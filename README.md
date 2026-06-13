@@ -1,6 +1,6 @@
 # Formalised CEGAR-Tableaux
 
-See the rendered Rocq documentation at https://blorbb.github.io/cegartab2025/toc.html.
+See the rendered Rocq documentation at https://blorbb.github.io/vct/toc.html.
 
 ## Usage
 
@@ -8,15 +8,16 @@ Rocq proofs in `theories/`.
 OCaml is extracted to `cegarbox/lib`.
 The unverified code for binding to MiniSat can be found in `cegarbox/lib/bindings.ml`.
 
-Requires Rocq 9.0.0 and OCaml 5.3.0.
+Requires Rocq 9.1.1 and OCaml 5.4.1.
 
 Install Rocq and OCaml in any way, or through an `opam` switch:
 
 ```sh
-opam switch create rocq 5.3.0
+opam switch create rocq 5.4.1
 opam switch rocq
 eval $(opam env)
-opam pin add rocq-prover 9.0.0
+opam repo add rocq-released https://rocq-prover.org/opam/released
+opam install rocq-prover rocq-core=9.1.1
 ```
 
 Running the OCaml code requires `dune`, `minisat` and `menhir`.
@@ -29,7 +30,7 @@ To run,
 
 ```sh
 cd cegarbox
-dune exec --profile release cegarbox -- file1 [file2 [...]]
+dune exec --release cegarbox -- file1 [file2 [...]]
 ```
 
 Where each of the files is a formula in InToHyLo format.
