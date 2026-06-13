@@ -1,3 +1,4 @@
+open Nat
 
 type t =
 | Pos of int
@@ -19,9 +20,9 @@ let atm = function
 
 let eqb a b =
   match a with
-  | Pos x -> (match b with
-              | Pos y -> (=) x y
+  | Pos p -> (match b with
+              | Pos q -> eqb p q
               | Neg _ -> false)
-  | Neg x -> (match b with
+  | Neg p -> (match b with
               | Pos _ -> false
-              | Neg y -> (=) x y)
+              | Neg q -> eqb p q)

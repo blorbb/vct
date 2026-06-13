@@ -1,13 +1,6 @@
-From Stdlib Require Import PeanoNat Setoids.Setoid Classical Lia.
-From Stdlib Require List.
-
 From CegarTableaux Require Lit Nnf Kripke Mclause.
 From CegarTableaux.Mcnf Require Mcnf Conversion.
-From CegarTableaux Require Import Utils.
-
-Import List.ListNotations.
-Open Scope list_scope.
-
+From CegarTableaux Require Import ImportStd Utils.
 
 (** Shorter alias for conversion functions *)
 Module Mcnfc := Conversion.
@@ -58,7 +51,7 @@ Qed.
     known inequalities from the above theorems. *)
 Local Ltac add_ineq_from_sym_in_nnf :=
   match goal with
-  | [ H: Nnf.In ?x ?phi |- _ ] =>
+  | [ H: Nnf.atm_in ?x ?phi |- _ ] =>
       let T := constr:(x <= Nnf.max_atm phi) in
       (* assertion already known: fail *)
       tryif assert T by assumption then
@@ -103,8 +96,8 @@ Theorem conv_atm_range :
     (Hmnp_lt : Nnf.max_atm phi < n < p)
     (x : nat),
   let (phi_mcnf, q) := Mcnfc.from_n_nnf n phi p in
-  Mcnf.In x phi_mcnf
-  -> Nnf.In x phi
+  Mcnf.atm_in x phi_mcnf
+  -> Nnf.atm_in x phi
     \/ x = n
     \/ p <= x < q.
 Proof.
@@ -155,7 +148,7 @@ Proof.
     fold B_mcnf in IHB.
 
     (* to apply to IH's *)
-    assert (x = n \/ x = nA \/ x = nB \/ Mcnf.In x A_mcnf \/ Mcnf.In x B_mcnf) as Hin_split.
+    assert (x = n \/ x = nA \/ x = nB \/ Mcnf.atm_in x A_mcnf \/ Mcnf.atm_in x B_mcnf) as Hin_split.
     {
       destruct Hx_in_mcnf as [[Hnx | [HnAx | F]] | [[Hnx | [HnBx | F]] | Hx_in_mcnf]]; try lia.
       right. right. right. apply Mcnf.in_mcnf_or. exact Hx_in_mcnf.
@@ -194,7 +187,7 @@ Proof.
     fold B_mcnf in IHB.
 
     (* to apply to IH's *)
-    assert (x = n \/ x = p \/ x = (S p) \/ Mcnf.In x A_mcnf \/ Mcnf.In x B_mcnf) as Hin_split.
+    assert (x = n \/ x = p \/ x = (S p) \/ Mcnf.atm_in x A_mcnf \/ Mcnf.atm_in x B_mcnf) as Hin_split.
     {
       destruct Hx_in_mcnf as [[Hnx | [Hpx | [HSpx | F]]] | Habx]; try lia.
       apply Mcnf.in_mcnf_or in Habx. tauto.
@@ -226,7 +219,7 @@ Proof.
     inline_pair in IHA. fold A_mcnf in IHA.
 
     (* to apply to IH's *)
-    assert (x = n \/ x = p \/ Mcnf.In x A_mcnf) as Hin_split.
+    assert (x = n \/ x = p \/ Mcnf.atm_in x A_mcnf) as Hin_split.
     {
       unfold A_mcnf in Hx_in_mcnf.
       simpl in Hx_in_mcnf.
@@ -263,7 +256,7 @@ Proof.
     inline_pair in IHA. fold A_mcnf in IHA.
 
     (* to apply to IH's *)
-    assert (x = n \/ x = p \/ Mcnf.In x A_mcnf) as Hin_split.
+    assert (x = n \/ x = p \/ Mcnf.atm_in x A_mcnf) as Hin_split.
     {
       simpl in Hx_in_mcnf.
       destruct Hx_in_mcnf as [[Hxn | Hxp] | Hctx_a_x]; try lia.
@@ -941,9 +934,8 @@ Section NnfToMcnf.
     (* all neighbours force *)
     {
       intro Hnbr. ifauto in Hnbr.
-      (* destruct Hnbr as [dnbr [Hrel_dnbr HM_force_nbr]]. *)
 
-      intros nbr Hrel_nbr.
+      intros w1 HR_w1.
       ifauto.
       apply named_model_vals_name_iff_force...
     }
@@ -951,12 +943,12 @@ Section NnfToMcnf.
     (* M' forces []A_mcnf *)
     {
       (* M' forces A_mcnf at every neighbour *)
-      rewrite Mcnf.w0_force_ctx_iff_nbr_force_phi.
-      intros nbr Hrel_nbr.
+      rewrite Mcnf.w0_force_ctx_iff_w1_force_phi.
+      intros w1 HR_w1.
 
       (* apply IH on the neighbour *)
       unfold IH in IHA.
-      specialize (IHA nbr p (S p)). forward IHA by lia.
+      specialize (IHA w1 p (S p)). forward IHA by lia.
 
       fold A_mcnf in IHA.
       set (M'IH := named_model M p A (S p)) in IHA.
@@ -986,9 +978,9 @@ Section NnfToMcnf.
     (* exists a neighbour that forces *)
     {
       intro Hnbr. ifauto in Hnbr.
-      destruct Hnbr as [dnbr [Hrel_dnbr HM_force_nbr]].
+      destruct Hnbr as [w1 [HR_w1 HM_force_w1]].
 
-      exists dnbr. split...
+      exists w1. split...
       ifauto.
       apply named_model_vals_name_iff_force...
     }
@@ -996,12 +988,12 @@ Section NnfToMcnf.
     (* M' forces []A_mcnf *)
     {
       (* M' forces A_mcnf at every neighbour *)
-      rewrite Mcnf.w0_force_ctx_iff_nbr_force_phi.
-      intros nbr Hrel_nbr.
+      rewrite Mcnf.w0_force_ctx_iff_w1_force_phi.
+      intros w1 HR_w1.
 
       (* apply IH on the neighbour *)
       unfold IH in IHA.
-      specialize (IHA nbr p (S p)). forward IHA by lia.
+      specialize (IHA w1 p (S p)). forward IHA by lia.
 
       fold A_mcnf in IHA.
       set (M'IH := named_model M p A (S p)) in IHA.
@@ -1179,11 +1171,11 @@ Proof with try finish.
 
     forward Hforce_nbrs by assumption.
 
-    rewrite Mcnf.w0_force_ctx_iff_nbr_force_phi in Hforce_ctx.
+    rewrite Mcnf.w0_force_ctx_iff_w1_force_phi in Hforce_ctx.
 
-    intros nbr Hrel_nbr.
+    intros w1 HR_w1.
 
-    apply (IHphi nbr p (S p))... split...
+    apply (IHphi w1 p (S p))... split...
     exists (Lit.Pos p)...
 
   - simpl in Hmnp_lt.
@@ -1193,17 +1185,17 @@ Proof with try finish.
     destruct Hforce_mcnf as [Hforce_n [Hforce_dnbr Hforce_ctx]].
 
     (* simplify Hforce_n *)
-    destruct Hforce_n as [x [[Hnx | F] Hforce_n]]...
-    rewrite <- Hnx in Hforce_n. clear x Hnx. simpl in Hforce_n.
+    destruct Hforce_n as [l [[Hnl | F] Hforce_n]]...
+    subst l. simpl in Hforce_n.
 
     forward Hforce_dnbr by assumption.
-    destruct Hforce_dnbr as [dnbr [Hrel_dnbr Hval_p]].
+    destruct Hforce_dnbr as [w1 [Hrel_w1 Hval_p]].
 
-    rewrite Mcnf.w0_force_ctx_iff_nbr_force_phi in Hforce_ctx.
+    rewrite Mcnf.w0_force_ctx_iff_w1_force_phi in Hforce_ctx.
 
-    exists dnbr. split...
+    exists w1. split...
 
-    apply (IHphi dnbr p (S p))... split...
+    apply (IHphi w1 p (S p))... split...
     exists (Lit.Pos p)...
 Qed.
 
@@ -1226,7 +1218,7 @@ Qed.
 
 
 (** Equisatisfiability of NNF and MCNF. *)
-Theorem nnf_mcnf_equisat :
+Theorem equisat_nnf :
   forall (phi : Nnf.t), Nnf.satisfiable phi <-> Mcnf.satisfiable (Mcnfc.from_nnf phi).
 Proof.
   intro phi. split.

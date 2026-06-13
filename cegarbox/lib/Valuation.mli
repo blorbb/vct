@@ -1,6 +1,5 @@
 open List
-open Lit
 
-type t = Lit.t list
+type t = int list
 
-val forces_lit : t -> Lit.t -> bool
+val forces_atm : t -> int -> bool

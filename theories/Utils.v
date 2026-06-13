@@ -162,4 +162,15 @@ Tactic Notation "replace_hyp" ident(H) "with" constr(P) :=
 
 (** Function pipeline operator *)
 Definition apply {A B} (x : A) (f : A -> B) := f x.
+Arguments apply {A B} x f /.
 Infix "|>" := apply (at level 51, left associativity).
+
+
+Lemma negb_exb_forallb : forall {A} (f : A -> bool) (l : list A),
+  negb (List.existsb f l) = List.forallb (fun a => negb (f a)) l.
+Proof.
+  intros A f l.
+  induction l.
+  - cbn. reflexivity.
+  - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
+Qed.

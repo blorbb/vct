@@ -6,6 +6,12 @@ Open Scope list_scope.
 From Stdlib Require Import Relations SetoidPermutation Permutation RelationClasses SetoidList PeanoNat Lia Classical.
 From CegarTableaux Require Import Utils.
 
+Lemma In_singleton : forall {A} (x y : A), List.In x [y] <-> x = y.
+Proof.
+  intros *. cbn. intuition.
+Qed. Global Hint Rewrite @In_singleton : datatypes.
+
+
 Lemma ex_eqA_iff_inA : forall {A} (eqA : relation A) (x : A) (l : list A),
   List.Exists (eqA x) l <-> InA eqA x l.
 Proof.
@@ -84,7 +90,21 @@ Lemma inclA_nil : forall {A} (eqA : relation A) (l : list A),
 Proof.
   intros A eqA l x Hxin.
   apply InA_nil in Hxin. contradiction.
-Qed.
+Qed. Global Hint Resolve inclA_nil : datatypes.
+
+
+Lemma incl_middle : forall {A} (l1 l2 : list A) (a : A) (s : list A),
+  incl (a :: l1 ++ l2) s <-> incl (l1 ++ a :: l2) s.
+Proof.
+  intros.
+  split.
+  - intros H x Hx_in.
+    apply Permutation_in with (l' := a::l1++l2) in Hx_in; auto.
+    symmetry. apply Permutation_middle.
+  - intros H x Hx_in.
+    apply Permutation_in with (l' := l1++a::l2) in Hx_in; auto.
+    apply Permutation_middle.
+Qed. Global Hint Resolve incl_middle : datatypes.
 
 
 Lemma cons_NoDupA : forall {A} (eqA : relation A) a l,
@@ -92,7 +112,7 @@ Lemma cons_NoDupA : forall {A} (eqA : relation A) a l,
 Proof.
   intros A eqA a l Hnd.
   inversion Hnd. assumption.
-Qed.
+Qed. Global Hint Resolve cons_NoDupA : datatypes.
 
 
 Lemma NoDupA_incl_length : forall {A} (eqA : relation A) l l',
@@ -165,10 +185,24 @@ Proof with auto.
 Qed.
 
 
+Lemma NoDupA_filter : forall {A} (eqA : relation A) (f : A -> bool) (l : list A),
+  Proper (eqA ==> eq) f ->
+  NoDupA eqA l -> NoDupA eqA (filter f l).
+Proof.
+  intros A eqA f l Hequiv Hnd. induction Hnd.
+  - cbn. apply NoDupA_nil.
+  - cbn. destruct (f x).
+    + apply NoDupA_cons; auto.
+      intro Hx_in_filter. apply H.
+      apply filter_InA in Hx_in_filter; tauto.
+    + assumption.
+Qed. Global Hint Resolve NoDupA_filter : datatypes.
+
+
 (** If for setoid-equal inputs, f is a setoid-permutation, then flat mapping will also be a permutation. *)
 Lemma PermutationA_flat_map : forall {A} (eqA : relation A) (f : A -> list A) (l l' : list A),
   Equivalence eqA ->
-  (forall a a', eqA a a' -> PermutationA eqA (f a) (f a')) ->
+  (Proper (eqA ==> PermutationA eqA) f) ->
   PermutationA eqA l l' -> PermutationA eqA (List.flat_map f l) (List.flat_map f l').
 Proof with auto.
   intros A eqA f l l' Hequiv Hf Hperm.
@@ -186,6 +220,23 @@ Proof with auto.
   - cbn. repeat rewrite List.app_assoc.
     apply PermutationA_app_tail... apply PermutationA_app_comm...
   - apply permA_trans with (l₂ := List.flat_map f b)...
+Qed.
+
+
+(* Setoid version of Permutation_map. *)
+Lemma PermutationA_map : forall {A} (eqA : relation A) (f : A -> A) (l l' : list A),
+  Equivalence eqA ->
+  (Proper (eqA ==> eqA) f) ->
+  PermutationA eqA l l' -> PermutationA eqA (map f l) (map f l').
+Proof with auto.
+  intros A eqA f l l' Hequiv Hf Hperm.
+  induction Hperm as [|h h' t t' Heq_h Hperm IHperm|h1 h2 t|a b c Hab Hbc IHab IHbc].
+  - cbn. reflexivity.
+  - cbn. apply permA_skip...
+  - cbn. apply permA_swap.
+  - eapply permA_trans.
+    + exact Hbc.
+    + exact IHbc.
 Qed.
 
 
@@ -223,6 +274,21 @@ Proof.
 Qed.
 
 
+Lemma NoDupA_swap_iff : forall {A} (eqA : relation A) (l l' : list A) (x : A),
+  Equivalence eqA ->
+  NoDupA eqA (l++x::l') <-> NoDupA eqA (x::l++l').
+Proof with auto.
+  intros A eqA l l' x Hequiv.
+  split.
+  - apply NoDupA_swap. assumption.
+  - intro Hnd.
+    eapply PermutationA_preserves_NoDupA.
+    + assumption.
+    + apply PermutationA_middle...
+    + assumption.
+Qed.
+
+
 Lemma NoDupA_length_2 : forall {A} (eqA : relation A) (x y : A),
   ~ eqA x y ->
   NoDupA eqA [x ; y].
@@ -231,7 +297,7 @@ Proof.
   repeat constructor.
   - rewrite InA_singleton. assumption.
   - intro H. apply InA_nil in H. contradiction.
-Qed.
+Qed. Global Hint Resolve NoDupA_length_2 : datatypes.
 
 
 Lemma InA_length_2 : forall {A} (eqA : relation A) (a x y : A),
@@ -239,7 +305,7 @@ Lemma InA_length_2 : forall {A} (eqA : relation A) (a x y : A),
 Proof.
   intros A eqA a x y Hin.
   apply InA_cons in Hin. rewrite InA_singleton in Hin. assumption.
-Qed.
+Qed. Global Hint Resolve InA_length_2 : datatypes.
 
 
 Lemma Permutation_heads_ne : forall {A} (a b : A) (l : list A),
@@ -256,7 +322,16 @@ Proof.
     + eapply perm_trans.
       * apply Hperm.
       * apply perm_swap.
-Qed.
+Qed. Global Hint Resolve Permutation_heads_ne : datatypes.
+
+
+Lemma Permutation_head_ne : forall {A} (a : A) (l : list A),
+  ~ Permutation (a::l) l.
+Proof.
+  intros A a l Hperm.
+  apply Permutation_length in Hperm.
+  cbn in Hperm. lia.
+Qed. Global Hint Resolve Permutation_head_ne : datatypes.
 
 
 Lemma Permutation_ne_in : forall {A} (a b : A) (l l' : list A),
@@ -269,7 +344,7 @@ Proof.
   - cbn in Hperm. destruct Hperm; auto.
     symmetry in H. contradiction.
   - apply List.in_eq.
-Qed.
+Qed. Global Hint Resolve Permutation_ne_in : datatypes.
 
 
 Lemma PermutationA_length : forall {A} (eqA : relation A) (l l' : list A),
@@ -278,4 +353,26 @@ Proof.
   intros A eqA l l' Hperm.
   induction Hperm; cbn; auto.
   now transitivity (length l₂).
+Qed.
+
+
+Lemma perm_existsb : forall {A} (f : A -> bool) (l1 l2 : list A),
+  Permutation l1 l2 -> existsb f l1 = existsb f l2.
+Proof.
+  intros A f l1 l2 Hperm. induction Hperm.
+  - reflexivity.
+  - cbn. now rewrite IHHperm.
+  - cbn. destruct (f x), (f y); reflexivity.
+  - transitivity (existsb f l'); assumption.
+Qed.
+
+
+Lemma perm_forallb : forall {A} (f : A -> bool) (l1 l2 : list A),
+  Permutation l1 l2 -> forallb f l1 = forallb f l2.
+Proof.
+  intros A f l1 l2 Hperm. induction Hperm.
+  - reflexivity.
+  - cbn. now rewrite IHHperm.
+  - cbn. destruct (f x), (f y); reflexivity.
+  - transitivity (forallb f l'); assumption.
 Qed.

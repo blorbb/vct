@@ -5,7 +5,7 @@ From CegarTableaux Require Valuation Assumptions.
 (** The return type of a classical SAT-solver. *)
 Inductive t : Type :=
   (* Returns valuations that make the formula satisfied. *)
-  | Sat (val : Valuation.t)
+  | Sat (V : Valuation.t)
   (* Returns assumptions that maintain unsatisfiability. *)
   | Unsat (core : Assumptions.t).
 

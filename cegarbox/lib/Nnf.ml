@@ -21,7 +21,7 @@ let rec negate = function
 (** val from_fml : Fml.t -> t **)
 
 let rec from_fml = function
-| Var x -> Lit (Pos x)
+| Var p -> Lit (Pos p)
 | Fml.Neg a -> negate (from_fml a)
 | Fml.And (a, b) -> And ((from_fml a), (from_fml b))
 | Fml.Or (a, b) -> Or ((from_fml a), (from_fml b))
@@ -33,8 +33,8 @@ let rec from_fml = function
 
 let rec max_atm = function
 | Lit l -> (match l with
-            | Pos x -> x
-            | Neg x -> x)
+            | Pos p -> p
+            | Neg p -> p)
 | And (a, b) -> Nat.max (max_atm a) (max_atm b)
 | Or (a, b) -> Nat.max (max_atm a) (max_atm b)
 | Box a -> max_atm a

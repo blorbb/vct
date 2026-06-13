@@ -1,13 +1,7 @@
 (** MCNF type with basic lemmas and definitions *)
 
-From Stdlib Require Import PeanoNat Setoids.Setoid Classical Lia.
-From Stdlib Require List.
-
 From CegarTableaux Require Lit Nnf Kripke Mclause.
-From CegarTableaux Require Import Utils.
-
-Import List.ListNotations.
-Open Scope list_scope.
+From CegarTableaux Require Import ImportStd Utils.
 
 
 (** An MCNF formula, a list of modal clauses. *)
@@ -25,86 +19,86 @@ Definition satisfiable (phi : t) : Prop :=
   exists W R (M : @Kripke.t W R) (w0 : W), force M w0 phi.
 
 
-Fixpoint In (x : nat) (phi : t) : Prop :=
+Fixpoint atm_in (p : nat) (phi : t) : Prop :=
   match phi with
   | [] => False
-  | head :: tail => Mclause.In x head \/ In x tail
+  | head :: tail => Mclause.atm_in p head \/ atm_in p tail
   end.
 
 
 (** Mini lemmas useful for simplifications. *)
 Section Simplify.
   Lemma in_mcnf_or :
-    forall (L R : t) (x : nat),
-    In x (L ++ R) <-> In x L \/ In x R .
+    forall (A B : t) (p : nat),
+    atm_in p (A ++ B) <-> atm_in p A \/ atm_in p B .
   Proof.
-    intros L R x.
-    induction L as [| head tail IHl]; simpl in *; tauto.
+    intros A B p.
+    induction A as [| head tail IHl]; simpl in *; tauto.
   Qed.
 
 
   Lemma in_ctx_iff_in_mcnf :
-    forall (phi : t) (x : nat),
-    In x (List.map Mclause.Ctx phi) <-> In x phi.
+    forall (phi : t) (p : nat),
+    atm_in p (List.map Mclause.Ctx phi) <-> atm_in p phi.
   Proof.
-    intros phi x.
+    intros phi p.
     induction phi as [| head tail IHphi]; simpl in *; tauto.
   Qed.
 
 
   Lemma mcnf_force_and :
-    forall {W} {R} (M : @Kripke.t W R) (w : W) (l r : t),
-    force M w (l ++ r) <-> force M w l /\ force M w r.
+    forall {W} {R} (M : @Kripke.t W R) (w0 : W) (A B : t),
+    force M w0 (A ++ B) <-> force M w0 A /\ force M w0 B.
   Proof.
-    intros W R M w l r.
+    intros W R M w0 A B.
     split.
     - intro Hforce_lr.
-      induction l as [| head tail IHl]; simpl in *; tauto.
+      induction A as [| head tail IHl]; simpl in *; tauto.
     - intros [Hforce_l Hforce_r].
-      induction l as [| head tail IHl]; simpl in *; tauto.
+      induction A as [| head tail IHl]; simpl in *; tauto.
   Qed.
 
 
-  Lemma w0_force_ctx_iff_nbr_force_phi :
-    forall {W} {R} (M : @Kripke.t W R) (w : W) (phi : t),
-      force M w (List.map Mclause.Ctx phi) <->
-      (forall (neighbour : W), R w neighbour -> force M neighbour phi).
+  Lemma w0_force_ctx_iff_w1_force_phi :
+    forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t),
+      force M w0 (List.map Mclause.Ctx phi) <->
+      (forall (w1 : W), R w0 w1 -> force M w1 phi).
   Proof with simpl; auto.
-    intros W R M w phi.
+    intros W R M w0 phi.
     induction phi as [| head tail IHphi].
     - simpl. tauto.
     - simpl in *. split.
-      + intros [Hforce_nbr Hforce_ctx_tail] nbr Hrel_nbr.
+      + intros [Hforce_w1 Hforce_ctx_tail] w1 Hrel_w1.
         split... apply IHphi...
-      + intros Hnbr_forces_head_tail.
+      + intros Hw1_forces_head_tail.
         split.
-        * intros nbr Hrel_nbr.
-          now apply Hnbr_forces_head_tail.
-        * apply IHphi. apply Hnbr_forces_head_tail.
+        * intros w1 Hrel_w1.
+          now apply Hw1_forces_head_tail.
+        * apply IHphi. apply Hw1_forces_head_tail.
   Qed.
 End Simplify.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w : W) (x : nat), In x phi -> (Kripke.valuation M w x <-> Kripke.valuation M' w x).
+  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
-  forall {W} {R} (M M' : @Kripke.t W R) (phi : t) (w : W),
-  agree phi M M' -> (force M w phi <-> force M' w phi).
+  forall {W} {R} (M M' : @Kripke.t W R) (phi : t) (w0 : W),
+  agree phi M M' -> (force M w0 phi <-> force M' w0 phi).
 Proof with simpl; auto.
   intros W R M M' phi w0 Hval.
 
   induction phi as [|head tail IHphi].
   - tauto.
-  - assert (forall w' x, In x tail -> Kripke.valuation M w' x <-> Kripke.valuation M' w' x) as Hval_tail.
+  - assert (forall w' p, atm_in p tail -> Kripke.valuation M w' p <-> Kripke.valuation M' w' p) as Hval_tail.
     {
-      intros w' x Hx_tail.
+      intros w' p Hp_tail.
       apply Hval...
     }
-    assert (forall w' x, Mclause.In x head -> Kripke.valuation M w' x <-> Kripke.valuation M' w' x) as Hval_head.
+    assert (forall w' p, Mclause.atm_in p head -> Kripke.valuation M w' p <-> Kripke.valuation M' w' p) as Hval_head.
     {
-      intros w' x Hx_head.
+      intros w' p Hp_head.
       apply Hval...
     }
 

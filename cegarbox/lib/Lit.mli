@@ -1,3 +1,4 @@
+open Nat
 
 type t =
 | Pos of int

@@ -1,8 +1,5 @@
-From Stdlib Require List.
-From Stdlib Require Import Classical Lia PeanoNat.
-
 From CegarTableaux Require Lit Kripke Fml.
-From CegarTableaux Require Import Utils.
+From CegarTableaux Require Import ImportStd Utils.
 
 
 (** A modal formula in negation normal form. *)
@@ -19,8 +16,8 @@ Fixpoint force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   | Lit l   => Lit.force M w0 l
   | And A B => force M w0 A /\ force M w0 B
   | Or  A B => force M w0 A \/ force M w0 B
-  | Box A   => forall nbr, R w0 nbr -> force M nbr A
-  | Dia A   => exists nbr, R w0 nbr /\ force M nbr A
+  | Box A   => forall w1, R w0 w1 -> force M w1 A
+  | Dia A   => exists w1, R w0 w1 /\ force M w1 A
   end.
 
 
@@ -45,7 +42,7 @@ Section Conversion.
 
   Fixpoint from_fml (phi : Fml.t) : t :=
     match phi with
-    | Fml.Var  x   => Lit (Lit.Pos x)
+    | Fml.Var  p   => Lit (Lit.Pos p)
     | Fml.Neg  A   => negate (from_fml A)
     | Fml.And  A B => And (from_fml A) (from_fml B)
     | Fml.Or   A B => Or  (from_fml A) (from_fml B)
@@ -64,14 +61,14 @@ Section Correctness.
     intros w0 phi.
     revert w0. (* make the induction hypothesis on 'forall w0' *)
     induction phi as
-      [ x
+      [ l
       | A IHA B IHB
       | A IHA B IHB
       | A IHA
       | A IHA
       ]; intro w0; simpl.
     (* literals *)
-    - destruct x.
+    - destruct l.
       + reflexivity.
       + simpl. tauto.
     (* And, Or *)
@@ -79,32 +76,32 @@ Section Correctness.
     - rewrite IHA. rewrite IHB. tauto.
     (* Box *)
     - split.
-      (* exists neighbour : not A sat -> not all neighbours force *)
+      (* exists w1 : not A sat -> not all neighbours force *)
       + intros Hexists Hforall.
-        destruct Hexists as [neighbour [Hrelated Hforces]].
-        specialize (Hforall neighbour Hrelated). (* remove the forall *)
-        apply IHA in Hforces.
+        destruct Hexists as [w1 [HR_w1 Hforce]].
+        specialize (Hforall w1 HR_w1). (* remove the forall *)
+        apply IHA in Hforce.
         contradiction.
-      (* not all neighbours force -> exists neighbour : not A sat *)
+      (* not all neighbours force -> exists w1 : not A sat *)
       + intros Hforall.
         apply not_all_ex_not in Hforall.
-        destruct Hforall as [neighbour Himpl].
-        apply not_imply_elim in Himpl as Hrelated.
-        apply not_imply_elim2 in Himpl as Hforces.
-        exists neighbour.
+        destruct Hforall as [w1 Himpl].
+        apply not_imply_elim in Himpl as HR_w1.
+        apply not_imply_elim2 in Himpl as Hforce.
+        exists w1.
         split.
-        * apply Hrelated.
-        * apply IHA. apply Hforces.
+        * apply HR_w1.
+        * apply IHA. apply Hforce.
     (* Dia *)
     - split.
       (* all neighbours force not A -> doesn't exist neighbour : force A *)
       + intros Hforall Hexists.
-        destruct Hexists as [neighbour [Hrelated Hforces]].
-        specialize (Hforall neighbour Hrelated).
+        destruct Hexists as [w1 [HR_w1 Hforce]].
+        specialize (Hforall w1 HR_w1).
         apply IHA in Hforall.
         contradiction.
-      + intros Hexists neighbour Hrelated.
-        apply not_ex_all_not with (n := neighbour) in Hexists.
+      + intros Hexists w1 HR_w1.
+        apply not_ex_all_not with (n := w1) in Hexists.
         apply not_and_or in Hexists.
         destruct Hexists as [contra | not_nnf].
         * contradiction.
@@ -112,13 +109,13 @@ Section Correctness.
   Qed.
 
 
-  Theorem force_fml_iff_force_nnf :
+  Theorem equiv_fml :
     forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Fml.t),
     Fml.force M w0 phi <-> force M w0 (from_fml phi).
   Proof.
     intros W R M w0 phi. revert w0.
     induction phi as
-      [ x
+      [ p
       | A IHA
       | A IHA B IHB
       | A IHA B IHB
@@ -126,7 +123,7 @@ Section Correctness.
       | A IHA
       | A IHA
       ]; intro w0; simpl.
-    (* Var x *)
+    (* Var p *)
     - tauto.
     (* Neg fml *)
     - rewrite force_negate_iff_not_force. rewrite IHA. reflexivity.
@@ -141,6 +138,17 @@ Section Correctness.
     (* <>A *)
     - setoid_rewrite IHA. reflexivity.
   Qed.
+
+
+  Corollary equisat_fml :
+    forall (phi : Fml.t), Fml.satisfiable phi <-> Nnf.satisfiable (from_fml phi).
+  Proof.
+    intro phi. split.
+    - intros [W [M [R [w0 Hforce]]]]. exists W, M, R, w0. 
+      now apply equiv_fml.
+    - intros [W [M [R [w0 Hforce]]]]. exists W, M, R, w0. 
+      now apply equiv_fml.
+  Qed.
 End Correctness.
 
 
@@ -148,36 +156,36 @@ End Correctness.
 Section Range.
   Fixpoint max_atm (phi : t) : nat :=
     match phi with
-    | Lit (Lit.Pos x) => x
-    | Lit (Lit.Neg x) => x
+    | Lit (Lit.Pos p) => p
+    | Lit (Lit.Neg p) => p
     | And A B => Nat.max (max_atm A) (max_atm B)
     | Or  A B => Nat.max (max_atm A) (max_atm B)
     | Box A   => max_atm A
     | Dia A   => max_atm A
     end.
 
-  Fixpoint In (x : nat) (phi : t) : Prop :=
+  Fixpoint atm_in (p : nat) (phi : t) : Prop :=
     match phi with
-    | Lit (Lit.Pos y) => x = y
-    | Lit (Lit.Neg y) => x = y
-    | And A B => In x A \/ In x B
-    | Or  A B => In x A \/ In x B
-    | Box A   => In x A
-    | Dia A   => In x A
+    | Lit (Lit.Pos q) => p = q
+    | Lit (Lit.Neg q) => p = q
+    | And A B => atm_in p A \/ atm_in p B
+    | Or  A B => atm_in p A \/ atm_in p B
+    | Box A   => atm_in p A
+    | Dia A   => atm_in p A
     end.
 
 
   Corollary atm_in_nnf_atm :
-    forall (l : Lit.t), In (Lit.atm l) (Lit l).
+    forall (l : Lit.t), atm_in (Lit.atm l) (Lit l).
   Proof.
     intros l. destruct l; reflexivity.
   Qed.
 
 
-  Theorem atm_le_max : forall (phi : t) (x : nat),
-    In x phi -> x <= (max_atm phi).
+  Theorem atm_le_max : forall (phi : t) (p : nat),
+    atm_in p phi -> p <= (max_atm phi).
   Proof.
-    intros phi x Hx_in_nnf.
+    intros phi p Hx_in_nnf.
 
     induction phi as
       [ l
@@ -199,7 +207,7 @@ Section Range.
 
 
   Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-    forall (w : W) (p : nat), In p phi -> (Kripke.valuation M w p <-> Kripke.valuation M' w p).
+    forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
   (** Makes some proofs in mcnf a bit easier.
 
@@ -209,7 +217,7 @@ Section Range.
   Proof.
     intro Hagree.
     unfold agree in *.
-    intros w p Hp_in_left.
+    intros w0 p Hp_in_left.
     apply Hagree. simpl. now left.
   Qed.
 
@@ -218,41 +226,41 @@ Section Range.
   Proof.
     intro Hagree.
     unfold agree in *.
-    intros w p Hp_in_right.
+    intros w0 p Hp_in_right.
     apply Hagree. simpl. now right.
   Qed.
 
 
   Theorem meaningful_valuations :
-    forall {W} {R} (M M' : @Kripke.t W R) (w : W) (phi : t),
-      agree phi M M' -> (force M w phi <-> force M' w phi).
+    forall {W} {R} (M M' : @Kripke.t W R) (w0 : W) (phi : t),
+      agree phi M M' -> (force M w0 phi <-> force M' w0 phi).
   Proof with simpl; auto.
-    intros W R M M' w phi Hagree. revert w Hagree.
+    intros W R M M' w0 phi Hagree. revert w0 Hagree.
     induction phi as
       [ l
       | A IHA B IHB
       | A IHA B IHB
       | A IHA
       | A IHA
-      ]; intros w Hagree.
+      ]; intros w0 Hagree.
     (* literal base case *)
     - split.
       + intro HMforce.
-        set (x := Lit.atm l).
-        assert (Hin : In x (Lit l)) by apply atm_in_nnf_atm.
-        specialize (Hagree w x Hin).
+        set (p := Lit.atm l).
+        assert (Hin : atm_in p (Lit l)) by apply atm_in_nnf_atm.
+        specialize (Hagree w0 p Hin).
         simpl in *.
         unfold Lit.force in *.
-        (* (~) valuation M' w p0 = (~) valuation m w p *)
-        destruct l; subst x; rewrite <- Hagree; exact HMforce.
+        (* (~) valuation M' w0 p0 = (~) valuation m w0 p *)
+        destruct l; subst p; rewrite <- Hagree; exact HMforce.
       + intro HMforce.
-        set (x := Lit.atm l).
-        assert (Hin : In x (Lit l)) by apply atm_in_nnf_atm.
-        specialize (Hagree w x Hin).
+        set (p := Lit.atm l).
+        assert (Hin : atm_in p (Lit l)) by apply atm_in_nnf_atm.
+        specialize (Hagree w0 p Hin).
         simpl in *.
         unfold Lit.force in *.
-        (* (~) valuation M' w p0 = (~) valuation m w p *)
-        destruct l; subst x; rewrite -> Hagree; exact HMforce.
+        (* (~) valuation M' w0 p0 = (~) valuation m w0 p *)
+        destruct l; subst p; rewrite -> Hagree; exact HMforce.
     (* And case *)
     - split.
       (* M forces -> M' forces *)
@@ -260,13 +268,13 @@ Section Range.
         simpl. split.
         { (* forces A *)
           apply IHA.
-          - intros w0 p Hin.
+          - intros w0' p Hin.
             apply Hagree. simpl. now left.
           - apply HMforce.
         }
         { (* forces B *)
           apply IHB.
-          - intros w0 p Hin.
+          - intros w0' p Hin.
             apply Hagree. simpl. now right.
           - apply HMforce.
         }
@@ -275,13 +283,13 @@ Section Range.
         simpl. split.
         { (* forces A *)
           apply IHA.
-          - intros w0 p Hin.
+          - intros w0' p Hin.
             apply Hagree. simpl. now left.
           - apply HM'force.
         }
         { (* forces B *)
           apply IHB.
-          - intros w0 p Hin.
+          - intros w0' p Hin.
             apply Hagree. simpl. now right.
           - apply HM'force.
         }
@@ -292,13 +300,13 @@ Section Range.
         simpl. simpl in HMforce. destruct HMforce as [Hforce_a|Hforce_b].
         { (* forces A *)
           left. apply IHA.
-          - intros w0 p Hin.
+          - intros w0' p Hin.
             apply Hagree. simpl. now left.
           - exact Hforce_a.
         }
         { (* forces B *)
           right. apply IHB.
-          - intros w0 p Hin.
+          - intros w0' p Hin.
             apply Hagree. simpl. now right.
           - exact Hforce_b.
         }
@@ -307,30 +315,30 @@ Section Range.
         simpl. simpl in HM'force. destruct HM'force as [Hforce_a|Hforce_b].
         { (* forces A *)
           left. apply IHA...
-          intros w0 p Hin.
+          intros w0' p Hin.
           apply Hagree. simpl. now left.
         }
         { (* forces B *)
           right. apply IHB...
-          intros w0 p Hin.
+          intros w0' p Hin.
           apply Hagree. simpl. now right.
         }
     (* Box case *)
     - simpl. split.
-      + intros HMforce neighbour HM'rel.
+      + intros HMforce w1 HR_w1.
         apply IHA...
-      + intros HM'force neighbour HMrel.
+      + intros HM'force w1 HR_w1.
         apply IHA...
     - simpl. split.
       + intros HMforce.
-        destruct HMforce as [neighbour [Hn_rel Hn_force]].
-        exists neighbour.
+        destruct HMforce as [w1 [HR_w1 Hforce]].
+        exists w1.
         split...
         apply IHA...
 
       + intros HM'force.
-        destruct HM'force as [neighbour [Hn_rel Hn_force]].
-        exists neighbour.
+        destruct HM'force as [w1 [HR_w1 Hforce]].
+        exists w1.
         split...
         apply IHA...
   Qed.

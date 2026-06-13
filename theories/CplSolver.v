@@ -4,32 +4,11 @@
     program extraction. They must also satisfy the axioms as defined in
     [solver_axioms].
 
-    See the Extract module for details about our Minisat implementation.
+    See the Extract module for details about our Minisat implementation. *)
 
-    * Caveats
-
-
-    We allow the SAT-solver to have mutable state. Mutability is not easy
-    to formalise in Rocq (though {{https://softwarefoundations.cis.upenn.edu/plf-current/References.html} possible}).
-    Our functions are defined as though the SAT-solver is immutable
-    (as we return a new solver on [make] / [add_clause]).
-
-    For our implementation to be correct, we must _manually_ ensure that
-    we never use a mutated solver, i.e. a solver that has been used
-    as input to [add_clause]. We must also be careful with how the solver is
-    used, as referential transparency is lost.
-
-    Future work to resolve this issue: wrap the solver in a monad.
-    Something similar to {{https://github.com/Lysxia/coq-simple-io} coq-simple-io}
-    may help with extracting to use the [IO] monad. *)
-
-From Stdlib Require List.
 From CegarTableaux Require CplClause Assumptions Lit Cnf Valuation.
-From CegarTableaux Require Import Utils.
+From CegarTableaux Require Import ImportStd Utils ListExt.
 From CegarTableaux.CplSolver Require Solution.
-From Stdlib Require Import Permutation SetoidPermutation SetoidList.
-Import List.ListNotations.
-Open Scope list_scope.
 
 
 (** A (possibly stateful) classical SAT-solver oracle. *)
@@ -38,16 +17,14 @@ Parameter t : Type.
 
 (** Creates a new SAT-solver.
 
-    This has a slightly odd type because the solver is technically mutable.
-    This must be a function since we can create multiple distinct instances
-    of a SAT solver; being a constant (e.g. just [t]) would not work as all
-    solvers would then be the same instance. *)
+    Even though the solver appears immutable, it is better to still make
+    this a function instead of a constant or else this is a reference to
+    an always-invalid solver that slowly holds more and more clauses
+    unnecessarily. *)
 Parameter make : unit -> t.
 
 
-(** Add a clause to the solver, returning the new solver.
-
-    See module documentation for caveats. *)
+(** Add a clause to the solver, returning the new solver. *)
 Parameter add_clause : t -> CplClause.t -> t.
 
 
@@ -58,9 +35,19 @@ Parameter add_clause : t -> CplClause.t -> t.
 Parameter solve_with_assumptions : t -> Assumptions.t -> Solution.t.
 
 
-(** Create a new solver with the provided CNF clauses. *)
+(** Create a new solver with the provided CNF clauses.
+
+    This must be a [fold_right] instead of [fold_left] (though the latter
+    would be better due to being tail recursive) because of some proofs
+    of [Solver.Search] requiring that the cpls of [w0] are exactly the
+    clauses of the cpl solver [s0]. But the conflict sets are [cons]ed
+    on to the head of the cpls of [w0] _and_ [cons]ed to the clauses
+    of [s0], so only [fold_right] is the correct definition here.
+
+    FIXME: If the above is a performance issue, fix up the proofs and 
+    switch this to a [fold_left] instead. *)
 Definition make_with_clauses (clauses : Cnf.t) : t :=
-  List.fold_left add_clause clauses (make tt).
+  List.fold_right (flip add_clause) (make tt) clauses.
 
 
 (** * Axioms *)
@@ -76,169 +63,165 @@ Parameter clauses_of : t -> Cnf.t.
 
     Returns the equivalent CNF formula that the solver is determining the
     satisfiability for (including the unit assumptions). *)
-Definition solved_clauses (solver : t) (assumptions : Assumptions.t) : Cnf.t :=
-  Cnf.from_assumptions assumptions ++ clauses_of solver.
+Definition solved_clauses (s : t) (A : Assumptions.t) : Cnf.t :=
+  Cnf.from_assumptions A ++ clauses_of s.
 
 
 (** Set of atoms that are in the solver or assumptions. *)
-Definition atms_of (solver : t) (assumptions : Assumptions.t) : list nat :=
-  Cnf.atms_of (solved_clauses solver assumptions).
+Definition atms_of (s : t) (A : Assumptions.t) : list nat :=
+  Cnf.atms_of (solved_clauses s A).
 
 
 (** Returns every possible valuation that can be created by the atoms of the
     solver and assumptions. *)
-Definition every_valuation (solver : t) (assumptions : Assumptions.t) : list Valuation.t :=
-  Valuation.every_valuation_of_atms (atms_of solver assumptions).
+Definition every_valuation (s : t) (A : Assumptions.t) : list Valuation.t :=
+  Valuation.every_valuation_of_atms (atms_of s A).
 
 
-Definition In (x : nat) (solver : t) (assumptions : Assumptions.t) : Prop :=
-  Cnf.In x (solved_clauses solver assumptions).
+Definition every_sat_valuation (s : t) (A : Assumptions.t) : list Valuation.t :=
+  List.filter (fun val => Cnf.cpl_forceb val (solved_clauses s A)) (every_valuation s A).
+
+
+Definition atm_in (p : nat) (s : t) (A : Assumptions.t) : Prop :=
+  Cnf.atm_in p (solved_clauses s A).
 
 
 (** Whether a clause does not introduce new atoms to the solver. *)
-Definition clause_atms_incl (clause : CplClause.t) (solver : t) (assumptions : Assumptions.t) : Prop :=
-  forall x, CplClause.In x clause -> In x solver assumptions.
+Definition clause_atms_incl (clause : CplClause.t) (s : t) (A : Assumptions.t) : Prop :=
+  forall p, CplClause.atm_in p clause -> atm_in p s A.
 
-Arguments clause_atms_incl clause solver assumptions /.
+Arguments clause_atms_incl clause s A /.
 
 
-(** The correctness assumptions we make about the SAT solver. *)
-Class solver_axioms (solver : t) :=
-{
-  (** [add_clause solver clause] correctly adds [clause] to the
-      clauses of [solver]. *)
-  add_clause_cons : forall (clause : CplClause.t),
-    clauses_of (add_clause solver clause) = clause :: clauses_of solver;
+(** The valuation returned by a satisfiable result is [clash_free]. *)
+Axiom valuation_clash_free : forall s A V,
+  Solution.Sat V = solve_with_assumptions s A ->
+  Valuation.clash_free V.
 
-  (** The valuation returned by a satisfiable result is [clash_free]. *)
-  valuation_clash_free : forall assumptions val,
-    Solution.Sat val = solve_with_assumptions solver assumptions ->
-    Valuation.clash_free val;
+(** Every atom in the valuation is an atom in the solver or assumptions. *)
+Axiom valuation_in_clauses : forall s A V,
+  Solution.Sat V = solve_with_assumptions s A ->
+  forall p, List.In p V -> atm_in p s A.
 
-  (** Every atom in the valuation is an atom in the solver or assumptions. *)
-  valuation_in_clauses : forall assumptions val,
-    Solution.Sat val = solve_with_assumptions solver assumptions ->
-    forall x, Valuation.In x val <-> In x solver assumptions;
+(** The unsatisfiable core is a subset of the unit assumptions. *)
+Axiom core_subset_assumptions : forall s A core,
+  Solution.Unsat core = solve_with_assumptions s A ->
+  List.incl core A.
 
-  (** The valuation is a superset of the assumptions *)
-  valuation_supset_assumptions : forall assumptions val,
-    Solution.Sat val = solve_with_assumptions solver assumptions ->
-    List.incl assumptions val;
+(** The solver + unsatisfiable core is still unsatisfiable. *)
+Axiom solution_soundness : forall s A core,
+  Solution.Unsat core = solve_with_assumptions s A ->
+  Cnf.unsatisfiable (solved_clauses s core).
 
-  (** The unsatisfiable core is a subset of the unit assumptions. *)
-  core_subset_assumptions : forall assumptions core,
-    Solution.Unsat core = solve_with_assumptions solver assumptions ->
-    List.incl core assumptions;
-
-  (** The valuation satisfies the solver clauses. *)
-  solution_soundness : forall assumptions val,
-    Solution.Sat val = solve_with_assumptions solver assumptions ->
-    exists W R (M : @Kripke.t W R) (w0 : W),
-      Valuation.matches_kripke_valuation val M w0 /\
-      Cnf.force M w0 (clauses_of solver);
-
-  (** The solver + unsatisfiable core is still unsatisfiable. *)
-  solution_completeness : forall assumptions core,
-    Solution.Unsat core = solve_with_assumptions solver assumptions ->
-    Cnf.unsatisfiable (solved_clauses solver core)
-}.
-
+(** The valuation satisfies the solver clauses. *)
+Axiom solution_completeness : forall s A V,
+  Solution.Sat V = solve_with_assumptions s A ->
+  Cnf.cpl_forceb V (solved_clauses s A) = true.
 
 (** The empty SAT-solver contains no clauses. *)
 Axiom make_is_empty : clauses_of (make tt) = [].
+Global Hint Rewrite make_is_empty : ct.
 
+(** [add_clause solver clause] correctly adds [clause] to the
+    clauses of [solver]. *)
+Axiom add_clause_cons : forall s (clause : CplClause.t),
+  clauses_of (add_clause s clause) = clause :: clauses_of s.
+Global Hint Rewrite add_clause_cons : ct.
 
-(** [axioms_make] and [axioms_ind] define which solvers satisfy the axioms.
-
-    This isn't strictly necessary as [make] and [add_clause] is the only way
-    you can create a solver instance. These axioms enforce that only solvers
-    created by [make] and [add_clause] satisfy the solvers, to ensure that
-    we can't accidentally make a solver through some other means. *)
-Axiom axioms_make : solver_axioms (make tt).
-
-Axiom axioms_ind : forall solver clause,
-  solver_axioms solver -> solver_axioms (add_clause solver clause).
-
-
-(** Applying [List.fold_left] on a solver also satisfies axioms. *)
-Lemma axioms_fold_left : forall (solver : t) (phi : Cnf.t),
-  solver_axioms solver -> solver_axioms (List.fold_left add_clause phi solver).
-Proof.
-  intros solver phi. revert solver.
-  induction phi as [|head tail IH]; intros solver Hsolver.
-  - cbn. assumption.
-  - cbn. apply IH. apply axioms_ind. assumption.
-Qed.
-
-
-(** [make_with_clauses] also satisfies solver axioms. *)
-Lemma axioms_clauses : forall (phi : Cnf.t), solver_axioms (make_with_clauses phi).
-Proof.
-  intro phi.
-  unfold make_with_clauses.
-  apply axioms_fold_left. apply axioms_make.
-Qed.
-
-
-(** The clauses that the solver will hold from a [List.fold_left] of clauses. *)
-Lemma clauses_of_fold_left : forall solver clauses,
-  solver_axioms solver ->
-  clauses_of (List.fold_left add_clause clauses solver) = (List.rev clauses) ++ clauses_of solver.
+(** The clauses that the solver will hold from a [List.fold_right] of clauses. *)
+Lemma clauses_of_fold_right : forall s (clauses : list CplClause.t),
+  clauses_of (List.fold_right (flip add_clause) s clauses) = clauses ++ clauses_of s.
 Proof with try easy.
-  intros solver clauses. revert solver.
-  induction clauses as [|h t IH]; intros solver Hsolver.
-  { reflexivity. }
-  cbn.
-  specialize (IH (add_clause solver h)).
-  forward IH by apply axioms_ind...
-  rewrite add_clause_cons in IH.
-  rewrite <- List.app_assoc. cbn. exact IH.
-Qed.
+  intros s clauses. revert s.
+  induction clauses as [|h t IH]; intros s.
+  - reflexivity.
+  - cbn. unfold flip in *. rewrite add_clause_cons. congruence.
+Qed. Global Hint Rewrite clauses_of_fold_right : ct.
 
 
-Lemma atms_of_nodup : forall solver assumptions, List.NoDup (atms_of solver assumptions).
+Lemma clauses_of_make_with_clauses : forall (phi : Cnf.t),
+  clauses_of (make_with_clauses phi) = phi.
+Proof.
+  intros phi. unfold make_with_clauses.
+  rewrite clauses_of_fold_right, make_is_empty.
+  now rewrite List.app_nil_r.
+Qed. Global Hint Resolve clauses_of_make_with_clauses : ct.
+
+
+Lemma add_clause_incl : forall s clause,
+  List.incl (clauses_of s) (clauses_of (add_clause s clause)).
+Proof.
+  intros s cl cl' Hcl_in.
+  rewrite add_clause_cons. now right.
+Qed. Global Hint Resolve add_clause_incl : ct.
+
+
+Corollary add_clause_incl_A : forall s A cl,
+  List.incl (solved_clauses s A) (solved_clauses (add_clause s cl) A).
+Proof.
+  intros s A cl cl' Hcl_in.
+  unfold solved_clauses in *.
+  rewrite List.in_app_iff in *. destruct Hcl_in as [Hcl_in_A | Hcl_in_c].
+  - now left.
+  - right. now apply add_clause_incl.
+Qed. Global Hint Resolve add_clause_incl_A : ct.
+
+
+Lemma atms_of_nodup : forall s A, List.NoDup (atms_of s A).
 Proof.
   intros. unfold atms_of, Cnf.atms_of. apply List.NoDup_nodup.
-Qed.
+Qed. Global Hint Resolve atms_of_nodup : ct.
 
 
-Lemma every_valuation_nodup : forall solver assumptions, NoDupA Valuation.eq (every_valuation solver assumptions).
+Lemma every_valuation_nodup : forall s A, NoDupA Valuation.eq (every_valuation s A).
 Proof.
   intros. apply Valuation.every_valuation_unique, atms_of_nodup.
-Qed.
+Qed. Global Hint Resolve every_valuation_nodup : ct.
+
+
+Corollary every_sat_valuation_nodup : forall s A, NoDupA Valuation.eq (every_sat_valuation s A).
+Proof.
+  intros. apply NoDupA_filter; auto with typeclass_instances.
+  apply every_valuation_nodup.
+Qed. Global Hint Resolve every_sat_valuation_nodup : ct.
 
 
 (** A satisfiable valuation is in [every_valuation] of the solver. *)
 Lemma valuation_in_every_valuation_of :
-  forall (solver : t) (assumptions : Assumptions.t) (valuation : Valuation.t),
-  solver_axioms solver ->
-  Solution.Sat valuation = solve_with_assumptions solver assumptions ->
-  InA Valuation.eq
-      valuation
-      (every_valuation solver assumptions).
-Proof.
-  intros solver assumptions val Hsolver Hsat.
+  forall (s : t) (A : Assumptions.t) (V : Valuation.t),
+  Solution.Sat V = solve_with_assumptions s A ->
+  Valuation.val_in_vals V (every_valuation s A).
+Proof with auto.
+  intros s A V Hsat.
   unfold every_valuation, atms_of.
   set (atms := Cnf.atms_of _).
-  pose proof (valuation_clash_free _ _ Hsat) as Hsound.
-  apply Valuation.val_with_atms_in_every_val.
-  (* atms is permutation of atms of val *)
-  apply NoDup_Permutation.
-  - unfold atms, Cnf.atms_of. apply List.NoDup_nodup.
-  - apply Valuation.atms_of_nodup. exact Hsound.
-  - setoid_rewrite (valuation_in_clauses assumptions val Hsat).
-    setoid_rewrite Cnf.in_atms_of. fold atms. reflexivity.
+  pose proof (valuation_clash_free _ _ _ Hsat) as Hcf.
+  apply Valuation.val_with_atms_in_every_val...
+  intros p Hp_in. apply Cnf.in_atms_of.
+  apply valuation_in_clauses with (V := V)...
+Qed.
+
+
+Lemma valuation_in_every_sat_valuation :
+  forall s A V,
+  Solution.Sat V = solve_with_assumptions s A ->
+  Valuation.val_in_vals V (every_sat_valuation s A).
+Proof with auto.
+  intros solver assumptions val Hsat.
+  unfold every_sat_valuation, Valuation.val_in_vals.
+  apply filter_InA; try apply Cnf.proper_cpl_forceb. split.
+  - now apply valuation_in_every_valuation_of.
+  - now apply solution_completeness.
 Qed.
 
 
 (** A solver with an added clause that contains no new atoms has the same set of atoms *)
 Lemma add_no_new_atms :
-  forall (solver : t) (clause : CplClause.t) (assumptions : Assumptions.t),
-  solver_axioms solver ->
-  clause_atms_incl clause solver assumptions ->
-  Permutation (atms_of solver assumptions) (atms_of (add_clause solver clause) assumptions).
+  forall (s : t) (A : Assumptions.t) (clause : CplClause.t),
+  clause_atms_incl clause s A ->
+  Permutation (atms_of s A) (atms_of (add_clause s clause) A).
 Proof with auto.
-  intros solver new_clause assumptions Hsolver Hclause_incl.
+  intros s A clause Hclause_incl.
 
   unfold atms_of, solved_clauses in *.
   rewrite add_clause_cons.
@@ -246,14 +229,14 @@ Proof with auto.
   apply NoDup_Permutation.
   - apply List.NoDup_nodup.
   - apply List.NoDup_nodup.
-  - intro x. split.
+  - intro p. split.
     (* in assumptions ++ clauses -> in assumptions ++ new_clause :: clauses *)
-    + intro Hx_in_solver.
+    + intro Hp_in_solver.
       (* simplify nodup and flatmap *)
-      apply List.nodup_In. apply List.nodup_In in Hx_in_solver.
-      apply List.in_flat_map. apply List.in_flat_map in Hx_in_solver.
-      destruct Hx_in_solver as [clause [Hclause_in_clauses Hx_in_clause]].
-      exists clause. split...
+      apply List.nodup_In. apply List.nodup_In in Hp_in_solver.
+      apply List.in_flat_map. apply List.in_flat_map in Hp_in_solver.
+      destruct Hp_in_solver as [clause' [Hclause_in_clauses Hx_in_clause]].
+      exists clause'. split...
 
       (* in a ++ b -> in a ++ c :: b *)
       rewrite List.in_app_iff in Hclause_in_clauses.
@@ -261,103 +244,96 @@ Proof with auto.
       * apply List.in_app_iff. now left.
       * apply List.in_app_iff. right. now apply List.in_cons.
     (* in assumptions ++ clauses <- in assumptions ++ new_clause :: clauses *)
-    + intro Hx_in_solver'.
+    + intro Hp_in_solver'.
       (* simplify nodup and flatmap *)
-      apply List.nodup_In in Hx_in_solver'.
-      apply List.in_flat_map in Hx_in_solver'.
-      destruct Hx_in_solver' as [clause [Hclause_in_clauses Hx_in_clause]].
+      apply List.nodup_In in Hp_in_solver'.
+      apply List.in_flat_map in Hp_in_solver'.
+      destruct Hp_in_solver' as [clause' [Hclause_in_clauses Hx_in_clause]].
 
       (* split into 3 cases, two are almost identical, so reorder to simplify *)
       rewrite List.in_app_iff in Hclause_in_clauses. cbn in Hclause_in_clauses.
       apply or_comm, or_assoc in Hclause_in_clauses.
       destruct Hclause_in_clauses as [Heq_new | Hin_existing].
-      (* x in new clause *)
-      * subst clause. unfold In in Hclause_incl.
+      (* p in new clause *)
+      * subst clause'. unfold In in Hclause_incl.
         apply Cnf.in_atms_of. apply Hclause_incl.
         cbn. assumption.
-      (* x in solver or assumptions *)
+      (* p in solver or assumptions *)
       * apply List.nodup_In. apply List.in_flat_map.
-        exists clause. split... apply List.in_app_iff.
+        exists clause'. split... apply List.in_app_iff.
         intuition.
-Qed.
+Qed. Global Hint Resolve add_no_new_atms : ct.
 
 
 (** Adds a list of literals interpreted as a conflict set.
 
-    [conflict_set] should be a subset of a previous valuation.
+    [cs] should be a subset of a previous valuation.
     [add_conflict_set] will add a clause requiring that at least one of these
     literals must be different if the next solution is also satisfiable. *)
-Definition add_conflict_set solver conflict_set := add_clause solver (List.map Lit.negate conflict_set).
+Definition add_conflict_set s cs := add_clause s (List.map Lit.Neg cs).
 
 
-(** If [val] = solution of [solver] and [val'] = solution of [solver']
-    where [solver'] contains the conflict set as one of it's clauses,
-    then [val] and [val'] cannot be equal. *)
-Lemma refined_solver_diff_val : forall solver assumptions val conflict_set solver' val',
-  solver_axioms solver ->
-  solver_axioms solver' ->
-  Solution.Sat val = solve_with_assumptions solver assumptions ->
-  List.incl conflict_set val ->
-  conflict_set <> [] ->
-  List.In (List.map Lit.negate conflict_set) (clauses_of solver') ->
-  Solution.Sat val' = solve_with_assumptions solver' assumptions ->
-  ~ Valuation.eq val val'.
-Proof with auto; try easy.
-  intros solver assumptions val conflict_set solver' val' Hsolver Hsolver' Hval Hcs_val Hcs_nonempty Hcs_in_solver' Hval'.
-  (* need to prove by contradiction *)
-  intro Heq.
-  pose proof (@solution_soundness solver' Hsolver' assumptions val' Hval') as Hsound.
-  (* -> forces solved_clauses (added conflict set). *)
-  (* but conflict set subset of val' so it cannot match the kripke valuation. *)
+(** If [V] = solution of [s] and [s'] contains the conflict set
+    as one of it's clauses, [V] cannot be one of the possible valuations. *)
+Lemma refined_solver_diff_val : forall s A V cs s',
+  Solution.Sat V = solve_with_assumptions s A ->
+  List.incl cs V ->
+  cs <> [] ->
+  List.In (List.map Lit.Neg cs) (clauses_of s') ->
+  ~ Valuation.val_in_vals V (every_sat_valuation s' A).
+Proof with auto with typeclass_instances; try easy.
+  (* TODO: this is very forward proof-y, can probably simplify *)
+  intros s A V cs s' HV Hcs_incl Hcs_ne Hcs_in_s' HV_in.
+  unfold Valuation.val_in_vals, every_sat_valuation in HV_in.
+  apply filter_InA in HV_in...
+  destruct HV_in as [HV_in HV_force].
+  unfold Cnf.cpl_forceb, solved_clauses in HV_force.
+  rewrite List.forallb_forall in HV_force.
+  specialize (HV_force (List.map Lit.Neg cs)).
+  forward HV_force. { apply List.in_app_iff. now right. }
 
-  destruct Hsound as [W [R [M [w0 [Hval_match Hforce]]]]].
-
-  (* M w0 |= clauses_of solver' *)
-  (* isolate just the conflict set *)
-  cbn in Hforce.
-  unfold Cnf.force in Hforce.
-  rewrite List.Forall_forall in Hforce.
-  specialize (Hforce (List.map Lit.negate conflict_set) Hcs_in_solver').
-
-  (* forcing ~conflict set -> ~l in conflict set *)
-  (* but +l in conflict set because conflict set subset of val. *)
-  cbn in Hforce. destruct Hforce as [l [Hl_in_cs Hforce_l]].
-  replace_hyp Hl_in_cs with (List.In (Lit.negate l) conflict_set).
-  {
-    apply List.in_map with (f:=Lit.negate) in Hl_in_cs.
-    rewrite List.map_map in Hl_in_cs.
-    setoid_rewrite Lit.negate_involution in Hl_in_cs.
-    rewrite List.map_id in Hl_in_cs.
-    assumption.
-  }
-
-  (* ~l in val' *)
-  apply Hcs_val in Hl_in_cs.
-  apply Permutation_in with (l' := val') in Hl_in_cs...
-  rename Hl_in_cs into Hnl_in_val'.
-
-  unfold Valuation.matches_kripke_valuation in Hval_match.
-
-  (* Hnl_in_val' and Hforce_l form a contradiction. *)
-  destruct l as [p|p]; cbn in Hforce_l, Hnl_in_val'.
-  - apply (Valuation.clash_free_no_negation (Lit.Pos p) val')...
-    + apply valuation_clash_free with assumptions...
-    + apply Hval_match...
-      apply (Valuation.lit_in_atm_in (Lit.Neg p))...
-  - apply Hforce_l. apply Hval_match...
-    apply (Valuation.lit_in_atm_in (Lit.Pos p))...
+  unfold CplClause.cpl_forceb in HV_force.
+  rewrite List.existsb_exists in HV_force.
+  destruct HV_force as [l [Hl_in HV_force_l]].
+  apply List.in_map_iff in Hl_in. destruct Hl_in as [p [Hpl Hp_in]]. subst.
+  cbn in HV_force_l. rewrite negb_exb_forallb in HV_force_l.
+  rewrite List.forallb_forall in HV_force_l.
+  specialize (HV_force_l p).
+  forward HV_force_l by now apply Hcs_incl.
+  rewrite Nat.eqb_refl in HV_force_l.
+  now apply Bool.no_fixpoint_negb in HV_force_l.
 Qed.
 
 
 (** If two solvers have the same set of atoms, they must have the same set
     of possible valuations. *)
 Lemma same_atms_valuation_set :
-  forall (solvera solverb : t) (assumptions : Assumptions.t),
-  solver_axioms solvera -> solver_axioms solverb ->
-  Permutation (atms_of solvera assumptions) (atms_of solverb assumptions) ->
-  PermutationA Valuation.eq (every_valuation solvera assumptions) (every_valuation solverb assumptions).
+  forall (s s' : t) (A : Assumptions.t),
+  Permutation (atms_of s A) (atms_of s' A) ->
+  PermutationA Valuation.eq (every_valuation s A) (every_valuation s' A).
 Proof.
-  intros solvera solverb assumptions Hsolvera Hsolverb Hatms_perm.
+  intros s s' A Hatms_perm.
   unfold every_valuation. now apply Valuation.every_valuation_perm.
 Qed.
 
+
+(** Adding an extra clause only restricts the possible sat valuations. *)
+Lemma refined_solver_sat_vals_subset : forall s A clause s',
+  clause_atms_incl clause s A ->
+  s' = add_clause s clause ->
+  inclA Valuation.eq (every_sat_valuation s' A) (every_sat_valuation s A).
+Proof with auto using Valuation.eq_equivalence.
+  intros s A clause s' Hclause Hs' V HV_in_s'.
+  unfold every_sat_valuation in *.
+
+  rewrite filter_InA in *; try apply Cnf.proper_cpl_forceb.
+  split.
+  - apply PermutationA_inA with (l := (every_valuation s' A))...
+    + apply same_atms_valuation_set.
+      symmetry. subst s'. now apply add_no_new_atms.
+    + exact (proj1 (HV_in_s')).
+  - destruct HV_in_s' as [HV_in_s' HV_force_s'].
+    unfold Cnf.cpl_forceb in *. rewrite List.forallb_forall in *.
+    intros cl Hcl. apply HV_force_s'.
+    subst s'. now apply add_clause_incl_A.
+Qed.

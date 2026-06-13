@@ -1,9 +1,8 @@
 open List
-open Lit
 
-type t = Lit.t list
+type t = int list
 
-(** val forces_lit : t -> Lit.t -> bool **)
+(** val forces_atm : t -> int -> bool **)
 
-let forces_lit val0 l =
-  existsb (eqb l) val0
+let forces_atm v p =
+  existsb ((=) p) v

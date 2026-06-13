@@ -13,10 +13,11 @@ BUILD_FILES := $(foreach DIR,$(DIRS),$(addprefix $(DIR)/,$(BUILD_PATTERNS)))
 
 _: makefile.rocq
 
+# Create Rocq makefile and compile.
 makefile.rocq:
 	rocq makefile -f _CoqProject -docroot docs -o $@
 
-
+# Generate Rocq documentation.
 doc: makefile.rocq
 	rm -rf html docs/*
 	COQDOCEXTRAFLAGS='--external $(PUBLIC_URL)'
@@ -26,6 +27,7 @@ doc: makefile.rocq
 
 -include makefile.rocq
 
+# Remove Rocq generated files and OCaml extracted files.
 clean::
 	rm makefile.rocq makefile.rocq.conf
 	rm -f $(BUILD_FILES)

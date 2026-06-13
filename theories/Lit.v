@@ -1,10 +1,10 @@
-From Stdlib Require Import Setoid PeanoNat.
-From CegarTableaux Require Kripke.
+From CegarTableaux Require Kripke Valuation.
+From CegarTableaux Require Import ImportStd ListExt Utils.
 
 (** A positive or negative literal. *)
 Inductive t : Type :=
-  | Pos (x : nat)
-  | Neg (x : nat).
+  | Pos (p : nat)
+  | Neg (p : nat).
 
 
 Definition negate (l : t) : t :=
@@ -21,10 +21,17 @@ Definition atm (l : t) : nat :=
   end.
 
 
+Definition get_pos (l : t) : option nat :=
+  match l with
+  | Pos n => Some n
+  | Neg n => None
+  end.
+
+
 Definition eqb (a b : t) : bool :=
   match a, b with
-  | Pos x, Pos y => x =? y
-  | Neg x, Neg y => x =? y
+  | Pos p, Pos q => p =? q
+  | Neg p, Neg q => p =? q
   | _, _ => false
   end.
 
@@ -38,7 +45,7 @@ Proof.
   - split; discriminate.
   - split; discriminate.
   - rewrite Nat.eqb_eq. split; congruence.
-Qed.
+Qed. Global Hint Rewrite eqb_eq : ct.
 
 
 Lemma eq_dec (a b : t) : {a = b} + {a <> b}.
@@ -50,13 +57,13 @@ Qed.
 Lemma negate_eq_atm (l : t) : atm (negate l) = atm l.
 Proof.
   destruct l; reflexivity.
-Qed.
+Qed. Global Hint Rewrite negate_eq_atm : ct.
 
 
 Lemma negate_involution : forall l, Lit.negate (Lit.negate l) = l.
 Proof.
   intro l. destruct l as [x|x]; auto.
-Qed.
+Qed. Global Hint Rewrite negate_involution : ct.
 
 
 (** Whether the atom within the literal is the same. *)
@@ -66,18 +73,18 @@ Definition eq_atm (a b : t) : Prop :=
 Arguments eq_atm a b /.
 
 
-Lemma eq_atm_refl : Reflexive eq_atm.
+Global Instance eq_atm_refl : Reflexive eq_atm.
 Proof.
   intro atm. reflexivity.
 Qed.
 
-Lemma eq_atm_sym : Symmetric eq_atm.
+Global Instance eq_atm_sym : Symmetric eq_atm.
 Proof.
   intros p q Heq.
   cbn in *. now symmetry.
 Qed.
 
-Lemma eq_atm_trans : Transitive eq_atm.
+Global Instance eq_atm_trans : Transitive eq_atm.
 Proof.
   intros p q r Hpq Hqr.
   cbn in *. now rewrite Hpq.
@@ -94,19 +101,36 @@ Global Instance eq_atm_equivalence : Equivalence eq_atm := {
 
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (l : t) : Prop :=
   match l with
-  | Pos n =>   Kripke.valuation M w0 n
-  | Neg n => ~ Kripke.valuation M w0 n
+  | Pos p =>   Kripke.valuation M w0 p
+  | Neg p => ~ Kripke.valuation M w0 p
   end.
 
 
-Definition In (x : nat) (phi : t) : Prop :=
-  x = atm phi.
+Definition cpl_forceb (val : Valuation.t) (l : t) : bool :=
+  match l with
+  | Pos p => List.existsb (Nat.eqb p) val
+  | Neg p => negb (List.existsb (Nat.eqb p) val)
+  end.
 
-Arguments In x phi /.
+
+Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V l,
+  Kripke.valuation M w0 (Lit.atm l) <-> Valuation.forces_atm V (Lit.atm l) = true ->
+  force M w0 l <-> cpl_forceb V l = true.
+Proof.
+  intros * HV. unfold Valuation.forces_atm in HV. destruct l as [p|p].
+  - now cbn in *.
+  - cbn in *. rewrite <- Bool.eq_true_not_negb_iff. tauto.
+Qed.
+
+
+Definition atm_in (p : nat) (phi : t) : Prop :=
+  p = atm phi.
+
+Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w : W) (x : nat), In x phi -> (Kripke.valuation M w x <-> Kripke.valuation M' w x).
+  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
@@ -116,7 +140,29 @@ Proof with simpl; easy.
   intros W R M M' phi w0 Hagree.
   unfold agree in Hagree.
 
-  destruct phi as [x | x].
+  destruct phi as [p | p].
   - simpl. rewrite Hagree...
   - simpl. rewrite Hagree...
+Qed.
+
+
+Global Instance proper_cpl_forceb (l : t) :
+  Proper (Valuation.eq ==> eq) (fun val => cpl_forceb val l).
+Proof.
+  intros v1 v2 Heq.
+  destruct l as [p|p].
+  - apply perm_existsb. assumption.
+  - unfold cpl_forceb. repeat rewrite negb_exb_forallb.
+    apply perm_forallb. assumption.
+Qed.
+
+
+(* Requires classical logic. *)
+Lemma not_force_negate : forall {W} {R} (M : @Kripke.t W R) (w0 : W) l,
+  ~ Lit.force M w0 l <-> Lit.force M w0 (Lit.negate l).
+Proof.
+  intros *. split.
+  - intros Hnforce. destruct l; auto.
+    cbn in *. tauto.
+  - intros Hforcen Hforce. destruct l; auto.
 Qed.

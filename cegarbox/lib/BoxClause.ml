@@ -1,3 +1,3 @@
 open Lit
 
-type t = Lit.t * Lit.t
+type t = int * Lit.t

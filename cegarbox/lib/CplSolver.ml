@@ -1,4 +1,5 @@
 open Assumptions
+open Basics
 open Cnf
 open CplClause
 open List
@@ -23,9 +24,9 @@ let solve_with_assumptions = Bindings.solve_with_assumptions
 (** val make_with_clauses : Cnf.t -> t **)
 
 let make_with_clauses clauses =
-  fold_left add_clause clauses (make ())
+  fold_right (flip add_clause) (make ()) clauses
 
-(** val add_conflict_set : t -> Lit.t list -> t **)
+(** val add_conflict_set : t -> int list -> t **)
 
-let add_conflict_set solver conflict_set =
-  add_clause solver (map negate conflict_set)
+let add_conflict_set s cs =
+  add_clause s (map (fun x -> Neg x) cs)

@@ -29,13 +29,11 @@ let rec from_n_nnf n phi sur =
   | Box a ->
     let sur0 = Stdlib.Int.succ sur in
     let (a_mcnf, sur1) = from_n_nnf sur a sur0 in
-    (((Mclause.Box ((Pos n), (Pos sur))) :: (map (fun x -> Ctx x) a_mcnf)),
-    sur1)
+    (((Mclause.Box (n, (Pos sur))) :: (map (fun x -> Ctx x) a_mcnf)), sur1)
   | Dia a ->
     let sur0 = Stdlib.Int.succ sur in
     let (a_mcnf, sur1) = from_n_nnf sur a sur0 in
-    (((Mclause.Dia ((Pos n), (Pos sur))) :: (map (fun x -> Ctx x) a_mcnf)),
-    sur1)
+    (((Mclause.Dia (n, (Pos sur))) :: (map (fun x -> Ctx x) a_mcnf)), sur1)
 
 (** val from_nnf_with_sur : int -> Nnf.t -> int -> Mcnf.t **)
 

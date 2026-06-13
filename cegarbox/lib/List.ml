@@ -1,10 +1,9 @@
 
-(** val fold_left : ('a1 -> 'a2 -> 'a1) -> 'a2 list -> 'a1 -> 'a1 **)
+(** val fold_right : ('a2 -> 'a1 -> 'a1) -> 'a1 -> 'a2 list -> 'a1 **)
 
-let rec fold_left f l a0 =
-  match l with
-  | [] -> a0
-  | b :: l0 -> fold_left f l0 (f a0 b)
+let rec fold_right f a0 = function
+| [] -> a0
+| b :: l0 -> f b (fold_right f a0 l0)
 
 (** val existsb : ('a1 -> bool) -> 'a1 list -> bool **)
 

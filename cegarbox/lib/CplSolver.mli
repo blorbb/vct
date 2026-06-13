@@ -1,4 +1,5 @@
 open Assumptions
+open Basics
 open Cnf
 open CplClause
 open List
@@ -16,4 +17,4 @@ val solve_with_assumptions : t -> Assumptions.t -> Solution.t
 
 val make_with_clauses : Cnf.t -> t
 
-val add_conflict_set : t -> Lit.t list -> t
+val add_conflict_set : t -> int list -> t

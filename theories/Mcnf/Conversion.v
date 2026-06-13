@@ -2,13 +2,9 @@
 
     We use the term 'surrogate' to mean an unused atom value. *)
 
-From Stdlib Require List.
-
 From CegarTableaux Require Lit Nnf Kripke Mclause Mcnf.Mcnf.
-From CegarTableaux Require Import Utils.
+From CegarTableaux Require Import ImportStd Utils.
 
-Import List.ListNotations.
-Open Scope list_scope.
 
 (** Converts [n -> phi] to MCNF, with a given surrogate value.
 
@@ -51,7 +47,7 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (sur : nat) : (Mcnf.t * nat) :=
     let (nA, sur) := (sur, S sur) in
     let (A_mcnf, sur) := from_n_nnf nA A sur in
     (
-      Mclause.Box ((Lit.Pos n), (Lit.Pos nA)) ::
+      Mclause.Box (n, (Lit.Pos nA)) ::
       (* wrap in new context *)
       List.map Mclause.Ctx A_mcnf,
       sur
@@ -61,7 +57,7 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (sur : nat) : (Mcnf.t * nat) :=
     let (nA, sur) := (sur, S sur) in
     let (A_mcnf, sur) := from_n_nnf nA A sur in
     (
-      Mclause.Dia ((Lit.Pos n), (Lit.Pos nA)) ::
+      Mclause.Dia (n, (Lit.Pos nA)) ::
       (* wrap the clauses in A new context *)
       List.map Mclause.Ctx A_mcnf,
       sur

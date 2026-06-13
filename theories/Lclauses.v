@@ -1,6 +1,6 @@
 From Stdlib Require List.
 From Stdlib Require Import Lia.
-From CegarTableaux Require Lit Kripke CplClause BoxClause DiaClause.
+From CegarTableaux Require Lit Kripke CplClause BoxClause DiaClause Cnf.
 From CegarTableaux Require Import Utils.
 Import List.ListNotations.
 Open Scope list_scope.
@@ -16,12 +16,12 @@ Definition empty := make [] [] [].
 
 
 (** Merge two sets of local clauses into one. *)
-Definition merge (a b : t) : t :=
-  make (cpls a ++ cpls b) (boxes a ++ boxes b) (dias a ++ dias b).
+Definition merge (A B : t) : t :=
+  make (cpls A ++ cpls B) (boxes A ++ boxes B) (dias A ++ dias B).
 
 
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
-  List.Forall (CplClause.force M w0) (cpls phi) /\
+  Cnf.force M w0 (cpls phi) /\
   List.Forall (BoxClause.force M w0) (boxes phi) /\
   List.Forall (DiaClause.force M w0) (dias phi).
 
@@ -40,16 +40,16 @@ Proof.
 Qed.
 
 
-Definition In (x : nat) (phi : t) : Prop :=
-  List.Exists (CplClause.In x) phi.(cpls) \/
-  List.Exists (BoxClause.In x) phi.(boxes) \/
-  List.Exists (DiaClause.In x) phi.(dias).
+Definition atm_in (p : nat) (phi : t) : Prop :=
+  List.Exists (CplClause.atm_in p) (cpls phi) \/
+  List.Exists (BoxClause.atm_in p) (boxes phi) \/
+  List.Exists (DiaClause.atm_in p) (dias phi).
 
-Arguments In x phi /.
+Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w : W) (x : nat), In x phi -> (Kripke.valuation M w x <-> Kripke.valuation M' w x).
+  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :

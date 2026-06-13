@@ -1,8 +1,6 @@
-From Stdlib Require List.
 From CegarTableaux Require Lclauses Mcnf Cnf.
-From CegarTableaux Require Import Utils.
-Import List.ListNotations.
-Open Scope list_scope.
+From CegarTableaux Require Import ImportStd Utils.
+Set Warnings "-intuition-auto-with-star".
 
 (** TODO: change MCNF procedures to use this type directly instead of MCNF. *)
 
@@ -19,7 +17,7 @@ Fixpoint force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   match phi with
   | [] => True
   | head :: tail => Lclauses.force M w0 head /\
-    forall nbr, R w0 nbr -> force M nbr tail
+    forall w1, R w0 w1 -> force M w1 tail
   end.
 
 
@@ -31,11 +29,11 @@ Definition unsatisfiable (phi : t) : Prop :=
   ~ satisfiable phi.
 
 
-Definition In (x : nat) (phi : t) : Prop := List.Exists (Lclauses.In x) phi.
+Definition atm_in (p : nat) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w : W) (x : nat), In x phi -> (Kripke.valuation M w x <-> Kripke.valuation M' w x).
+  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Section Conversion.
@@ -69,7 +67,7 @@ End Conversion.
 
 (** Logical equivalence of the [from_mcnf] conversion. *)
 Section Correctness.
-  Lemma mclause_equivalent : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Mclause.t),
+  Lemma equiv_mclause : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Mclause.t),
     Mclause.force M w0 phi <-> force M w0 (from_mclause phi).
   Proof with auto; try tauto.
     intros W R M w0 phi. revert w0.
@@ -102,7 +100,7 @@ Section Correctness.
     - split.
       + intro Hforce_mclause.
         cbn. split...
-        intros nbr Hrel_nbr.
+        intros w1 HR_w1.
 
         apply IHmclause.
         cbn in Hforce_mclause.
@@ -111,7 +109,7 @@ Section Correctness.
 
       + intro Hforce_chain.
         cbn.
-        intros nbr Hrel_nbr.
+        intros w1 HR_w1.
 
         apply IHmclause.
         cbn in Hforce_chain.
@@ -129,20 +127,18 @@ Section Correctness.
     (* induction on A, case-by-case on arbitrary B *)
     induction A as [|ha ta IHta]; intros w0 B; destruct B as [| hb tb].
     (* trivial empty cases *)
-    - cbn. intuition.
-    - cbn. intuition.
-    - cbn. intuition.
+    - cbn. tauto.
+    - cbn. tauto.
+    - cbn. tauto.
     (* merge (ha::ta) (hb::tb) <-> (ha::ta) and (hb::tb) *)
     - cbn [zip_merge force].
       rewrite Lclauses.force_merge_and.
       setoid_rewrite IHta.
       intuition.
-      + now apply H1.
-      + now apply H1.
   Qed.
 
 
-  Theorem mcnf_equivalent : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Mcnf.t),
+  Theorem equiv_mcnf : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Mcnf.t),
     Mcnf.force M w0 phi <-> force M w0 (from_mcnf phi).
   Proof with auto; try tauto.
     intros W R M w0 phi. revert w0.
@@ -150,7 +146,18 @@ Section Correctness.
     induction phi as [| head tail IHtail].
     - cbn. tauto.
     - intro w0. cbn.
-      rewrite force_zip_and, mclause_equivalent, IHtail.
+      rewrite force_zip_and, equiv_mclause, IHtail.
       tauto.
+  Qed.
+
+
+  Corollary equisat_mcnf : forall phi,
+    Mcnf.satisfiable phi <-> satisfiable (from_mcnf phi).
+  Proof.
+    intro phi. split.
+    - intros [W [M [R [w0 Hforce]]]]. exists W, M, R, w0.
+      now apply equiv_mcnf.
+    - intros [W [M [R [w0 Hforce]]]]. exists W, M, R, w0.
+      now apply equiv_mcnf.
   Qed.
 End Correctness.
