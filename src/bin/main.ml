@@ -1,21 +1,21 @@
-open Cegarbox
 open Stdlib
 open Printf
 
-let rec tree_size (Tree.Coq_make (_, children)) =
+let rec tree_size (Vct.Tree.Coq_make (_, children)) =
   1 + (children |> List.map tree_size |> List.fold_left ( + ) 0)
 ;;
 
 let rec deriv_size = function
-  | Derivation.Id _ -> 1
-  | Derivation.JumpRestart (_, _, dj, dr) -> 1 + deriv_size dj + deriv_size dr
+  | Vct.Derivation.Id _ -> 1
+  | Vct.Derivation.JumpRestart (_, _, dj, dr) -> 1 + deriv_size dj + deriv_size dr
 ;;
 
 let check fml =
-  let solution = Solver.solve_fml fml in
+  let solution = Vct.Solver.solve_fml fml in
   match solution with
-  | Solver.Solution.Sat t -> printf "SAT: tree size %i\n" (tree_size t)
-  | Solver.Solution.Unsat (_, d) -> printf "UNSAT: derivation size %i\n" (deriv_size d)
+  | Vct.Solver.Solution.Sat t -> printf "SAT: tree size %i\n" (tree_size t)
+  | Vct.Solver.Solution.Unsat (_, d) ->
+    printf "UNSAT: derivation size %i\n" (deriv_size d)
 ;;
 
 let check_file filename =

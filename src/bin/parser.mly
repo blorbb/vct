@@ -1,5 +1,5 @@
 %{
-  open Cegarbox
+  open Vct
 %}
 
 %token SEMICOLON

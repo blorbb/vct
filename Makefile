@@ -5,7 +5,7 @@ COQDOCFLAGS:= \
   --index indexpage --no-lib-name --parse-comments \
   --with-header $(EXTRA_DIR)/header.html --with-footer $(EXTRA_DIR)/footer.html
 export COQDOCFLAGS
-PUBLIC_URL="https://blorbb.github.io/cegartab2025"
+PUBLIC_URL := "https://blorbb.github.io/vct"
 SUBDIR_ROOTS := theories
 DIRS := . $(shell find $(SUBDIR_ROOTS) -type d)
 BUILD_PATTERNS := *.vok *.vos *.glob *.vo .*.aux
@@ -31,6 +31,6 @@ doc: makefile.rocq
 clean::
 	rm makefile.rocq makefile.rocq.conf
 	rm -f $(BUILD_FILES)
-	find cegarbox/lib -maxdepth 1 -type f ! -name 'dune' ! -name 'bindings.ml' ! -name 'bindings.mli' -delete
+	find src/lib -maxdepth 1 -type f ! -name 'dune' ! -name 'bindings.ml' ! -name 'bindings.mli' -delete
 
 .PHONY: _

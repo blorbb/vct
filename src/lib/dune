@@ -1,5 +1,5 @@
 (library
- (name cegarbox)
+ (name vct)
  (libraries minisat))
 
 ; disable unused open warning

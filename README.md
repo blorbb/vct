@@ -29,12 +29,19 @@ opam install dune minisat menhir
 To run,
 
 ```sh
-cd cegarbox
-dune exec --release cegarbox -- file1 [file2 [...]]
+cd src
+dune exec --release vct -- file1 [file2 [...]]
 ```
 
 Where each of the files is a formula in InToHyLo format.
 We recommend using [LWB-benchmark-generator](https://github.com/cormackikkert/LWB-benchmark-generator) to make some example inputs.
+
+Alternatively, the binary can be built with the provided Dockerfile.
+
+```sh
+docker buildx build -t vct .
+docker run -t vct ./vct [file]
+```
 
 ### Compiling
 

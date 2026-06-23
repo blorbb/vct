@@ -1,6 +1,6 @@
-(lang dune 3.20)
+(lang dune 3.17)
 
-(name cegarbox)
+(name vct)
 
 (generate_opam_files true)
 
@@ -18,7 +18,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name cegarbox)
+ (name vct)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends ocaml)

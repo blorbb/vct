@@ -2,7 +2,7 @@ From Stdlib Require Extraction ExtrOcamlBasic ExtrOcamlNatInt.
 From CegarTableaux Require Mcnf Tree Solver CplSolver.
 
 Extraction Language OCaml.
-Set Extraction Output Directory "cegarbox/lib".
+Set Extraction Output Directory "src/lib".
 
 (** The axioms depend on a module named [Bindings] being accessible with
     the correct implementation. *)

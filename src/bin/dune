@@ -1,7 +1,7 @@
 (executable
- (public_name cegarbox)
+ (public_name vct)
  (name main)
- (libraries cegarbox))
+ (libraries vct))
 
 (menhir
  (modules parser))
