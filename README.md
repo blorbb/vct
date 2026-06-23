@@ -63,4 +63,4 @@ Thanks to [Ian Shillito](https://github.com/ianshil) for helpful instructions on
 
 Most styling and custom features from [CoqdocJS](https://github.com/rocq-community/coqdocjs).
 
-The OCaml lexer and parser are from https://github.com/jogiet/MOLOSS.
+The OCaml lexer and parser are adapted from https://github.com/jogiet/MOLOSS.
