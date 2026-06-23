@@ -73,7 +73,7 @@ let solve_with_assumptions s assumptions : Solution.t =
     in
     Solution.Sat
       (union_lits s.atoms assumptions
-       |> IntSet.to_list
+       |> IntSet.elements
        (* p here is 0-indexed *)
        |> List.filter (fun p -> rocq_atm_value s.solver p |> is_pos))
   with
