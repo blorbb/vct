@@ -1,27 +1,15 @@
 open Stdlib
 open Printf
 
-let rec tree_size (Vct.Tree.Coq_make (_, children)) =
-  1 + (children |> List.map tree_size |> List.fold_left ( + ) 0)
-;;
-
-let rec deriv_size = function
-  | Vct.Derivation.Id _ -> 1
-  | Vct.Derivation.JumpRestart (_, _, dj, dr) -> 1 + deriv_size dj + deriv_size dr
-;;
-
 let check fml =
-  let solution = Vct.Solver.solve_fml fml in
-  match solution with
-  | Vct.Solver.Solution.Sat t -> printf "SAT: tree size %i\n" (tree_size t)
-  | Vct.Solver.Solution.Unsat (_, d) ->
-    printf "UNSAT: derivation size %i\n" (deriv_size d)
+  let result = Vct.Solver.solve_fml fml in
+  match result with
+  | Vct.Search.Solution.Sat _ -> print_endline "SAT"
+  | Vct.Search.Solution.Unsat (_, _) -> print_endline "UNSAT"
 ;;
 
 let check_file filename =
-  printf "%s: " filename;
-  flush stdout;
-  let file_text = In_channel.open_text filename in
+  let file_text = open_in filename in
   let lexbuf = Lexing.from_channel file_text in
   let fml =
     try Parser.file Lexer.next_token lexbuf with
@@ -32,4 +20,10 @@ let check_file filename =
   check fml
 ;;
 
-let () = Array.sub Sys.argv 1 ((Sys.argv |> Array.length) - 1) |> Array.iter check_file
+let () =
+  match Array.length Sys.argv with
+  | 2 -> check_file Sys.argv.(1)
+  | _ ->
+    Printf.eprintf "Usage: %s <input_file>\n" Sys.argv.(0);
+    exit 1
+;;
