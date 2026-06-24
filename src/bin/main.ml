@@ -1,5 +1,4 @@
 open Stdlib
-open Printf
 
 let check fml =
   let result = Vct.Solver.solve_fml fml in

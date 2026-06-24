@@ -39,5 +39,5 @@ formula:
 | f1 = formula; Dij; f2 = formula { Fml.Or (f1, f2) }
 | f1 = formula; Impl; f2 = formula { Fml.Impl (f1, f2) }
 | f1 = formula; Equiv; f2 = formula { Fml.And (Fml.Impl (f1, f2), Fml.Impl (f2, f1)) }
-| b = Boxe; f = formula { Fml.Box f }
-| d = Diamond; f = formula { Fml.Dia f }
+| _b = Boxe; f = formula { Fml.Box f }
+| _d = Diamond; f = formula { Fml.Dia f }
