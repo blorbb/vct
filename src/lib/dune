@@ -2,6 +2,11 @@
  (name vct)
  (libraries minisat))
 
+(menhir
+ (modules parser))
+
+(ocamllex lexer)
+
 ; disable unused open warning
 
 (env

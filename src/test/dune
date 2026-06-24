@@ -1,3 +1,5 @@
 (test
  (name test_vct)
- (libraries vct))
+ (libraries vct str)
+ (preprocess
+  (pps ppx_deriving.show)))

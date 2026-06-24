@@ -1,6 +1,3 @@
-%{
-  open Vct
-%}
 
 %token LPAR RPAR
 %token <int> Diamond Boxe

@@ -1,5 +1,3 @@
-open Stdlib
-
 let check fml =
   let result = Vct.Solver.solve_fml fml in
   match result with
@@ -10,12 +8,7 @@ let check fml =
 let check_file filename =
   let file_text = open_in filename in
   let lexbuf = Lexing.from_channel file_text in
-  let fml =
-    try Parser.file Lexer.next_token lexbuf with
-    | Lexer.SyntaxError s ->
-      print_string s;
-      exit 1
-  in
+  let fml = Vct.Parser.file Vct.Lexer.next_token lexbuf in
   check fml
 ;;
 

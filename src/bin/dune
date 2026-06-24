@@ -2,8 +2,3 @@
  (public_name vct)
  (name main)
  (libraries vct))
-
-(menhir
- (modules parser))
-
-(ocamllex lexer)
