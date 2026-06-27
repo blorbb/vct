@@ -15,7 +15,14 @@ module Lit = struct
   type t = Vct.Lit.t =
     | Pos of int
     | Neg of int
-  [@@deriving show { with_path = false }]
+
+  let pp fmt t =
+    match t with
+    | Pos p -> Format.fprintf fmt "+%i" p
+    | Neg p -> Format.fprintf fmt "-%i" p
+  ;;
+
+  (* let show t = Format.asprintf "%a" pp t *)
 end
 
 module Deriv = struct
