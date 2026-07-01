@@ -19,3 +19,5 @@ type __ = Obj.t
 module Spec = Spec
 
 module TailRec = TailRec
+
+module NoModel = NoModel

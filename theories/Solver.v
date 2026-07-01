@@ -1,18 +1,11 @@
 From CegarTableaux.Solver Require Search Derivation Soundness Completeness.
+From CegarTableaux.Solver Require Import MchainExt.
 From CegarTableaux Require Import ImportStd.
 
 Include Search.
 Include Soundness.
 Include Completeness.
 
-
-Theorem solve_mchain_sound_complete : forall mc0,
-  Mchain.satisfiable mc0 <-> Spec.Solution.is_sat (Spec.solve_mchain mc0) = true.
-Proof with try easy; auto.
-  intros mc0. split.
-  - apply solve_mchain_sound_contrapos.
-  - apply solve_mchain_complete.
-Qed.
 
 Theorem solve_fml_sound_complete : forall phi,
   Fml.satisfiable phi <-> Spec.Solution.is_sat (Spec.solve_fml phi) = true.
@@ -28,6 +21,12 @@ Proof.
   unfold TailRec.solve_fml, TailRec.solve_mchain.
   setoid_rewrite <- TailRec.tableau_spec.
   apply solve_fml_sound_complete.
+Qed.
+
+Corollary nomodel_solve_fml_sound_complete : forall phi,
+  Fml.satisfiable phi <-> NoModel.Solution.is_sat (NoModel.solve_fml phi) = true.
+Proof.
+  setoid_rewrite NoModel.is_sat_spec. exact solve_fml_sound_complete.
 Qed.
 
 
