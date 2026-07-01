@@ -1,6 +1,5 @@
 From CegarTableaux Require Lclauses Mcnf Cnf.
 From CegarTableaux Require Import ImportStd Utils.
-Set Warnings "-intuition-auto-with-star".
 
 (** TODO: change MCNF procedures to use this type directly instead of MCNF. *)
 
@@ -118,7 +117,6 @@ Section Correctness.
         assumption.
   Qed.
 
-
   Lemma force_zip_and : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (A B : t),
     force M w0 (zip_merge A B) <-> force M w0 A /\ force M w0 B.
   Proof.
@@ -134,7 +132,7 @@ Section Correctness.
     - cbn [zip_merge force].
       rewrite Lclauses.force_merge_and.
       setoid_rewrite IHta.
-      intuition.
+      intuition (auto with solve_subterm).
   Qed.
 
 

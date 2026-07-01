@@ -11,5 +11,6 @@ From Equations Require Export Equations.
 Require Export Equations.Prop.Logic.
 
 Create HintDb ct.
+Create Rewrite HintDb ct.
 
 From CegarTableaux Require Export Utils ListExt.

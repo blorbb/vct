@@ -35,9 +35,9 @@ Fixpoint get_core (t : t) :=
 
 
 Inductive conds : Mchain.t -> Assumptions.t -> t -> Prop :=
-| IdCond : forall mc0 A core, CplSolver.Solution.Unsat core = cpl_solve mc0 A -> conds mc0 A (Id core)
+| IdCond : forall mc0 A core, CplSolution.Unsat core = cpl_solve mc0 A -> conds mc0 A (Id core)
 | JumpRestartCond : forall mc0 A V failed_dia jump_deriv rs_deriv,
-  CplSolver.Solution.Sat V = cpl_solve mc0 A ->
+  CplSolution.Sat V = cpl_solve mc0 A ->
   List.In failed_dia (first_dias mc0) ->
   Valuation.forces_atm V (fst failed_dia) = true ->
   (* Jump tableau also satisfies conds. *)

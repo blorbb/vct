@@ -1,7 +1,7 @@
 (** Helpers to manipulate an [Mchain.t] for the CEGARBox implementation. *)
 
 From CegarTableaux Require CplSolver Lit Mchain Assumptions Valuation Tree.
-From CegarTableaux Require Import ImportStd Utils ListExt.
+From CegarTableaux Require Import ImportStd.
 
 
 
@@ -71,7 +71,7 @@ Definition conflict_set_of mc0 V dia_antecedent core :=
 
 (** The conflict set is a subset of the valuation. *)
 Lemma conflict_set_incl_val : forall mc0 V dia_antecedent core s A,
-  CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s A ->
+  CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
   Valuation.forces_atm V dia_antecedent = true ->
   let conflict_set := conflict_set_of mc0 V dia_antecedent core in
   List.incl conflict_set V.
@@ -100,7 +100,7 @@ Qed.
 
 (** Adding a subset of a CPL solver valuation adds no new atoms to the solver state. *)
 Lemma val_subset_no_new_atms : forall s A V subset,
-  CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s A ->
+  CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
   List.incl subset V ->
   CplSolver.clause_atms_incl (List.map Lit.Neg subset) s A.
 Proof with auto.

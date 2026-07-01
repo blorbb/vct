@@ -76,7 +76,7 @@ Local Ltac add_ineq_from_n_impl :=
         clearbody q
   end.
 
-Local Ltac add_ineqs := repeat (add_ineq_from_sym_in_nnf; [] || add_ineq_from_n_impl; []).
+Local Ltac add_ineqs := repeat ((add_ineq_from_sym_in_nnf; []) || (add_ineq_from_n_impl; [])).
 
 Local Ltac autolia :=
   add_ineqs;

@@ -57,11 +57,11 @@ let parse_str str =
 
 let print_solution str =
   Printf.printf "%s : " str;
-  (match parse_str str |> Vct.Solver.solve_fml with
-   | Vct.Solver.Solution.Sat t ->
+  (match parse_str str |> Vct.Solver.TailRec.solve_fml with
+   | Sat t ->
      print_endline "SAT";
      print_endline (t |> RTree.of_vct_tree |> RTree.show)
-   | Vct.Solver.Solution.Unsat (_a, d) ->
+   | Unsat (_a, d) ->
      print_endline "UNSAT";
      print_endline (d |> Deriv.of_vct_deriv |> Deriv.show));
   print_newline ()

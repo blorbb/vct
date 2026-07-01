@@ -45,7 +45,7 @@ Qed.
       CplSolver.t : Type
       CplSolver.make : unit -> CplSolver.t
       CplSolver.add_clause : CplSolver.t -> CplClause.t -> CplSolver.t
-      CplSolver.solve_with_assumptions : CplSolver.t -> Assumptions.t -> CplSolver.Solution.t
+      CplSolver.solve_with_assumptions : CplSolver.t -> Assumptions.t -> CplSolution.t
       CplSolver.clauses_of : CplSolver.t -> Cnf.t
 
       CplSolver.make_is_empty : CplSolver.clauses_of (CplSolver.make tt) = nil
@@ -54,22 +54,22 @@ Qed.
         CplSolver.clauses_of (CplSolver.add_clause s clause) = clause :: CplSolver.clauses_of s
       CplSolver.valuation_in_clauses :
         forall (s : CplSolver.t) (A : Assumptions.t) (V : Valuation.t),
-        CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s A ->
+        CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
         forall p : nat, List.In p V -> CplSolver.atm_in p s A
       CplSolver.valuation_clash_free :
         forall (s : CplSolver.t) (A : Assumptions.t) (V : Valuation.t),
-        CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s A ->
+        CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
         Valuation.clash_free V
       CplSolver.solution_soundness :
         forall (s : CplSolver.t) (A core : Assumptions.t),
-        CplSolver.Solution.Unsat core = CplSolver.solve_with_assumptions s A ->
+        CplSolution.Unsat core = CplSolver.solve_with_assumptions s A ->
         Cnf.unsatisfiable (CplSolver.solved_clauses s core)
       CplSolver.solution_completeness :
         forall (s : CplSolver.t) (A : Assumptions.t) (V : Valuation.t),
-        CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s A ->
+        CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
         Cnf.cpl_forceb V (CplSolver.solved_clauses s A) = true
       CplSolver.core_subset_assumptions :
         forall (s : CplSolver.t) (A core : Assumptions.t),
-        CplSolver.Solution.Unsat core = CplSolver.solve_with_assumptions s A ->
+        CplSolution.Unsat core = CplSolver.solve_with_assumptions s A ->
         List.incl core A
     ]] *)

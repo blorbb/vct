@@ -8,7 +8,7 @@ Rocq proofs in `theories/`.
 OCaml is extracted to `cegarbox/lib`.
 The unverified code for binding to MiniSat can be found in `cegarbox/lib/bindings.ml`.
 
-Requires Rocq 9.1.1 and OCaml 5.4.1.
+Requires Rocq 9.2.0 and OCaml 5.4.1.
 
 Install Rocq and OCaml in any way, or through an `opam` switch:
 
@@ -17,7 +17,7 @@ opam switch create rocq 5.4.1
 opam switch rocq
 eval $(opam env)
 opam repo add rocq-released https://rocq-prover.org/opam/released
-opam install rocq-prover rocq-core=9.1.1
+opam install rocq-prover rocq-core=9.2.0
 ```
 
 Running the OCaml code requires `dune`, `minisat` and `menhir`.

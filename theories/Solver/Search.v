@@ -12,7 +12,7 @@
 
 
 From CegarTableaux Require CplSolver Lit Mchain Assumptions Valuation Tree.
-From CegarTableaux Require Import ImportStd Utils ListExt.
+From CegarTableaux Require Import ImportStd.
 From CegarTableaux.Solver Require Import MchainExt.
 From CegarTableaux.Solver Require Derivation.
 
@@ -48,7 +48,7 @@ Qed.
 
 
 Lemma decreasing_sat_vals : forall s0 A mc0 V c jump_core,
-  CplSolver.solve_with_assumptions s0 A = CplSolver.Solution.Sat V ->
+  CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
   Valuation.forces_atm V c = true ->
   let cs := conflict_set_of mc0 V c jump_core in
   let s0' := CplSolver.add_conflict_set s0 cs in
@@ -184,8 +184,8 @@ Module Spec.
   :=
   tableau A s0 mc0
   with inspect (CplSolver.solve_with_assumptions s0 A) := {
-    | CplSolver.Solution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Id A')
-    | CplSolver.Solution.Sat V eqn:Hcsol_eq with mc0 =>
+    | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Id A')
+    | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
       | [] => Solution.Sat (Tree.make V [])
       | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)) := {
         (* Every child was sat -> done! *)
@@ -316,8 +316,8 @@ Module TailRec.
   :=
   tableau A s0 mc0
   with inspect (CplSolver.solve_with_assumptions s0 A) := {
-    | CplSolver.Solution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Id A')
-    | CplSolver.Solution.Sat V eqn:Hcsol_eq with mc0 =>
+    | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Id A')
+    | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
       | [] => Solution.Sat (Tree.make V [])
       | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 [] (fun A' => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)) := {
         | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)

@@ -1,8 +1,8 @@
 let check fml =
-  let result = Vct.Solver.solve_fml fml in
-  match result with
-  | Vct.Search.Solution.Sat _ -> print_endline "SAT"
-  | Vct.Search.Solution.Unsat (_, _) -> print_endline "UNSAT"
+  let result = Vct.Solver.TailRec.solve_fml fml in
+  match Vct.Solver.TailRec.Solution.is_sat result with
+  | true -> print_endline "SAT"
+  | false -> print_endline "UNSAT"
 ;;
 
 let check_file filename =

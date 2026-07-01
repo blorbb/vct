@@ -1,11 +1,11 @@
-From CegarTableaux Require Import ImportStd Utils ListExt.
+From CegarTableaux Require Import ImportStd.
 From CegarTableaux.Solver Require Import Search MchainExt.
 From CegarTableaux.Solver Require Derivation.
 
 (** Completeness of the [Spec] implementation. *)
 
 Lemma singleton_tree_force : forall s0 A V cpls boxes mc1,
-  CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s0 A ->
+  CplSolution.Sat V = CplSolver.solve_with_assumptions s0 A ->
   cpls = CplSolver.clauses_of s0 ->
   Mchain.force Tree.as_kripke (Tree.make V [])
     (add_assumptions (Lclauses.make cpls boxes [] :: mc1) A).
@@ -35,7 +35,7 @@ Lemma tableau_jumps_completeness : forall s0 A V l0 mc1 T1s,
     Spec.Solution.Sat T0 = Spec.next_tableau mc1 A' ->
     Mchain.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
   s0 = CplSolver.make_with_clauses (Lclauses.cpls l0) ->
-  CplSolver.Solution.Sat V = CplSolver.solve_with_assumptions s0 A ->
+  CplSolution.Sat V = CplSolver.solve_with_assumptions s0 A ->
   Mchain.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsat IHnt Hs0 Hcpl_sat.

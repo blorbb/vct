@@ -7,8 +7,8 @@
     See the Extract module for details about our Minisat implementation. *)
 
 From CegarTableaux Require CplClause Assumptions Lit Cnf Valuation.
-From CegarTableaux Require Import ImportStd Utils ListExt.
-From CegarTableaux.CplSolver Require Solution.
+From CegarTableaux Require Import ImportStd.
+From CegarTableaux Require CplSolution.
 
 
 (** A (possibly stateful) classical SAT-solver oracle. *)
@@ -32,7 +32,7 @@ Parameter add_clause : t -> CplClause.t -> t.
     unit assumptions.
 
     The solver state is unchanged by this function call. *)
-Parameter solve_with_assumptions : t -> Assumptions.t -> Solution.t.
+Parameter solve_with_assumptions : t -> Assumptions.t -> CplSolution.t.
 
 
 (** Create a new solver with the provided CNF clauses.
@@ -95,27 +95,27 @@ Arguments clause_atms_incl clause s A /.
 
 (** The valuation returned by a satisfiable result is [clash_free]. *)
 Axiom valuation_clash_free : forall s A V,
-  Solution.Sat V = solve_with_assumptions s A ->
+  CplSolution.Sat V = solve_with_assumptions s A ->
   Valuation.clash_free V.
 
 (** Every atom in the valuation is an atom in the solver or assumptions. *)
 Axiom valuation_in_clauses : forall s A V,
-  Solution.Sat V = solve_with_assumptions s A ->
+  CplSolution.Sat V = solve_with_assumptions s A ->
   forall p, List.In p V -> atm_in p s A.
 
 (** The unsatisfiable core is a subset of the unit assumptions. *)
 Axiom core_subset_assumptions : forall s A core,
-  Solution.Unsat core = solve_with_assumptions s A ->
+  CplSolution.Unsat core = solve_with_assumptions s A ->
   List.incl core A.
 
 (** The solver + unsatisfiable core is still unsatisfiable. *)
 Axiom solution_soundness : forall s A core,
-  Solution.Unsat core = solve_with_assumptions s A ->
+  CplSolution.Unsat core = solve_with_assumptions s A ->
   Cnf.unsatisfiable (solved_clauses s core).
 
 (** The valuation satisfies the solver clauses. *)
 Axiom solution_completeness : forall s A V,
-  Solution.Sat V = solve_with_assumptions s A ->
+  CplSolution.Sat V = solve_with_assumptions s A ->
   Cnf.cpl_forceb V (solved_clauses s A) = true.
 
 (** The empty SAT-solver contains no clauses. *)
@@ -189,7 +189,7 @@ Qed. Global Hint Resolve every_sat_valuation_nodup : ct.
 (** A satisfiable valuation is in [every_valuation] of the solver. *)
 Lemma valuation_in_every_valuation_of :
   forall (s : t) (A : Assumptions.t) (V : Valuation.t),
-  Solution.Sat V = solve_with_assumptions s A ->
+  CplSolution.Sat V = solve_with_assumptions s A ->
   Valuation.val_in_vals V (every_valuation s A).
 Proof with auto.
   intros s A V Hsat.
@@ -204,7 +204,7 @@ Qed.
 
 Lemma valuation_in_every_sat_valuation :
   forall s A V,
-  Solution.Sat V = solve_with_assumptions s A ->
+  CplSolution.Sat V = solve_with_assumptions s A ->
   Valuation.val_in_vals V (every_sat_valuation s A).
 Proof with auto.
   intros solver assumptions val Hsat.
@@ -276,7 +276,7 @@ Definition add_conflict_set s cs := add_clause s (List.map Lit.Neg cs).
 (** If [V] = solution of [s] and [s'] contains the conflict set
     as one of it's clauses, [V] cannot be one of the possible valuations. *)
 Lemma refined_solver_diff_val : forall s A V cs s',
-  Solution.Sat V = solve_with_assumptions s A ->
+  CplSolution.Sat V = solve_with_assumptions s A ->
   List.incl cs V ->
   cs <> [] ->
   List.In (List.map Lit.Neg cs) (clauses_of s') ->

@@ -3,6 +3,7 @@ From CegarTableaux Require Mcnf Tree Solver CplSolver.
 
 Extraction Language OCaml.
 Set Extraction Output Directory "src/lib".
+Extraction Blacklist bindings.
 
 (** The axioms depend on a module named [Bindings] being accessible with
     the correct implementation. *)

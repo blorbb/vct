@@ -79,7 +79,7 @@ let check_or_recreate t =
   else make_from_clauses t.clauses
 ;;
 
-let solve_with_assumptions s assumptions : Solution.t =
+let solve_with_assumptions s assumptions =
   let s = check_or_recreate s in
   try
     Minisat.solve
@@ -90,13 +90,13 @@ let solve_with_assumptions s assumptions : Solution.t =
       | Lit.Pos _ -> true
       | Lit.Neg _ -> false
     in
-    Solution.Sat
+    CplSolution.Sat
       (union_lits s.atoms assumptions
        |> Atom_set.elements
        (* p here is 0-indexed *)
        |> List.filter (fun p -> rocq_atm_value s.solver.minisat p |> is_pos))
   with
   | Minisat.Unsat ->
-    Solution.Unsat
+    CplSolution.Unsat
       (Minisat.unsat_core s.solver.minisat |> minisat_clause_to_rocq |> Array.to_list)
 ;;
