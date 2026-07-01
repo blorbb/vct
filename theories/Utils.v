@@ -174,3 +174,20 @@ Proof.
   - cbn. reflexivity.
   - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
 Qed.
+
+
+
+(** Destructs a match using the convoy pattern.
+
+    Implementation adapted from https://discourse.rocq-prover.org/t/2209/3. *)
+Ltac dep_destruct e H :=
+  match goal with
+  | [ |- context C [match e with | _ => _ end] ] =>
+    let x := fresh in
+    generalize (@eq_refl _ e);
+    generalize e at 2 3;
+    intros x H;
+    destruct x
+  end.
+
+Tactic Notation "dep_destruct" constr(e) "as" ident(H) := dep_destruct e H.

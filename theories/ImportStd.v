@@ -12,4 +12,4 @@ Require Export Equations.Prop.Logic.
 
 Create HintDb ct.
 
-(* TODO: maybe move Utils and ListExt into here. *)
+From CegarTableaux Require Export Utils ListExt.

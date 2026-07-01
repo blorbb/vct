@@ -1,4 +1,5 @@
 From CegarTableaux.Solver Require Search Derivation Soundness Completeness.
+From CegarTableaux Require Import ImportStd.
 
 Include Search.
 Include Soundness.
@@ -6,24 +7,29 @@ Include Completeness.
 
 
 Theorem solve_mchain_sound_complete : forall mc0,
-  Mchain.satisfiable mc0 <-> Solution.is_sat (solve_mchain mc0).
+  Mchain.satisfiable mc0 <-> Spec.Solution.is_sat (Spec.solve_mchain mc0) = true.
 Proof with try easy; auto.
   intros mc0. split.
-  - intros Hsat. unfold Solution.is_sat.
-    destruct (solve_mchain mc0) eqn:Hunsat...
-    apply (solve_mchain_sound mc0)...
-    rewrite Hunsat. easy.
-  - intros Hsat. now apply solve_mchain_complete.
+  - apply solve_mchain_sound_contrapos.
+  - apply solve_mchain_complete.
 Qed.
 
 Theorem solve_fml_sound_complete : forall phi,
-  Fml.satisfiable phi <-> Solution.is_sat (solve_fml phi).
+  Fml.satisfiable phi <-> Spec.Solution.is_sat (Spec.solve_fml phi) = true.
 Proof with try easy; auto.
-  intros phi.
-  unfold solve_fml. cbn [Utils.apply].
-  rewrite Nnf.equisat_fml, Mcnf.equisat_nnf, Mchain.equisat_mcnf.
-  apply solve_mchain_sound_complete.
+  intros mc0. split.
+  - apply solve_fml_sound_contrapos.
+  - apply solve_fml_complete.
 Qed.
+
+Corollary tailrec_solve_fml_sound_complete : forall phi,
+  Fml.satisfiable phi <-> TailRec.Solution.is_sat (TailRec.solve_fml phi) = true.
+Proof.
+  unfold TailRec.solve_fml, TailRec.solve_mchain.
+  setoid_rewrite <- TailRec.tableau_spec.
+  apply solve_fml_sound_complete.
+Qed.
+
 
 (** Running [Print Assumptions solve_fml_sound_complete.]
     prints the following (slightly reformatted):
