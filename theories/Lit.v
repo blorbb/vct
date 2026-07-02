@@ -2,7 +2,7 @@ From CegarTableaux Require Kripke Valuation.
 From CegarTableaux Require Import ImportStd ListExt Utils.
 
 (** A positive or negative literal. *)
-Inductive t : Type :=
+Inductive t : Set :=
   | Pos (p : nat)
   | Neg (p : nat).
 

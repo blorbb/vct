@@ -4,6 +4,7 @@ From Stdlib Require Import PeanoNat Arith Lia.
 Import List.ListNotations.
 Open Scope list_scope.
 
+Ltac inv_clear H := inversion H; subst; clear H.
 
 (** Proves the first implication in a hypothesis.
 
@@ -262,3 +263,11 @@ Tactic Notation "destruct" "matches" "in" ident(H) := repeat (destruct_matches_i
 Tactic Notation "destruct" "matches" "in" "*" := destruct_all_matches.
 Tactic Notation "destruct" "matches" "in" "*|-" := destruct_nongoal_matches.
 Tactic Notation "destruct" "matches" := destruct_goal_matches.
+
+(* From https://github.com/rocq-community/rocq-tricks *)
+Ltac deex :=
+  repeat match goal with
+  | [ H: exists (name:_), _ |- _ ] =>
+    let name' := fresh name in
+    destruct H as [name' H]
+  end.

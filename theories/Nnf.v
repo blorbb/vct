@@ -3,7 +3,7 @@ From CegarTableaux Require Import ImportStd Utils.
 
 
 (** A modal formula in negation normal form. *)
-Inductive t : Type :=
+Inductive t : Set :=
   | Lit (l : Lit.t)
   | And (A B : t)
   | Or  (A B : t)

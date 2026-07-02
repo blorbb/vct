@@ -1,9 +1,7 @@
 From CegarTableaux Require Kripke Valuation.
 From CegarTableaux Require Import ImportStd.
 
-
-(* Rocq does not generate a useful induction theorem. Need to make our own. *)
-Unset Elimination Schemes.
+Scheme All for list.
 
 (** A Kripke model with a tree structure. *)
 Inductive t :=
@@ -12,20 +10,6 @@ Inductive t :=
       (* A list of sub-trees reachable from here. *)
       (children : list t).
 
-Set Elimination Schemes.
-
-Definition t_ind :
-  forall P : t -> Prop,
-  (forall V children, List.Forall P children -> P (make V children)) ->
-  forall tr, P tr.
-Proof.
-  intros P H.
-  (* Assume the goal as IH, but argument 1 (tr) must be decreasing. *)
-  fix IH 1.
-  intros [V children].
-  apply H.
-  induction children; auto.
-Qed.
 
 Definition empty := make [] [].
 
