@@ -414,3 +414,12 @@ Proof.
   rewrite List.in_map_iff.
   exists a. easy.
 Qed.
+
+
+Lemma Exists_singleton : forall {A} (P : A -> Prop) (x : A),
+  List.Exists P [x] <-> P x.
+Proof. intros *. rewrite Exists_cons, Exists_nil. tauto. Qed.
+Hint Rewrite @Exists_singleton : datatypes.
+
+Hint Rewrite Exists_nil : datatypes.
+Hint Rewrite Forall_nil : datatypes.

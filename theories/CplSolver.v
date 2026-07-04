@@ -85,6 +85,8 @@ Definition every_sat_valuation (s : t) (A : Assumptions.t) : list Valuation.t :=
 Definition atm_in (p : nat) (s : t) (A : Assumptions.t) : Prop :=
   Cnf.atm_in p (solved_clauses s A).
 
+Arguments atm_in p s A /.
+
 
 (** Whether a clause does not introduce new atoms to the solver. *)
 Definition clause_atms_incl (clause : CplClause.t) (s : t) (A : Assumptions.t) : Prop :=

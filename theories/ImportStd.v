@@ -14,3 +14,33 @@ Create HintDb ct.
 Create Rewrite HintDb ct.
 
 From CegarTableaux Require Export Utils ListExt.
+
+Hint Rewrite Exists_cons Forall_cons_iff Exists_app Forall_app Exists_nil Forall_nil_iff : datatypes.
+
+Lemma or_false_l : forall P, P \/ False <-> P.
+Proof. tauto. Qed.
+Lemma or_false_r : forall P, False \/ P <-> P.
+Proof. tauto. Qed.
+Lemma and_true_l : forall P, P /\ True <-> P.
+Proof. tauto. Qed.
+Lemma and_true_r : forall P, True /\ P <-> P.
+Proof. tauto. Qed.
+Lemma idem_f : False /\ False <-> False.
+Proof. tauto. Qed.
+Lemma idem_t : True /\ True <-> True.
+Proof. tauto. Qed.
+Lemma imp_false_r : forall P, (False -> P) <-> True.
+Proof. tauto. Qed.
+Lemma imp_true_r : forall P, (True -> P) <-> P.
+Proof. tauto. Qed.
+Lemma imp_true_l : forall P, (P -> True) <-> True.
+Proof. tauto. Qed.
+Lemma imp_true_l_forall : forall {A} P, (forall (a : A), P a -> True) <-> True. (* common *)
+Proof. tauto. Qed.
+Lemma not_false : ~ False <-> True.
+Proof. tauto. Qed.
+Lemma not_true : ~ False <-> True.
+Proof. tauto. Qed.
+
+Create Rewrite HintDb fold_prop.
+Hint Rewrite or_false_l or_false_r and_true_l and_true_r idem_f idem_t imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true : fold_prop.

@@ -4,4 +4,6 @@ From CegarTableaux Require Lit.
 Definition t := list Lit.t.
 
 
-Definition atm_in (t : t) (p : nat) : Prop := List.In p (List.map Lit.atm t).
+Definition atm_in (p : nat) (phi : t) : Prop := List.In p (List.map Lit.atm phi).
+
+Arguments atm_in p phi /.

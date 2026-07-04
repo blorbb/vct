@@ -1,4 +1,4 @@
-From Stdlib Require Import Relations.
+From CegarTableaux Require Import ImportStd.
 
 (** A Kripke model with a parameterised Kripke frame [W, R] and [valuation].
 
@@ -15,8 +15,14 @@ From Stdlib Require Import Relations.
     multiple models with the same frame without requiring additional
     propositions.
 
-    The relation and valuation functions could return a [bool] instead of a
-    [Prop]. It doesn't matter much since we assume the law of excluded middle. *)
+    The relation and valuation functions must return a [Prop] instead of a [bool],
+    even though we assume classical logic, as the valuation function may not be
+    decidable. We want the valuation to be set to whether or not a particular
+    formula is forced. [W] could be an infinite set and forcing has [forall] and
+    [exists] statements about [W], so forcing is not computable.
+
+    We could change this (and [force]) to a [bool] and possibly get rid of
+    classical logic entirely if we add some constraints on [W]. *)
 Record t {W : Type} {R : relation W} : Type := {
   valuation : W -> nat -> Prop;
 }.

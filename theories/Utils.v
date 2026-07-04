@@ -123,6 +123,20 @@ Tactic Notation "ifauto" "in" hyp(H) "by" tactic(tac) :=
   in_hyp H ltac:(ifauto by tac).
 
 
+
+Ltac destruct_tuple :=
+  match goal with
+  | [ H: context[let '(a, b) := ?p in _] |- _ ] =>
+    let a := fresh a in
+    let b := fresh b in
+    destruct p as [a b]
+  | [ |- context[let '(a, b) := ?p in _] ] =>
+    let a := fresh a in
+    let b := fresh b in
+    destruct p as [a b]
+  end.
+
+
 (** Simplifies [let (a, b) := x in ...] by replacing instances of 
     [a] with [fst x], and [b] with [snd x]. *)
 Local Lemma inline_pair_lemma : forall {A B C : Type} (p : A * B) (f : A -> B -> C),
@@ -134,16 +148,40 @@ Tactic Notation "inline_pair" "in" hyp(H) := rewrite inline_pair_lemma in H.
 Tactic Notation "inline_pair" "in" "*" := rewrite inline_pair_lemma in *.
 
 
+Tactic Notation "destruct_pair" :=
+  lazymatch goal with
+  | [ |- context[let '(x, y) := ?p in _] ] =>
+    rewrite inline_pair_lemma;
+    let x := fresh x in
+    let y := fresh y in
+    set (x := fst p);
+    set (y := snd p)
+  end.
+
+Tactic Notation "destruct_pair" "in" hyp(H) :=
+  in_hyp H ltac:(destruct_pair).
+
+Tactic Notation "destruct_pair" "as" "[" ident(x) ident(y) "]" :=
+  lazymatch goal with
+  | [ |- context[let '(a, b) := ?p in _] ] =>
+    rewrite inline_pair_lemma;
+    set (x := fst p);
+    set (y := snd p)
+  end.
+
+Tactic Notation "destruct_pair" "in" hyp(H) "as" "[" ident(x) ident(y) "]" :=
+  in_hyp H ltac:(destruct_pair as [x y]).
+
+
 Tactic Notation "destruct_pair" constr(p) "as" "[" ident(x) ident(y) "]" :=
     rewrite (inline_pair_lemma p);
     set (x := fst p);
     set (y := snd p).
 
-Tactic Notation "destruct_pair" constr(p) "as" "[" ident(x) ident(y) "]" "in" hyp(H) :=
+Tactic Notation "destruct_pair" constr(p) "in" hyp(H) "as" "[" ident(x) ident(y) "]" :=
     rewrite (inline_pair_lemma p) in H;
-    set (x := fst p);
-    set (y := snd p);
-    fold x in H; fold y in H.
+    set (x := fst p) in *;
+    set (y := snd p) in *.
 
 
 (** Fold a definition in all hypotheses.

@@ -31,6 +31,8 @@ Definition unsatisfiable (phi : t) : Prop :=
 
 Definition atm_in (p : nat) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
 
+Arguments atm_in p phi /.
+
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
   forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).

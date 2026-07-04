@@ -1,17 +1,20 @@
 (** MCNF type with basic lemmas and definitions *)
 
-From CegarTableaux Require Lit Nnf Kripke Mclause.
-From CegarTableaux Require Import ImportStd Utils.
+From CegarTableaux Require Lit Nnf Kripke Lclauses.
+From CegarTableaux Require Import ImportStd.
 
 
-(** An MCNF formula, a list of modal clauses. *)
-Definition t := list Mclause.t.
+(** An MCNF formula, a list of clauses, where the 'local' clauses at the head
+    are clauses that need to be satisfied at the 'current' world, and the tail
+    is one modal context away. *)
+Definition t := list Lclauses.t.
 
 
 Fixpoint force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   match phi with
   | [] => True
-  | head :: tail => Mclause.force M w0 head /\ force M w0 tail
+  | head :: tail => Lclauses.force M w0 head /\
+    forall w1, R w0 w1 -> force M w1 tail
   end.
 
 
@@ -19,34 +22,62 @@ Definition satisfiable (phi : t) : Prop :=
   exists W R (M : @Kripke.t W R) (w0 : W), force M w0 phi.
 
 
-Fixpoint atm_in (p : nat) (phi : t) : Prop :=
-  match phi with
-  | [] => False
-  | head :: tail => Mclause.atm_in p head \/ atm_in p tail
-  end.
+Definition unsatisfiable (phi : t) : Prop :=
+  ~ satisfiable phi.
+
+
+Definition atm_in (p : nat) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
+
+Arguments atm_in p phi /.
+
+
+Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
+  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+
+
+Definition max_atm (phi : t) : nat :=
+  list_max_nat (List.map Lclauses.max_atm phi).
+
+
+Lemma atm_le_max : forall (phi : t) (p : nat),
+  atm_in p phi -> p <= (max_atm phi).
+Proof with try easy.
+  intros phi p Hatm.
+  unfold atm_in in Hatm. rewrite List.Exists_exists in Hatm.
+  destruct Hatm as [lclause [Hlclause_in Hp_lclauses]].
+  apply Lclauses.atm_le_max in Hp_lclauses.
+  apply nat_le_mapped_list_max with (a := lclause)...
+Qed.
 
 
 (** Mini lemmas useful for simplifications. *)
 Section Simplify.
-  Lemma in_mcnf_or :
-    forall (A B : t) (p : nat),
-    atm_in p (A ++ B) <-> atm_in p A \/ atm_in p B .
-  Proof.
-    intros A B p.
-    induction A as [| head tail IHl]; simpl in *; tauto.
+  Lemma agree_cons : forall {W} {R} {M M' : @Kripke.t W R} l0 mc1,
+    agree (l0::mc1) M M' <-> Lclauses.agree l0 M M' /\ agree mc1 M M'.
+  Proof with try easy; auto with datatypes ct.
+    intros *. unfold agree, Lclauses.agree. split.
+    - intros Hagree. split.
+      + intros w0 p Hp_in_l0. rewrite Hagree... unfold atm_in...
+      + intros w0 p Hp_in_mc1. rewrite Hagree... unfold atm_in...
+    - intros [Hl0_agree Hmc1_agree] w0 p Hp_in.
+      unfold atm_in in Hp_in. rewrite List.Exists_exists in Hp_in.
+      destruct Hp_in as [ln [[Hln_l0 | Hln_in_mc1] Hp_in_ln]].
+      + subst ln. rewrite Hl0_agree...
+      + rewrite Hmc1_agree...
+        unfold atm_in. rewrite List.Exists_exists. exists ln...
   Qed.
 
 
-  Lemma in_ctx_iff_in_mcnf :
+  (* Lemma in_ctx_iff_in_mcnf :
     forall (phi : t) (p : nat),
     atm_in p (List.map Mclause.Ctx phi) <-> atm_in p phi.
   Proof.
     intros phi p.
     induction phi as [| head tail IHphi]; simpl in *; tauto.
-  Qed.
+  Qed. *)
 
 
-  Lemma mcnf_force_and :
+  (* Lemma mcnf_force_and :
     forall {W} {R} (M : @Kripke.t W R) (w0 : W) (A B : t),
     force M w0 (A ++ B) <-> force M w0 A /\ force M w0 B.
   Proof.
@@ -56,10 +87,11 @@ Section Simplify.
       induction A as [| head tail IHl]; simpl in *; tauto.
     - intros [Hforce_l Hforce_r].
       induction A as [| head tail IHl]; simpl in *; tauto.
-  Qed.
+  Qed. *)
 
+  
 
-  Lemma w0_force_ctx_iff_w1_force_phi :
+  (* Lemma w0_force_ctx_iff_w1_force_phi :
     forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t),
       force M w0 (List.map Mclause.Ctx phi) <->
       (forall (w1 : W), R w0 w1 -> force M w1 phi).
@@ -75,46 +107,20 @@ Section Simplify.
         * intros w1 Hrel_w1.
           now apply Hw1_forces_head_tail.
         * apply IHphi. apply Hw1_forces_head_tail.
-  Qed.
+  Qed. *)
 End Simplify.
-
-
-Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
   forall {W} {R} (M M' : @Kripke.t W R) (phi : t) (w0 : W),
   agree phi M M' -> (force M w0 phi <-> force M' w0 phi).
-Proof with simpl; auto.
-  intros W R M M' phi w0 Hval.
+Proof with try easy; auto with datatypes.
+  intros W R M M' phi w0 Hagree. revert w0.
 
-  induction phi as [|head tail IHphi].
-  - tauto.
-  - assert (forall w' p, atm_in p tail -> Kripke.valuation M w' p <-> Kripke.valuation M' w' p) as Hval_tail.
-    {
-      intros w' p Hp_tail.
-      apply Hval...
-    }
-    assert (forall w' p, Mclause.atm_in p head -> Kripke.valuation M w' p <-> Kripke.valuation M' w' p) as Hval_head.
-    {
-      intros w' p Hp_head.
-      apply Hval...
-    }
-
-    rewrite (mcnf_force_and M w0 [head] tail).
-    rewrite (mcnf_force_and M' w0 [head] tail).
-    split.
-    + intros [Hhead Htail].
-      split.
-      (* force head *)
-      * simpl in *. split... destruct Hhead as [Hhead _].
-        rewrite <- (Mclause.meaningful_valuations M M')...
-      (* force tail by IH *)
-      * apply IHphi...
-    + intros [Hhead Htail].
-      split.
-      * simpl in *. split... destruct Hhead as [Hhead _].
-        rewrite (Mclause.meaningful_valuations M M')...
-      * apply IHphi...
+  induction phi as [|l0 mc1 IHphi]; intros w0; try tauto.
+  apply agree_cons in Hagree as [Hagree_l0 Hagree_mc1].
+  forward IHphi by exact Hagree_mc1.
+  cbn [force].
+  rewrite (Lclauses.meaningful_valuations M M')...
+  setoid_rewrite IHphi...
 Qed.
