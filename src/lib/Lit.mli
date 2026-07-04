@@ -9,3 +9,5 @@ val negate : t -> t
 val atm : t -> int
 
 val eqb : t -> t -> bool
+
+val leb : t -> t -> bool

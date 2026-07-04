@@ -26,3 +26,14 @@ let eqb a b =
   | Neg p -> (match b with
               | Pos _ -> false
               | Neg q -> eqb p q)
+
+(** val leb : t -> t -> bool **)
+
+let leb x y =
+  match x with
+  | Pos p -> (match y with
+              | Pos q -> leb p q
+              | Neg _ -> true)
+  | Neg p -> (match y with
+              | Pos _ -> false
+              | Neg q -> leb p q)

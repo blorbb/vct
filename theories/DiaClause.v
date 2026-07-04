@@ -1,5 +1,5 @@
-From CegarTableaux Require Lit.
-From CegarTableaux Require Import ImportStd Utils.
+From CegarTableaux Require Lit BoxClause.
+From CegarTableaux Require Import ImportStd.
 
 (** An MCNF dia-clause [a -> <>b].
 
@@ -58,3 +58,12 @@ Proof with simpl; auto.
     split...
     apply Heq_lit...
 Qed.
+
+
+Definition max_atm (phi : t) : nat :=
+  Nat.max (fst phi) (Lit.atm (snd phi)).
+
+
+Lemma atm_le_max : forall (phi : t) (p : nat),
+  atm_in p phi -> p <= (max_atm phi).
+Proof. exact BoxClause.atm_le_max. Qed.

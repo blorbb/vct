@@ -44,6 +44,19 @@ module Deriv = struct
   ;;
 end
 
+module Lclauses = struct
+  type t = Vct.Lclauses.t =
+    { cpls : Lit.t list list
+    ; boxes : (int * Lit.t) list
+    ; dias : (int * Lit.t) list
+    }
+  [@@deriving show { with_path = false }]
+end
+
+module Mchain = struct
+  type t = Lclauses.t list [@@deriving show { with_path = false }]
+end
+
 let parse_str str =
   let intohylo =
     str
@@ -55,9 +68,16 @@ let parse_str str =
   Vct.Parser.file Vct.Lexer.next_token lexbuf
 ;;
 
+let convert fml = fml |> Vct.Nnf.from_fml |> Vct.Mcnf0.from_nnf |> Vct.Mchain.from_mcnf
+(* |> Vct.Mchain.simplify *)
+
 let print_solution str =
   Printf.printf "%s : " str;
-  (match parse_str str |> Vct.Solver.TailRec.solve_fml with
+  let fml = parse_str str in
+  let mc0 = convert fml in
+  (* print_endline "as mchain:";
+  print_endline (Mchain.show mc0); *)
+  (match Vct.Solver.TailRec.solve_mchain mc0 with
    | Sat t ->
      print_endline "SAT";
      print_endline (t |> RTree.of_vct_tree |> RTree.show)

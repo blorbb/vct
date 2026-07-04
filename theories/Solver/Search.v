@@ -236,6 +236,7 @@ Module Spec.
     phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mchain.from_mcnf |> solve_mchain.
 End Spec.
 
+
 Module TailRec.
   Module Solution := Spec.Solution.
   Module JumpSolution := Spec.JumpSolution.
@@ -403,6 +404,7 @@ Module TailRec.
       + rewrite Hs_eq in Hcsol_eq. discriminate.
   Qed.
 End TailRec.
+
 
 Module NoModel.
   (** Does not construct a model/derivation. *)

@@ -1,5 +1,5 @@
-From CegarTableaux Require Lit DiaClause.
-From CegarTableaux Require Import Utils.
+From CegarTableaux Require Lit.
+From CegarTableaux Require Import ImportStd.
 
 (** An MCNF box-clause [a -> []b].
 
@@ -52,4 +52,18 @@ Proof with simpl; auto.
     rewrite Hagree in HM_force_a...
     forward HM'_force_a by assumption.
     setoid_rewrite Heq_lit...
+Qed.
+
+
+Definition max_atm (phi : t) : nat :=
+  Nat.max (fst phi) (Lit.atm (snd phi)).
+
+
+Lemma atm_le_max : forall (phi : t) (p : nat),
+  atm_in p phi -> p <= (max_atm phi).
+Proof with try easy.
+  intros phi p Hatm. destruct phi as [a b].
+  cbn in *. destruct Hatm.
+  - subst. apply Nat.le_max_l.
+  - subst. apply Nat.le_max_r.
 Qed.

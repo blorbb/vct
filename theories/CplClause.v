@@ -69,6 +69,18 @@ Proof with simpl; auto.
 Qed.
 
 
+
+Definition max_atm (phi : t) : nat :=
+  List.map Lit.atm phi |> list_max_nat.
+
+
+Lemma atm_le_max : forall (phi : t) (p : nat),
+  atm_in p phi -> p <= (max_atm phi).
+Proof with try easy.
+  intros phi p Hatm. now apply nat_le_list_max.
+Qed.
+
+
 (** Creates a CPL clause from a single literal. *)
 Definition from_lit (l : Lit.t) : t := [l].
 

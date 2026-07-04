@@ -4400,7 +4400,9 @@ module NoModel =
   (** val solve_fml : Fml.t -> Solution.t **)
 
   let solve_fml phi =
-    apply (apply (apply (apply phi from_fml) from_nnf) from_mcnf) solve_mchain
+    apply
+      (apply (apply (apply (apply phi from_fml) from_nnf) from_mcnf) simplify)
+      solve_mchain
 
   (** val next_tableau : Mchain.t -> Assumptions.t -> Solution.t **)
 

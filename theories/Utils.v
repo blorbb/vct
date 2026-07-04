@@ -177,6 +177,13 @@ Proof.
 Qed.
 
 
+Lemma nat_leb_total : forall n m, (n <=? m) = true \/ (m <=? n) = true.
+Proof.
+  intros n m. destruct (Nat.leb_spec n m).
+  - now left.
+  - right. rewrite Nat.leb_le. now apply Nat.lt_le_incl.
+Qed.
+
 
 (** Destructs a match using the convoy pattern.
 

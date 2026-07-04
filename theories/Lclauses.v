@@ -1,7 +1,7 @@
 From Stdlib Require List.
 From Stdlib Require Import Lia.
 From CegarTableaux Require Lit Kripke CplClause BoxClause DiaClause Cnf.
-From CegarTableaux Require Import Utils.
+From CegarTableaux Require Import ImportStd.
 Import List.ListNotations.
 Open Scope list_scope.
 
@@ -13,6 +13,8 @@ Record t : Type := make {
 }.
 
 Definition empty := make [] [] [].
+
+Definition make_cpls cpls := make cpls [] [].
 
 
 (** Merge two sets of local clauses into one. *)
@@ -128,4 +130,36 @@ Proof with try solve [simpl; auto; tauto].
         apply Hagree. right. right.
         apply List.Exists_exists. exists dia...
       * rewrite List.Forall_forall in Hd. apply Hd...
+Qed.
+
+
+Definition max_atm (phi : t) : nat :=
+  Nat.max (Lclauses.cpls phi |> List.map CplClause.max_atm |> list_max_nat)
+  (Nat.max
+    (Lclauses.boxes phi |> List.map BoxClause.max_atm |> list_max_nat)
+    (Lclauses.dias phi |> List.map DiaClause.max_atm |> list_max_nat)).
+
+
+Lemma atm_le_max : forall (phi : t) (p : nat),
+  atm_in p phi -> p <= (max_atm phi).
+Proof with try easy.
+  intros phi p Hatm. destruct phi as [cpls boxes dias].
+  cbn -[list_max_nat] in *. repeat rewrite Nat.max_le_iff.
+
+  destruct Hatm as [Hp_cpls | [Hp_boxes | Hp_dias]].
+  - left.
+    rewrite List.Exists_exists in Hp_cpls.
+    destruct Hp_cpls as [cl [Hcl_cpls Hp_cl]].
+    apply nat_le_list_max in Hp_cl.
+    apply nat_le_mapped_list_max with (a := cl)...
+  - right. left.
+    rewrite List.Exists_exists in Hp_boxes.
+    destruct Hp_boxes as [box [Hbox_boxes Hp_box]].
+    apply BoxClause.atm_le_max in Hp_box.
+    apply nat_le_mapped_list_max with (a := box)...
+  - right. right.
+    rewrite List.Exists_exists in Hp_dias.
+    destruct Hp_dias as [dia [Hdia_dias Hp_dia]].
+    apply DiaClause.atm_le_max in Hp_dia.
+    apply nat_le_mapped_list_max with (a := dia)...
 Qed.

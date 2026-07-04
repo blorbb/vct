@@ -97,6 +97,27 @@ Global Instance eq_atm_equivalence : Equivalence eq_atm := {
 }.
 
 
+(** Pos < Neg to match inductive definition order. *)
+Definition leb (x y : t) : bool :=
+  match x, y with
+  | Pos p, Pos q => p <=? q
+  | Neg p, Neg q => p <=? q
+  | Pos p, Neg q => true
+  | Neg p, Pos q => false
+  end.
+
+
+Lemma leb_total : forall (x y : t), leb x y = true \/ leb y x = true.
+Proof.
+  intros x y.
+  induction x; destruct y; cbn.
+  - apply nat_leb_total.
+  - tauto.
+  - tauto.
+  - apply nat_leb_total.
+Qed.
+
+
 (** * Forcing *)
 
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (l : t) : Prop :=
