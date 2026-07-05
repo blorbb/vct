@@ -53,7 +53,7 @@ module Lclauses = struct
   [@@deriving show { with_path = false }]
 end
 
-module Mchain = struct
+module Mcnf = struct
   type t = Lclauses.t list [@@deriving show { with_path = false }]
 end
 
@@ -69,21 +69,17 @@ let parse_str str =
 ;;
 
 let convert fml = fml |> Vct.Nnf.from_fml |> Vct.Mcnf0.from_nnf
-(* |> Vct.Mchain.simplify *)
+(* |> Vct.Mcnf.simplify *)
 
 let print_solution str =
-  Printf.printf "%s : " str;
+  Printf.printf "FORMULA: %s\n\n" str;
   let fml = parse_str str in
   let mc0 = convert fml in
-  (* print_endline "as mchain:";
-  print_endline (Mchain.show mc0); *)
+  Printf.printf "MCNF:\n%s\n\n" (Mcnf.show mc0);
   (match Vct.Solver.TailRec.solve_mcnf mc0 with
-   | Sat t ->
-     print_endline "SAT";
-     print_endline (t |> RTree.of_vct_tree |> RTree.show)
+   | Sat t -> Printf.printf "SAT:\n%s\n\n" (t |> RTree.of_vct_tree |> RTree.show)
    | Unsat (_a, d) ->
-     print_endline "UNSAT";
-     print_endline (d |> Deriv.of_vct_deriv |> Deriv.show));
+     Printf.printf "UNSAT:\n%s\n\n" (d |> Deriv.of_vct_deriv |> Deriv.show));
   print_newline ()
 ;;
 
