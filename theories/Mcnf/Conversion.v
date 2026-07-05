@@ -260,14 +260,18 @@ Qed.
 
 (** Construction of a model that forces the converted formula. *)
 Section EquisatModel.
+  Definition with_global_val {W} {R} (M : @Kripke.t W R) (p : nat) (val : W -> Prop) :=
+    Kripke.make W R (fun w p' => if p =? p' then val w else Kripke.valuation M w p').
+
+
   Definition set_kripke_at_n_iff_force
     {W} {R}
     (** the model to change at n *)
     (Mmcnf : @Kripke.t W R) (n : nat)
     (** at n, set valuation to Nnf.force Mnnf w phi *)
     (Mnnf : @Kripke.t W R) (phi : Nnf.t)
-    : @Kripke.t W R :=
-    Kripke.make W R (fun w x => if x =? n then Nnf.force Mnnf w phi else Kripke.valuation Mmcnf w x).
+    :=
+    with_global_val Mmcnf n (fun w => Nnf.force Mnnf w phi).
 
 
   (** Transforms [M] so that [M] forces [n -> phi] iff [M'] forces [n -> phi']
@@ -431,6 +435,7 @@ Section EquisatModelRange.
   Qed.
 
 
+  (* TODO: clean up this proof *)
   Lemma named_model_overrides_all_sur :
     forall {W} {R} (M M' : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k p : nat) (Hmnp_lt : Nnf.max_atm phi < n < k),
       let k' := snd (from_n_nnf n phi k) in
@@ -596,13 +601,39 @@ Section NnfToMcnf.
   Context {R : relation W}.
   Context {M : @Kripke.t W R}.
 
-  Definition with_global_val {W} {R} (M : @Kripke.t W R) (p : nat) (val : W -> Prop) :=
-    Kripke.make W R (fun w p' => if p =? p' then val w else Kripke.valuation M w p').
 
+  (** A note about the inductive hypothesis:
+
+      The parts about [n_val] are required for the [Nnf.And] case.
+      The only way to prove that a model [M'] forces a formula is by showing
+      that it agrees with another model [M] that is known to force a formula
+      (via the IH, i.e. that it agrees with the two submodules [MA] and [MB]
+      which do force [A_mcnf] and [B_mcnf]).
+
+      However, in the [Nnf.And] case, the model [M'] does not agree with the
+      two submodels. This is because we overwrite [n] to be true iff _both_
+      [A] and [B] are forced.
+
+      If, e.g., [A] is forced but [B] is not, then [MA] expects [n] to be true,
+      but [M'] sets it to false. This shouldn't matter because the conversion
+      semantically makes [A_mcnf] equivalent to [n -> A]; changing [MA] so
+      that [n] is set to false should still force [A_mcnf].
+
+      [n_val] and the condition on it 'weakens' the value that [MA] must have
+      on [n], saying that [n] being false will still allow [MA] to force
+      [A_mcnf].
+
+      The valuation still needs to match up with [named_model] in the case
+      that [n] may be true, so the value is dependent on the world it is at.
+      We could alternatively add [w0] to [named_model] and set [n] to be
+      true at _every_ world iff [Nnf.force M w0 phi].
+
+      For cases other than [Nnf.And], this condition does not matter as
+      this overwriting issue does not occur. We are free to set [n_val]
+      to [Nnf.force M w phi] and act like it isn't there. *)
   Definition IH phi :=
     forall w0 n p, Nnf.max_atm phi < n < p ->
     let M' := named_model M n phi p in
-    (* unset n to be arbitrary, still forces *)
     forall (n_val : W -> Prop),
     (forall w, n_val w -> Nnf.force M w phi) ->
     Mcnf.force (with_global_val M' n n_val) w0 (fst (from_n_nnf n phi p)).
@@ -632,8 +663,6 @@ Section NnfToMcnf.
 
     set (MA := named_model M n A k).
     set (MB := named_model MA n B kA).
-    (* assert (S (S p) <= q) as Hpq. { unfold q. apply sur_input_le_return. }
-    assert (q <= r) as Hqr. { unfold r. apply sur_input_le_return. } *)
 
     fold MA kA MB in M'. fold M'.
 
