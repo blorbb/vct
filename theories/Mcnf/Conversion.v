@@ -38,6 +38,12 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
         (Mcnf.zip_merge A_mcnf B_mcnf),
       k
     )
+  (* n -> []l  as single box clause *)
+  | Nnf.Box (Nnf.Lit l) =>
+      (
+        [Lclauses.make [] [(n, l)] []],
+        k
+      )
   (* n -> []A  =>  n -> []nA ; [](nA -> A) *)
   | Nnf.Box A =>
     let (nA, k) := (k, S k) in
@@ -46,6 +52,12 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
       Lclauses.make [] [(n, Lit.Pos nA)] [] :: A_mcnf,
       k
     )
+  (* n -> <>l  as single dia clause *)
+  | Nnf.Dia (Nnf.Lit l) =>
+      (
+        [Lclauses.make [] [] [(n, l)]],
+        k
+      )
   (* n -> <>A  =>  n -> <>nA ; [](nA -> A) *)
   | Nnf.Dia A =>
     let (nA, k) := (k, S k) in
@@ -71,6 +83,7 @@ Definition from_nnf (phi : Nnf.t) : Mcnf.t :=
 (** * Conversion correctness *)
 
 
+
 Lemma sur_input_le_return :
   forall (n : nat) (phi : Nnf.t) (k : nat),
     k <= snd (from_n_nnf n phi k).
@@ -90,10 +103,12 @@ Proof with auto.
   - repeat destruct_pair. cbn.
     transitivity (S (S k))...
     transitivity k0; subst k0 k1...
-  - destruct_pair. cbn.
-    transitivity (S k); subst k0...
-  - destruct_pair. cbn.
-    transitivity (S k); subst k0...
+  - destruct_pair. Nnf.destruct_lit A.
+    + cbn...
+    + cbn. transitivity (S k)... subst k0...
+  - destruct_pair. Nnf.destruct_lit A.
+    + cbn...
+    + cbn. transitivity (S k)... subst k0...
 Qed.
 
 
@@ -224,6 +239,7 @@ Proof with finish.
 
   (* box *)
   - cbn -[Mcnf.zip_merge Mcnf.atm_in].
+    Nnf.destruct_lit A. { repeat (autorewrite with list prop; cbn). lia. }
     destruct_pair (from_n_nnf k A (S k)) as [A_mcnf kA].
     intro Hp_mcnf. cbn [fst] in Hp_mcnf.
 
@@ -241,6 +257,7 @@ Proof with finish.
 
   (* dia: identical to box case *)
   - cbn -[Mcnf.zip_merge Mcnf.atm_in].
+    Nnf.destruct_lit A. { repeat (autorewrite with list prop; cbn). lia. }
     destruct_pair (from_n_nnf k A (S k)) as [A_mcnf kA].
     intro Hp_mcnf. cbn [fst] in Hp_mcnf.
 
@@ -298,12 +315,16 @@ Section EquisatModel.
       let M' := named_model M' nB B k in
         set_kripke_at_n_iff_force M' n M phi
 
+    | Nnf.Box (Nnf.Lit l) =>
+        set_kripke_at_n_iff_force M n M phi
     (* n -> []A  =>  n -> []nA ; [](nA -> A) *)
     | Nnf.Box A =>
       let (nA, k) := (k, S k) in
       let M' := named_model M nA A k in
         set_kripke_at_n_iff_force M' n M phi
 
+    | Nnf.Dia (Nnf.Lit l) =>
+        set_kripke_at_n_iff_force M n M phi
     (* n -> <>A  =>  n -> <>nA ; [](nA -> A) *)
     | Nnf.Dia A =>
       let (nA, k) := (k, S k) in
@@ -400,21 +421,23 @@ Section EquisatModelRange.
       simpl. ifauto. fold MA kA MB. tauto.
 
     (* box *)
-    - simpl. simpl in Hmnp_lt. ifauto.
+    - cbn in *. subst k'.
+      Nnf.destruct_lit A. { cbn in *. now ifauto. }
+      cbn. ifauto.
 
-      set (kA := snd (from_n_nnf k A (S k))).
-      assert (kA = k').
-      { unfold k'. simpl. inline_pair. simpl. reflexivity. }
-
+      inline_pair in Hx_range.
+      set (kA := snd (from_n_nnf k A (S k))) in *.
+      cbn in Hx_range.
       apply IHA... fold kA. autolia.
 
     (* dia *)
-    - simpl. simpl in Hmnp_lt. ifauto.
+    - cbn in *. subst k'.
+      Nnf.destruct_lit A. { cbn in *. now ifauto. }
+      cbn. ifauto.
 
-      set (kA := snd (from_n_nnf k A (S k))).
-      assert (kA = k').
-      { unfold k'. simpl. inline_pair. simpl. reflexivity. }
-
+      inline_pair in Hx_range.
+      set (kA := snd (from_n_nnf k A (S k))) in *.
+      cbn in Hx_range.
       apply IHA... fold kA. autolia.
   Qed.
 
@@ -431,7 +454,7 @@ Section EquisatModelRange.
       | A IHA
       | A IHA
       ];
-    intros w n k; simpl; ifauto; reflexivity.
+      intros w n k; cbn; (try Nnf.destruct_lit A; cbn); ifauto; reflexivity.
   Qed.
 
 
@@ -570,27 +593,29 @@ Section EquisatModelRange.
           rewrite <- (named_model_changes_sur_only M)...
           apply (Nnf.agree_r A B)...
 
-    - simpl. simpl in Hmnp_lt. ifauto.
-      set (q := snd (from_n_nnf k A (S k))).
-      assert (q = k') as Hqs.
-      { unfold k'. simpl. inline_pair. simpl. reflexivity. }
+    - subst k'. cbn in *.
+      Nnf.destruct_lit A. { cbn in *. lia. }
+      inline_pair in Hx_range. cbn in *.
+      set (q := snd (from_n_nnf k A (S k))) in *.
+      ifauto.
 
-      assert (p = k \/ S k <= p < k') as [Hxp | HSpxs] by lia.
+      assert (p = k \/ S k <= p < q) as [Hxp | HSpxs] by lia.
       + rewrite Hxp.
         repeat rewrite named_model_vals_name_iff_force.
         apply Nnf.meaningful_valuations. assumption.
-      + apply IHA... fold q. lia.
+      + apply IHA...
 
-    - simpl. simpl in Hmnp_lt. ifauto.
-      set (q := snd (from_n_nnf k A (S k))).
-      assert (q = k') as Hqs.
-      { unfold k'. simpl. inline_pair. simpl. reflexivity. }
+    - subst k'. cbn in *.
+      Nnf.destruct_lit A. { cbn in *. lia. }
+      inline_pair in Hx_range. cbn in *.
+      set (q := snd (from_n_nnf k A (S k))) in *.
+      ifauto.
 
-      assert (p = k \/ S k <= p < k') as [Hxp | HSpxs] by lia.
+      assert (p = k \/ S k <= p < q) as [Hxp | HSpxs] by lia.
       + rewrite Hxp.
         repeat rewrite named_model_vals_name_iff_force.
         apply Nnf.meaningful_valuations. assumption.
-      + apply IHA... fold q. lia.
+      + apply IHA...
   Qed.
 End EquisatModelRange.
 
@@ -825,6 +850,24 @@ Section NnfToMcnf.
   Proof with try finish.
     intros A IHA w0 n k Hmnk_lt M' n_val Hn_val.
     cbn.
+
+    Nnf.destruct_lit A. {
+      cbn in Hmnk_lt |- *. autorewrite with list prop. cbn. ifauto.
+
+      intros Hnval_w0 w1 HR_w1.
+      unfold IH in IHA.
+      specialize (IHA w1 n k Hmnk_lt (fun w => Lit.force M w l)).
+      forward IHA by tauto.
+      cbn in IHA. autorewrite with list prop in IHA. cbn in IHA.
+
+      destruct IHA as [l' [[Hl'_nn | [Hl'_l | F]] Hforce_l']]...
+      - exfalso. subst l'. cbn in Hforce_l'. apply Hforce_l'.
+        ifauto. apply (Hn_val w0)...
+      - subst l'.
+        eapply Lit.meaningful_valuations. 2: { exact Hforce_l'. }
+        intros w p Hp_l. cbn in Hp_l. subst p. cbn. ifauto...
+    }
+
     destruct_pair as [A_mcnf kA].
 
     cbn in *. autorewrite with list prop.
@@ -857,6 +900,28 @@ Section NnfToMcnf.
   Proof with try finish.
     intros A IHA w0 n k Hmnk_lt M' n_val Hn_val.
     cbn.
+
+    Nnf.destruct_lit A. {
+      cbn in Hmnk_lt |- *. autorewrite with list prop. cbn. ifauto.
+
+      intro Hn_val_w0.
+      specialize (Hn_val w0 Hn_val_w0).
+      destruct Hn_val as [w1 [HR_w1 Hw1_force_A]].
+      exists w1. split...
+
+      unfold IH in IHA.
+      specialize (IHA w1 n k Hmnk_lt (fun w => Lit.force M w l)).
+      forward IHA by tauto.
+      cbn in IHA. autorewrite with list prop in IHA. cbn in IHA.
+
+      destruct IHA as [l' [[Hl'_nn | [Hl'_l | F]] Hforce_l']]...
+      - exfalso. subst l'. cbn in Hforce_l'. apply Hforce_l'.
+        ifauto.
+      - subst l'.
+        eapply Lit.meaningful_valuations. 2: { exact Hforce_l'. }
+        intros w p Hp_l. cbn in Hp_l. subst p. cbn. ifauto...
+    }
+
     destruct_pair as [A_mcnf kA].
 
     cbn in *. autorewrite with list prop.
@@ -1041,6 +1106,14 @@ Proof with try finish.
   - cbn in Hmnk_lt.
     unfold from_nnf_with_sur in Hforce_mcnf.
     cbn [from_n_nnf] in Hforce_mcnf.
+
+    Nnf.destruct_lit phi. {
+      repeat (cbn in Hforce_mcnf; autorewrite with list prop in Hforce_mcnf).
+      cbn.
+      destruct Hforce_mcnf as [[l' [[Hnl | F] Hforce_l]] Hforce_nl]...
+      subst l'. cbn in Hforce_l. apply Hforce_nl...
+    }
+
     destruct_pair in Hforce_mcnf as [A_mcnf kA].
     cbn [fst] in Hforce_mcnf.
 
@@ -1062,6 +1135,14 @@ Proof with try finish.
   - cbn in Hmnk_lt.
     unfold from_nnf_with_sur in Hforce_mcnf.
     cbn [from_n_nnf] in Hforce_mcnf.
+
+    Nnf.destruct_lit phi. {
+      repeat (cbn in Hforce_mcnf; autorewrite with list prop in Hforce_mcnf).
+      cbn.
+      destruct Hforce_mcnf as [[l' [[Hnl | F] Hforce_l]] Hforce_nl]...
+      subst l'. cbn in Hforce_l. apply Hforce_nl...
+    }
+
     destruct_pair in Hforce_mcnf as [A_mcnf kA].
     cbn [fst] in Hforce_mcnf.
 

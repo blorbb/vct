@@ -29,6 +29,41 @@ Definition unsatisfiable (phi : t) : Prop :=
   forall W R (M : @Kripke.t W R) (w0 : W), ~ force M w0 phi.
 
 
+Definition as_lit (phi : t) : option Lit.t :=
+  match phi with
+  | Lit l => Some l
+  | _ => None
+  end.
+
+
+Lemma as_lit_some_inv : forall phi l, as_lit phi = Some l <-> phi = (Nnf.Lit l).
+Proof.
+  intros phi l.
+  destruct phi; cbn.
+  1: split; intro; now inv_clear H.
+  all: split; intro; discriminate.
+Qed.
+
+
+Lemma as_lit_none : forall {A} (phi : t) (f : Lit.t -> A) (other : A),
+  as_lit phi = None ->
+  (match phi with | Lit l => f l | _ => other end) = other.
+Proof.
+  intros * Hphi_none.
+  destruct phi.
+  1: discriminate.
+  all: reflexivity.
+Qed.
+
+
+Ltac destruct_lit A :=
+  let l := fresh "l" in
+  let H := fresh in
+  destruct (as_lit A) as [l|] eqn:H;
+    [ rewrite as_lit_some_inv in H; repeat (rewrite H in *)
+    | repeat (rewrite (as_lit_none A _ _ H) in *)].
+
+
 Section Conversion.
   Fixpoint negate (phi : t) : t :=
     match phi with
@@ -156,8 +191,7 @@ End Correctness.
 Section Range.
   Fixpoint max_atm (phi : t) : nat :=
     match phi with
-    | Lit (Lit.Pos p) => p
-    | Lit (Lit.Neg p) => p
+    | Lit l => Lit.atm l
     | And A B => Nat.max (max_atm A) (max_atm B)
     | Or  A B => Nat.max (max_atm A) (max_atm B)
     | Box A   => max_atm A
@@ -166,8 +200,7 @@ Section Range.
 
   Fixpoint atm_in (p : nat) (phi : t) : Prop :=
     match phi with
-    | Lit (Lit.Pos q) => p = q
-    | Lit (Lit.Neg q) => p = q
+    | Lit l => p = Lit.atm l
     | And A B => atm_in p A \/ atm_in p B
     | Or  A B => atm_in p A \/ atm_in p B
     | Box A   => atm_in p A

@@ -24,13 +24,21 @@ let rec from_n_nnf n phi k =
        (zip_merge a_mcnf b_mcnf)),
     k3)
   | Box a ->
-    let k0 = Stdlib.Int.succ k in
-    let (a_mcnf, k1) = from_n_nnf k a k0 in
-    (({ cpls = []; boxes = ((n, (Pos k)) :: []); dias = [] } :: a_mcnf), k1)
+    (match a with
+     | Lit l -> (({ cpls = []; boxes = ((n, l) :: []); dias = [] } :: []), k)
+     | _ ->
+       let k0 = Stdlib.Int.succ k in
+       let (a_mcnf, k1) = from_n_nnf k a k0 in
+       (({ cpls = []; boxes = ((n, (Pos k)) :: []); dias = [] } :: a_mcnf),
+       k1))
   | Dia a ->
-    let k0 = Stdlib.Int.succ k in
-    let (a_mcnf, k1) = from_n_nnf k a k0 in
-    (({ cpls = []; boxes = []; dias = ((n, (Pos k)) :: []) } :: a_mcnf), k1)
+    (match a with
+     | Lit l -> (({ cpls = []; boxes = []; dias = ((n, l) :: []) } :: []), k)
+     | _ ->
+       let k0 = Stdlib.Int.succ k in
+       let (a_mcnf, k1) = from_n_nnf k a k0 in
+       (({ cpls = []; boxes = []; dias = ((n, (Pos k)) :: []) } :: a_mcnf),
+       k1))
 
 (** val from_nnf_with_sur : int -> Nnf.t -> int -> Mcnf.t **)
 

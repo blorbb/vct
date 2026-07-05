@@ -32,9 +32,7 @@ let rec from_fml = function
 (** val max_atm : t -> int **)
 
 let rec max_atm = function
-| Lit l -> (match l with
-            | Pos p -> p
-            | Neg p -> p)
+| Lit l -> atm l
 | And (a, b) -> Nat.max (max_atm a) (max_atm b)
 | Or (a, b) -> Nat.max (max_atm a) (max_atm b)
 | Box a -> max_atm a
