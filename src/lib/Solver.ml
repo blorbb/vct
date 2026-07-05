@@ -9,7 +9,7 @@ open DiaClause
 open Fml
 open Lclauses
 open Lit
-open Mchain
+open Mcnf0
 open Search
 open Tree
 open Valuation

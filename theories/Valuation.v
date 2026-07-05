@@ -1,4 +1,4 @@
-From CegarTableaux Require Import ImportStd ListExt Utils.
+From CegarTableaux Require Import ImportStd.
 
 
 (** Valuation represented as a list of forced atoms. *)

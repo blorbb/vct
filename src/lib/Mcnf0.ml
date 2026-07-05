@@ -1,44 +1,42 @@
 open Datatypes
-open ListDef
+open Lclauses
 open Lit
-open Mclause
 open Mcnf
 open Nnf
 
-type t = Mclause.t list
+type t = Lclauses.t list
 
 (** val from_n_nnf : int -> Nnf.t -> int -> Mcnf.t * int **)
 
-let rec from_n_nnf n phi sur =
+let rec from_n_nnf n phi k =
   match phi with
-  | Lit l -> (((Cpl ((Neg n) :: (l :: []))) :: []), sur)
+  | Lit l -> (((make_cpls (((Neg n) :: (l :: [])) :: [])) :: []), k)
   | And (a, b) ->
-    let sur0 = Stdlib.Int.succ sur in
-    let sur1 = Stdlib.Int.succ sur0 in
-    let (a_mcnf, sur2) = from_n_nnf sur a sur1 in
-    let (b_mcnf, sur3) = from_n_nnf sur0 b sur2 in
-    (((Cpl ((Neg n) :: ((Pos sur) :: []))) :: ((Cpl ((Neg n) :: ((Pos
-    sur0) :: []))) :: (app a_mcnf b_mcnf))), sur3)
+    let (a_mcnf, k0) = from_n_nnf n a k in
+    let (b_mcnf, k1) = from_n_nnf n b k0 in ((zip_merge a_mcnf b_mcnf), k1)
   | Or (a, b) ->
-    let sur0 = Stdlib.Int.succ sur in
-    let sur1 = Stdlib.Int.succ sur0 in
-    let (a_mcnf, sur2) = from_n_nnf sur a sur1 in
-    let (b_mcnf, sur3) = from_n_nnf sur0 b sur2 in
-    (((Cpl ((Neg n) :: ((Pos sur) :: ((Pos
-    sur0) :: [])))) :: (app a_mcnf b_mcnf)), sur3)
+    let k0 = Stdlib.Int.succ k in
+    let k1 = Stdlib.Int.succ k0 in
+    let (a_mcnf, k2) = from_n_nnf k a k1 in
+    let (b_mcnf, k3) = from_n_nnf k0 b k2 in
+    ((zip_merge
+       ((make_cpls (((Neg n) :: ((Pos k) :: ((Pos k0) :: []))) :: [])) :: [])
+       (zip_merge a_mcnf b_mcnf)),
+    k3)
   | Box a ->
-    let sur0 = Stdlib.Int.succ sur in
-    let (a_mcnf, sur1) = from_n_nnf sur a sur0 in
-    (((Mclause.Box (n, (Pos sur))) :: (map (fun x -> Ctx x) a_mcnf)), sur1)
+    let k0 = Stdlib.Int.succ k in
+    let (a_mcnf, k1) = from_n_nnf k a k0 in
+    (({ cpls = []; boxes = ((n, (Pos k)) :: []); dias = [] } :: a_mcnf), k1)
   | Dia a ->
-    let sur0 = Stdlib.Int.succ sur in
-    let (a_mcnf, sur1) = from_n_nnf sur a sur0 in
-    (((Mclause.Dia (n, (Pos sur))) :: (map (fun x -> Ctx x) a_mcnf)), sur1)
+    let k0 = Stdlib.Int.succ k in
+    let (a_mcnf, k1) = from_n_nnf k a k0 in
+    (({ cpls = []; boxes = []; dias = ((n, (Pos k)) :: []) } :: a_mcnf), k1)
 
 (** val from_nnf_with_sur : int -> Nnf.t -> int -> Mcnf.t **)
 
-let from_nnf_with_sur name phi sur =
-  (Cpl ((Pos name) :: [])) :: (fst (from_n_nnf name phi sur))
+let from_nnf_with_sur n phi k =
+  zip_merge ((make_cpls (((Pos n) :: []) :: [])) :: [])
+    (fst (from_n_nnf n phi k))
 
 (** val from_nnf : Nnf.t -> Mcnf.t **)
 

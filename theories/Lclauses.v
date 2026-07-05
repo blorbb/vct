@@ -17,10 +17,6 @@ Definition empty := make [] [] [].
 Definition make_cpls cpls := make cpls [] [].
 
 
-(** Merge two sets of local clauses into one. *)
-Definition merge (A B : t) : t :=
-  make (cpls A ++ cpls B) (boxes A ++ boxes B) (dias A ++ dias B).
-
 
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   Cnf.force M w0 (cpls phi) /\
@@ -28,18 +24,6 @@ Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   List.Forall (DiaClause.force M w0) (dias phi).
 
 Arguments force {W R} M w0 phi /.
-
-
-Lemma force_merge_and : forall {W} {R} {M : @Kripke.t W R} {w0 : W} (A B : t),
-  force M w0 (merge A B) <-> force M w0 A /\ force M w0 B.
-Proof.
-  intros W R M w0 A B.
-  destruct A as [cpls boxes dias].
-
-  unfold force, merge; cbn.
-  repeat rewrite List.Forall_app.
-  intuition.
-Qed.
 
 
 Definition atm_in (p : nat) (phi : t) : Prop :=
@@ -162,4 +146,31 @@ Proof with try easy.
     destruct Hp_dias as [dia [Hdia_dias Hp_dia]].
     apply DiaClause.atm_le_max in Hp_dia.
     apply nat_le_mapped_list_max with (a := dia)...
+Qed.
+
+
+(** Merge two sets of local clauses into one. *)
+Definition merge (A B : t) : t :=
+  make (cpls A ++ cpls B) (boxes A ++ boxes B) (dias A ++ dias B).
+
+
+Lemma force_merge_and : forall {W} {R} {M : @Kripke.t W R} {w0 : W} (A B : t),
+  force M w0 (merge A B) <-> force M w0 A /\ force M w0 B.
+Proof.
+  intros W R M w0 A B.
+  destruct A as [cpls boxes dias].
+
+  unfold force, merge; cbn.
+  repeat rewrite List.Forall_app.
+  intuition.
+Qed.
+
+
+Lemma in_merge_or : forall (A B : t) (p : nat),
+  atm_in p (merge A B) <-> atm_in p A \/ atm_in p B.
+Proof.
+  intros *.
+  destruct A as [Acpls Aboxes Adias].
+  destruct B as [Bcpls Bboxes Bdias].
+  cbn. repeat rewrite Exists_app. tauto.
 Qed.

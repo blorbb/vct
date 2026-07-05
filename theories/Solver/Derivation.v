@@ -1,8 +1,8 @@
 (** A concrete derivation of unsatisfiability. *)
 
-From CegarTableaux Require Mchain Assumptions CplSolver Lclauses.
-From CegarTableaux Require Import ImportStd Utils.
-From CegarTableaux.Solver Require Import MchainExt.
+From CegarTableaux Require Mcnf Assumptions CplSolver Lclauses.
+From CegarTableaux Require Import ImportStd.
+From CegarTableaux.Solver Require Import McnfExt.
 
 
 (** A closed tableau derivation.
@@ -34,7 +34,7 @@ Fixpoint get_core (t : t) :=
   end.
 
 
-Inductive conds : Mchain.t -> Assumptions.t -> t -> Prop :=
+Inductive conds : Mcnf.t -> Assumptions.t -> t -> Prop :=
 | IdCond : forall mc0 A core, CplSolution.Unsat core = cpl_solve mc0 A -> conds mc0 A (Id core)
 | JumpRestartCond : forall mc0 A V failed_dia jump_deriv rs_deriv,
   CplSolution.Sat V = cpl_solve mc0 A ->

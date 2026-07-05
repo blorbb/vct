@@ -1,5 +1,5 @@
 From CegarTableaux Require Kripke Valuation.
-From CegarTableaux Require Import ImportStd ListExt Utils.
+From CegarTableaux Require Import ImportStd.
 
 (** A positive or negative literal. *)
 Inductive t : Set :=

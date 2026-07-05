@@ -1,5 +1,5 @@
-From CegarTableaux Require Import ImportStd Utils.
-From CegarTableaux.Solver Require Import Search MchainExt.
+From CegarTableaux Require Import ImportStd.
+From CegarTableaux.Solver Require Import Search McnfExt.
 From CegarTableaux.Solver Require Derivation.
 From CegarTableaux Require Cnf.
 
@@ -97,8 +97,8 @@ Proof with auto.
 Qed.
 
 (** The derivation conditions are held for the [solve_*] functions. *)
-Corollary solve_mchain_deriv : forall phi core deriv,
-  Spec.Solution.Unsat core deriv = Spec.solve_mchain phi ->
+Corollary solve_mcnf_deriv : forall phi core deriv,
+  Spec.Solution.Unsat core deriv = Spec.solve_mcnf phi ->
   Derivation.conds phi [] deriv.
 Proof.
   intros *. intros Hunsat.
@@ -109,9 +109,9 @@ Qed.
 
 Corollary solve_fml_deriv : forall phi core deriv,
   Spec.Solution.Unsat core deriv = Spec.solve_fml phi ->
-  Derivation.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mchain.from_mcnf) [] deriv.
+  Derivation.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf) [] deriv.
 Proof.
-  intros. eapply solve_mchain_deriv. exact H.
+  intros. eapply solve_mcnf_deriv. exact H.
 Qed.
 
 
@@ -121,19 +121,19 @@ Qed.
 
 (** Some helpers to simplify unsat goals. *)
 
-Lemma cnf_unsat_subset : forall phi, Cnf.unsatisfiable (first_cpls phi) -> Mchain.unsatisfiable phi.
+Lemma cnf_unsat_subset : forall phi, Cnf.unsatisfiable (first_cpls phi) -> Mcnf.unsatisfiable phi.
 Proof.
   intros phi. induction phi as [|l0 mc1].
   - cbn. intros Hcnf_unsat Hm_sat.
     unfold Cnf.unsatisfiable, Cnf.satisfiable in Hcnf_unsat.
-    unfold Mchain.satisfiable in Hm_sat.
+    unfold Mcnf.satisfiable in Hm_sat.
     destruct Hm_sat as [W [R [M [mc0 _]]]].
     apply Hcnf_unsat.
     exists W, R, M, mc0. cbn.
     now apply List.Forall_nil_iff.
   - cbn. intros Hcnf_unsat Hm_sat.
     unfold Cnf.unsatisfiable, Cnf.satisfiable in Hcnf_unsat.
-    unfold Mchain.satisfiable in Hm_sat.
+    unfold Mcnf.satisfiable in Hm_sat.
     destruct Hm_sat as [W [R [M [mc0 Hforce]]]].
     apply Hcnf_unsat.
     exists W, R, M, mc0.
@@ -142,10 +142,10 @@ Proof.
 Qed.
 
 
-Lemma mchain_cpls : forall {cpls cpls' boxes dias mc1},
-  Mchain.unsatisfiable (Lclauses.make cpls boxes dias :: mc1) ->
+Lemma Mcnf_cpls : forall {cpls cpls' boxes dias mc1},
+  Mcnf.unsatisfiable (Lclauses.make cpls boxes dias :: mc1) ->
   (forall W R (M : @Kripke.t W R) mc0, Cnf.force M mc0 cpls' -> Cnf.force M mc0 cpls) ->
-  Mchain.unsatisfiable (Lclauses.make cpls' boxes dias :: mc1).
+  Mcnf.unsatisfiable (Lclauses.make cpls' boxes dias :: mc1).
 Proof.
   intros * Hunsat Himpl [W [R [M [mc0 Hforce]]]]. apply Hunsat.
   exists W, R, M, mc0. cbn in Hforce |- *. auto with solve_subterm.
@@ -177,7 +177,7 @@ Qed.
 
 (** Weird definition to fit the contexts this is used in. *)
 Lemma force_first_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls boxes dias,
-  Mchain.force M w0 mc0 ->
+  Mcnf.force M w0 mc0 ->
   first_ctx mc0 = Lclauses.make cpls boxes dias ->
   Cnf.force M w0 cpls.
 Proof.
@@ -188,9 +188,9 @@ Qed.
 
 Lemma force_new_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls' cpls boxes dias,
   first_ctx mc0 = Lclauses.make cpls boxes dias ->
-  Mchain.force M w0 mc0 ->
+  Mcnf.force M w0 mc0 ->
   Cnf.force M w0 cpls' ->
-  Mchain.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: next_ctx mc0).
+  Mcnf.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: next_ctx mc0).
 Proof.
   intros * Hl0_eq Hforce_w0 Hforce_cpls'. destruct mc0 as [|l0 mc1].
   - cbn in *. inversion_clear Hl0_eq. intuition.
@@ -199,10 +199,10 @@ Proof.
     apply Forall_app; auto.
 Qed.
 
-Lemma mchain_resolution : forall mc0 (A : list Lit.t),
-  Mchain.unsatisfiable (add_assumptions mc0 A) ->
-  Mchain.unsatisfiable (add_neg_assumptions mc0 A) ->
-  Mchain.unsatisfiable mc0.
+Lemma Mcnf_resolution : forall mc0 (A : list Lit.t),
+  Mcnf.unsatisfiable (add_assumptions mc0 A) ->
+  Mcnf.unsatisfiable (add_neg_assumptions mc0 A) ->
+  Mcnf.unsatisfiable mc0.
 Proof with try easy; auto.
   intros mc0 cs Hcs Hncs [W [R [M [w Hforce]]]].
   apply Hncs. exists W, R, M, w.
@@ -216,12 +216,12 @@ Proof with try easy; auto.
   - apply (force_first_cpls mc0 cpls boxes dias)...
 Qed.
 
-Corollary mchain_resolution_cs : forall mc0 (cs : list nat),
-  Mchain.unsatisfiable (add_conflict_set mc0 cs) ->
-  Mchain.unsatisfiable (add_assumptions mc0 (List.map Lit.Pos cs)) ->
-  Mchain.unsatisfiable mc0.
+Corollary Mcnf_resolution_cs : forall mc0 (cs : list nat),
+  Mcnf.unsatisfiable (add_conflict_set mc0 cs) ->
+  Mcnf.unsatisfiable (add_assumptions mc0 (List.map Lit.Pos cs)) ->
+  Mcnf.unsatisfiable mc0.
 Proof.
-  intros * Hcs HA. apply mchain_resolution with (A := (List.map Lit.Pos cs)).
+  intros * Hcs HA. apply Mcnf_resolution with (A := (List.map Lit.Pos cs)).
   - easy.
   - cbn in *. rewrite List.map_map. cbn. apply Hcs.
 Qed.
@@ -251,7 +251,7 @@ Qed.
 
 Theorem deriv_sound : forall mc0 A deriv,
   Derivation.conds mc0 A deriv ->
-  Mchain.unsatisfiable (add_assumptions mc0 (Derivation.get_core deriv)).
+  Mcnf.unsatisfiable (add_assumptions mc0 (Derivation.get_core deriv)).
 Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   intros mc0 A deriv Hconds.
   induction Hconds as
@@ -271,11 +271,11 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   - destruct failed_dia as [c d]; cbn [fst snd] in *.
     cbn [Derivation.get_core].
     set (cs := conflict_set_of mc0 V c (Derivation.get_core jump_deriv)) in *.
-    apply mchain_resolution_cs with (cs := cs).
+    apply Mcnf_resolution_cs with (cs := cs).
     (* mc0 /\ ~cs *)
     + clear -IHrs. fold cs.
       destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
-      apply (mchain_cpls IHrs).
+      apply (Mcnf_cpls IHrs).
       intros W R M w0 Hforce.
       rewrite Cnf.permutation_force. { exact Hforce. }
       symmetry. cbn. apply Permutation_middle.
@@ -341,13 +341,13 @@ Qed.
 (** ** Soundness of tableau *)
 
 
-Corollary solve_mchain_sound : forall mc0,
-  Spec.Solution.is_sat (Spec.solve_mchain mc0) = false ->
-  Mchain.unsatisfiable mc0.
+Corollary solve_mcnf_sound : forall mc0,
+  Spec.Solution.is_sat (Spec.solve_mcnf mc0) = false ->
+  Mcnf.unsatisfiable mc0.
 Proof with try easy.
-  intros mc0 Hunsat. destruct (Spec.solve_mchain mc0) eqn:Hsolve...
+  intros mc0 Hunsat. destruct (Spec.solve_mcnf mc0) eqn:Hsolve...
   clear Hunsat.
-  pose proof (solve_mchain_deriv mc0 core deriv (eq_sym Hsolve)) as Hconds.
+  pose proof (solve_mcnf_deriv mc0 core deriv (eq_sym Hsolve)) as Hconds.
   pose proof (deriv_sound mc0 [] deriv Hconds) as Hunsat.
   assert (Derivation.get_core deriv = []) as Hderiv. {
     apply incl_l_nil. apply deriv_core_incl_A with (mc0 := mc0)...
@@ -367,20 +367,19 @@ Proof.
   intros phi Hunsat Hsat.
   rewrite Nnf.equisat_fml in Hsat.
   rewrite Mcnf.equisat_nnf in Hsat.
-  rewrite Mchain.equisat_mcnf in Hsat.
-  eapply solve_mchain_sound.
+  eapply solve_mcnf_sound.
   - exact Hunsat.
   - exact Hsat.
 Qed.
 
 
-Corollary solve_mchain_sound_contrapos : forall mc0,
-  Mchain.satisfiable mc0 ->
-  Spec.Solution.is_sat (Spec.solve_mchain mc0) = true.
+Corollary solve_mcnf_sound_contrapos : forall mc0,
+  Mcnf.satisfiable mc0 ->
+  Spec.Solution.is_sat (Spec.solve_mcnf mc0) = true.
 Proof with try easy.
   intros mc0 Hsat. unfold Spec.Solution.is_sat.
-  destruct (Spec.solve_mchain mc0) eqn:Hunsat...
-  exfalso. apply (solve_mchain_sound mc0)...
+  destruct (Spec.solve_mcnf mc0) eqn:Hunsat...
+  exfalso. apply (solve_mcnf_sound mc0)...
   now rewrite Hunsat.
 Qed.
 
@@ -390,6 +389,6 @@ Corollary solve_fml_sound_contrapos : forall phi,
   Spec.Solution.is_sat (Spec.solve_fml phi) = true.
 Proof with try easy.
   intros phi. unfold Spec.solve_fml, "|>".
-  rewrite Nnf.equisat_fml, Mcnf.equisat_nnf, Mchain.equisat_mcnf.
-  apply solve_mchain_sound_contrapos.
+  rewrite Nnf.equisat_fml, Mcnf.equisat_nnf.
+  apply solve_mcnf_sound_contrapos.
 Qed.

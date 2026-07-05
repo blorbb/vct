@@ -11,9 +11,9 @@
     use the proof language rather than trying to do some stuff with function application. *)
 
 
-From CegarTableaux Require CplSolver Lit Mchain Assumptions Valuation Tree.
+From CegarTableaux Require CplSolver Lit Mcnf Assumptions Valuation Tree.
 From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import MchainExt.
+From CegarTableaux.Solver Require Import McnfExt.
 From CegarTableaux.Solver Require Derivation.
 
 
@@ -119,7 +119,7 @@ Module Spec.
     (* Actual arguments. *)
     (V : Valuation.t)
     (l0 : Lclauses.t)
-    (mc1 : Mchain.t)
+    (mc1 : Mcnf.t)
     (* The [tableau] function below with [mc1] and
       [s1 := CplSolver.make_with_clauses (first_cpls mc1)]. *)
     (next_tableau : Assumptions.t -> Solution.t)
@@ -174,7 +174,7 @@ Module Spec.
     (A : Assumptions.t)
     (* The CPL clauses of the current world and maybe extra conflict sets. *)
     (s0 : CplSolver.t)
-    (mc0 : Mchain.t)
+    (mc0 : Mcnf.t)
     : Solution.t
     by wf (
       List.length mc0,
@@ -225,7 +225,7 @@ Module Spec.
 
 
   (** Solve a formula by applying [tableau] with the correct arguments. *)
-  Definition solve_mchain (mc0 : Mchain.t) : Solution.t :=
+  Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
     let cpls := first_cpls mc0 in
     let s0 := (CplSolver.make_with_clauses cpls) in
     tableau [] s0 mc0.
@@ -233,7 +233,7 @@ Module Spec.
 
   (** Solve a [Fml.t] formula by converting first. *)
   Definition solve_fml (phi : Fml.t) : Solution.t :=
-    phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mchain.from_mcnf |> solve_mchain.
+    phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 End Spec.
 
 
@@ -246,7 +246,7 @@ Module TailRec.
     (* Actual arguments. *)
     (V : Valuation.t)
     (l0 : Lclauses.t)
-    (mc1 : Mchain.t)
+    (mc1 : Mcnf.t)
     (* Previous sibling satisfying models. *)
     (T1s : list Tree.t)
     (* The [tableau] function below with [mc1] and
@@ -308,7 +308,7 @@ Module TailRec.
   Equations tableau
     (A : Assumptions.t)
     (s0 : CplSolver.t)
-    (mc0 : Mchain.t)
+    (mc0 : Mcnf.t)
     : Solution.t
     by wf (
       List.length mc0,
@@ -350,7 +350,7 @@ Module TailRec.
 
 
   (** Solve a formula by applying [tableau] with the correct arguments. *)
-  Definition solve_mchain (mc0 : Mchain.t) : Solution.t :=
+  Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
     let cpls := first_cpls mc0 in
     let s0 := (CplSolver.make_with_clauses cpls) in
     tableau [] s0 mc0.
@@ -358,7 +358,7 @@ Module TailRec.
 
   (** Solve a [Fml.t] formula by converting first. *)
   Definition solve_fml (phi : Fml.t) : Solution.t :=
-    phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mchain.from_mcnf |> solve_mchain.
+    phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 
 
   Lemma tableau_spec : forall A s0 mc0,
@@ -447,7 +447,7 @@ Module NoModel.
     (* Actual arguments. *)
     (V : Valuation.t)
     (l0 : Lclauses.t)
-    (mc1 : Mchain.t)
+    (mc1 : Mcnf.t)
     (* The [tableau] function below with [mc1] and
       [s1 := CplSolver.make_with_clauses (first_cpls mc1)]. *)
     (next_tableau : Assumptions.t -> Solution.t)
@@ -491,7 +491,7 @@ Module NoModel.
   Equations tableau
     (A : Assumptions.t)
     (s0 : CplSolver.t)
-    (mc0 : Mchain.t)
+    (mc0 : Mcnf.t)
     : Solution.t
     by wf (
       List.length mc0,
@@ -527,7 +527,7 @@ Module NoModel.
 
 
   (** Solve a formula by applying [tableau] with the correct arguments. *)
-  Definition solve_mchain (mc0 : Mchain.t) : Solution.t :=
+  Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
     let cpls := first_cpls mc0 in
     let s0 := (CplSolver.make_with_clauses cpls) in
     tableau [] s0 mc0.
@@ -535,7 +535,7 @@ Module NoModel.
 
   (** Solve a [Fml.t] formula by converting first. *)
   Definition solve_fml (phi : Fml.t) : Solution.t :=
-    phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mchain.from_mcnf |> solve_mchain.
+    phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 
 
   Definition next_tableau mc1 := fun A' =>

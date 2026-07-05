@@ -1,5 +1,5 @@
 From CegarTableaux Require Lit Kripke Fml.
-From CegarTableaux Require Import ImportStd Utils.
+From CegarTableaux Require Import ImportStd.
 
 
 (** A modal formula in negation normal form. *)

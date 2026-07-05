@@ -1,3 +1,5 @@
-open Mclause
+open Lclauses
 
-type t = Mclause.t list
+type t = Lclauses.t list
+
+val zip_merge : t -> t -> t

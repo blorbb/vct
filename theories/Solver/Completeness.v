@@ -1,5 +1,5 @@
 From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import Search MchainExt.
+From CegarTableaux.Solver Require Import Search McnfExt.
 From CegarTableaux.Solver Require Derivation.
 
 (** Completeness of the [Spec] implementation. *)
@@ -7,7 +7,7 @@ From CegarTableaux.Solver Require Derivation.
 Lemma singleton_tree_force : forall s0 A V cpls boxes mc1,
   CplSolution.Sat V = CplSolver.solve_with_assumptions s0 A ->
   cpls = CplSolver.clauses_of s0 ->
-  Mchain.force Tree.as_kripke (Tree.make V [])
+  Mcnf.force Tree.as_kripke (Tree.make V [])
     (add_assumptions (Lclauses.make cpls boxes [] :: mc1) A).
 Proof with try easy; auto with datatypes ct.
   intros * Hsat Hcpls. cbn. repeat rewrite List.Forall_forall. repeat split...
@@ -20,8 +20,8 @@ Qed.
 
 
 Lemma force_no_assumptions : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 A,
-  Mchain.force M w0 (add_assumptions mc0 A) ->
-  Mchain.force M w0 mc0.
+  Mcnf.force M w0 (add_assumptions mc0 A) ->
+  Mcnf.force M w0 mc0.
 Proof.
   intros * Hforce. destruct mc0 as [|l0 mc1].
   - cbn. apply I.
@@ -33,10 +33,10 @@ Lemma tableau_jumps_completeness : forall s0 A V l0 mc1 T1s,
   Spec.JumpSolution.Sat T1s = Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) ->
   (forall A' T0,
     Spec.Solution.Sat T0 = Spec.next_tableau mc1 A' ->
-    Mchain.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
+    Mcnf.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
   s0 = CplSolver.make_with_clauses (Lclauses.cpls l0) ->
   CplSolution.Sat V = CplSolver.solve_with_assumptions s0 A ->
-  Mchain.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
+  Mcnf.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsat IHnt Hs0 Hcpl_sat.
 
@@ -51,7 +51,7 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   - discriminate.
   (* Fired dia clause. *)
   - inversion Hsat as [HT1s]. rename T1s0 into T1s, T1s into T1s', T1 into T1d. clear Hsat.
-    cbn -[Mchain.force].
+    cbn -[Mcnf.force].
 
     cbn [Lclauses.cpls] in Hcpl_sat.
     specialize (Hind (CplSolver.make_with_clauses cpls) A T1s').
@@ -110,7 +110,7 @@ Qed.
 Theorem tableau_completeness : forall A s0 mc0 T,
   Spec.Solution.Sat T = Spec.tableau A s0 mc0 ->
   s0 = CplSolver.make_with_clauses (first_cpls mc0) ->
-  Mchain.force Tree.as_kripke T (add_assumptions mc0 A).
+  Mcnf.force Tree.as_kripke T (add_assumptions mc0 A).
 Proof with try easy; auto with datatypes ct.
   intros A s0 mc0 T Hsat Hs0.
 
@@ -138,12 +138,12 @@ Proof with try easy; auto with datatypes ct.
 Qed.
 
 
-Corollary solve_mchain_complete_force : forall mc0 T,
-  Spec.Solution.Sat T = Spec.solve_mchain mc0 ->
-  Mchain.force Tree.as_kripke T mc0.
+Corollary solve_mcnf_complete_force : forall mc0 T,
+  Spec.Solution.Sat T = Spec.solve_mcnf mc0 ->
+  Mcnf.force Tree.as_kripke T mc0.
 Proof.
   intros mc0 T Hsat.
-  unfold Spec.solve_mchain in Hsat.
+  unfold Spec.solve_mcnf in Hsat.
   apply tableau_completeness in Hsat; auto.
   destruct mc0.
   - cbn. apply I.
@@ -158,23 +158,23 @@ Corollary solve_fml_complete_force : forall phi T,
   Fml.force Tree.as_kripke T phi.
 Proof.
   intros phi T Hsat.
-  apply solve_mchain_complete_force in Hsat.
+  apply solve_mcnf_complete_force in Hsat.
   apply Nnf.equiv_fml.
   eapply Mcnf.mcnf_to_nnf_forces.
-  2: { rewrite Mchain.equiv_mcnf. exact Hsat. }
+  2: { exact Hsat. }
   cbn. lia.
 Qed.
 
 
-Corollary solve_mchain_complete : forall mc0,
-  Spec.Solution.is_sat (Spec.solve_mchain mc0) = true ->
-  Mchain.satisfiable mc0.
+Corollary solve_mcnf_complete : forall mc0,
+  Spec.Solution.is_sat (Spec.solve_mcnf mc0) = true ->
+  Mcnf.satisfiable mc0.
 Proof with try easy.
   intros mc0 Hsat.
   unfold Spec.Solution.is_sat in Hsat.
-  destruct (Spec.solve_mchain mc0) eqn:Hsol_sat...
+  destruct (Spec.solve_mcnf mc0) eqn:Hsol_sat...
   symmetry in Hsol_sat.
-  apply solve_mchain_complete_force in Hsol_sat.
+  apply solve_mcnf_complete_force in Hsol_sat.
   exists _, _, Tree.as_kripke, T0. exact Hsol_sat.
 Qed.
 

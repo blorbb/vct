@@ -1,11 +1,10 @@
 open Datatypes
-open ListDef
+open Lclauses
 open Lit
-open Mclause
 open Mcnf
 open Nnf
 
-type t = Mclause.t list
+type t = Lclauses.t list
 
 val from_n_nnf : int -> Nnf.t -> int -> Mcnf.t * int
 

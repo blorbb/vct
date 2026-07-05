@@ -4,14 +4,13 @@ From Stdlib Require List.
 Import List.ListNotations.
 Open Scope list_scope.
 From Stdlib Require Import Relations SetoidPermutation Permutation RelationClasses SetoidList PeanoNat Lia Classical.
-From CegarTableaux Require Import Utils.
+From CegarTableaux Require Import Tactics.
 
-Create Rewrite HintDb datatypes.
 
 Lemma In_singleton : forall {A} (x y : A), List.In x [y] <-> x = y.
 Proof.
   intros *. cbn. intuition.
-Qed. Global Hint Rewrite @In_singleton : datatypes.
+Qed. Global Hint Rewrite @In_singleton : list.
 
 
 Lemma ex_eqA_iff_inA : forall {A} (eqA : relation A) (x : A) (l : list A),
@@ -419,7 +418,4 @@ Qed.
 Lemma Exists_singleton : forall {A} (P : A -> Prop) (x : A),
   List.Exists P [x] <-> P x.
 Proof. intros *. rewrite Exists_cons, Exists_nil. tauto. Qed.
-Hint Rewrite @Exists_singleton : datatypes.
-
-Hint Rewrite Exists_nil : datatypes.
-Hint Rewrite Forall_nil : datatypes.
+Hint Rewrite @Exists_singleton : list.

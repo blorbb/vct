@@ -1,5 +1,5 @@
 From CegarTableaux.Solver Require Search Derivation Soundness Completeness.
-From CegarTableaux.Solver Require Import MchainExt.
+From CegarTableaux.Solver Require Import McnfExt.
 From CegarTableaux Require Import ImportStd.
 
 Include Search.
@@ -18,7 +18,7 @@ Qed.
 Corollary tailrec_solve_fml_sound_complete : forall phi,
   Fml.satisfiable phi <-> TailRec.Solution.is_sat (TailRec.solve_fml phi) = true.
 Proof.
-  unfold TailRec.solve_fml, TailRec.solve_mchain.
+  unfold TailRec.solve_fml, TailRec.solve_mcnf.
   setoid_rewrite <- TailRec.tableau_spec.
   apply solve_fml_sound_complete.
 Qed.

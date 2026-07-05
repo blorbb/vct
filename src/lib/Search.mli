@@ -8,17 +8,16 @@ open Datatypes
 open Derivation
 open DiaClause
 open Fml
+open ImportStd
 open Lclauses
 open List
 open ListDef
 open Lit
 open Logic
-open Mchain
-open MchainExt
 open Mcnf0
+open McnfExt
 open Nnf
 open Tree
-open Utils
 open Valuation
 
 type __ = Obj.t
@@ -57,411 +56,409 @@ module Spec :
 
   val tableau_jumps_clause_2_clause_2_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t -> JumpSolution.t
 
   val tableau_jumps_clause_2_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Solution.t -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Solution.t -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps_functional :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t
 
   val tableau_jumps_unfold_clause_2_clause_2_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
     JumpSolution.t -> JumpSolution.t
 
   val tableau_jumps_unfold_clause_2_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Solution.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Solution.t ->
     JumpSolution.t
 
   val tableau_jumps_unfold_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t
 
   val tableau_jumps_unfold :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t
 
   type tableau_jumps_graph =
   | Coq_tableau_jumps_graph_equation_1 of t * CplClause.t list
-     * BoxClause.t list * Mchain.t * (Assumptions.t -> Solution.t)
+     * BoxClause.t list * Mcnf0.t * (Assumptions.t -> Solution.t)
   | Coq_tableau_jumps_graph_refinement_2 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * (Assumptions.t -> Solution.t) * tableau_jumps_clause_2_graph
   and tableau_jumps_clause_2_graph =
   | Coq_tableau_jumps_clause_2_graph_refinement_1 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * (Assumptions.t -> Solution.t) * tableau_jumps_clause_2_clause_2_graph
   | Coq_tableau_jumps_clause_2_graph_equation_2 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * (Assumptions.t -> Solution.t) * tableau_jumps_graph
   and tableau_jumps_clause_2_clause_2_graph =
   | Coq_tableau_jumps_clause_2_clause_2_graph_refinement_1 of t
      * CplClause.t list * BoxClause.t list * int * Lit.t * DiaClause.t list
-     * Mchain.t * (Assumptions.t -> Solution.t) * Tree.t
-     * tableau_jumps_graph * tableau_jumps_clause_2_clause_2_clause_2_graph
+     * Mcnf0.t * (Assumptions.t -> Solution.t) * Tree.t * tableau_jumps_graph
+     * tableau_jumps_clause_2_clause_2_clause_2_graph
   | Coq_tableau_jumps_clause_2_clause_2_graph_equation_2 of t
      * CplClause.t list * BoxClause.t list * int * Lit.t * DiaClause.t list
-     * Mchain.t * (Assumptions.t -> Solution.t) * Assumptions.t * Derivation.t
+     * Mcnf0.t * (Assumptions.t -> Solution.t) * Assumptions.t * Derivation.t
   and tableau_jumps_clause_2_clause_2_clause_2_graph =
   | Coq_tableau_jumps_clause_2_clause_2_clause_2_graph_equation_1 of 
      t * CplClause.t list * BoxClause.t list * int * Lit.t * DiaClause.t list
-     * Mchain.t * (Assumptions.t -> Solution.t) * Tree.t * Tree.t list
+     * Mcnf0.t * (Assumptions.t -> Solution.t) * Tree.t * Tree.t list
   | Coq_tableau_jumps_clause_2_clause_2_clause_2_graph_equation_2 of 
      t * CplClause.t list * BoxClause.t list * int * Lit.t * DiaClause.t list
-     * Mchain.t * (Assumptions.t -> Solution.t) * Tree.t * DiaClause.t
+     * Mcnf0.t * (Assumptions.t -> Solution.t) * Tree.t * DiaClause.t
      * Assumptions.t * Derivation.t
 
   val tableau_jumps_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
     tableau_jumps_graph -> 'a1 ->
     tableau_jumps_clause_2_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
     Derivation.t -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t)
+    -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t)
     -> Tree.t -> Tree.t list -> 'a4) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
-    'a4) -> t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    'a4) -> t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t -> tableau_jumps_graph -> 'a1
 
   val tableau_jumps_clause_2_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
     tableau_jumps_graph -> 'a1 ->
     tableau_jumps_clause_2_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
     Derivation.t -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t)
+    -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t)
     -> Tree.t -> Tree.t list -> 'a4) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
     'a4) -> t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t
-    -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t -> tableau_jumps_clause_2_graph -> 'a2
 
   val tableau_jumps_clause_2_clause_2_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
     tableau_jumps_graph -> 'a1 ->
     tableau_jumps_clause_2_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
     Derivation.t -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t)
+    -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t)
     -> Tree.t -> Tree.t list -> 'a4) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
     'a4) -> t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     Solution.t -> JumpSolution.t -> tableau_jumps_clause_2_clause_2_graph ->
     'a3
 
   val tableau_jumps_clause_2_clause_2_clause_2_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
     tableau_jumps_graph -> 'a1 ->
     tableau_jumps_clause_2_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
     Derivation.t -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t)
+    -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t)
     -> Tree.t -> Tree.t list -> 'a4) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
     'a4) -> t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t
-    -> JumpSolution.t -> JumpSolution.t ->
+    DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    JumpSolution.t -> JumpSolution.t ->
     tableau_jumps_clause_2_clause_2_clause_2_graph -> 'a4
 
   val tableau_jumps_graph_rect :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t ->
     tableau_jumps_graph -> 'a1 ->
     tableau_jumps_clause_2_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Assumptions.t ->
     Derivation.t -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t)
+    -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t)
     -> Tree.t -> Tree.t list -> 'a4) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
-    'a4) -> t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    'a4) -> t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t -> tableau_jumps_graph -> 'a1
 
   val tableau_jumps_graph_correct :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_graph
 
   val tableau_jumps_elim :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> 'a1 -> __ -> 'a1) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Assumptions.t -> Derivation.t -> __ -> __ -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t -> Tree.t list ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t -> Tree.t list ->
     __ -> 'a1 -> __ -> __ -> 'a1) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
-    __ -> 'a1 -> __ -> __ -> 'a1) -> t -> Lclauses.t -> Mchain.t ->
+    __ -> 'a1 -> __ -> __ -> 'a1) -> t -> Lclauses.t -> Mcnf0.t ->
     (Assumptions.t -> Solution.t) -> 'a1
 
   val coq_FunctionalElimination_tableau_jumps :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> __) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> __ -> __ -> __) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Assumptions.t -> Derivation.t -> __ -> __ -> __) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) -> Tree.t -> Tree.t list ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Tree.t -> Tree.t list ->
     __ -> __ -> __ -> __ -> __) -> (t -> CplClause.t list -> BoxClause.t list
-    -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> Tree.t -> DiaClause.t -> Assumptions.t -> Derivation.t ->
-    __ -> __ -> __ -> __ -> __) -> t -> Lclauses.t -> Mchain.t ->
+    __ -> __ -> __ -> __ -> __) -> t -> Lclauses.t -> Mcnf0.t ->
     (Assumptions.t -> Solution.t) -> __
 
   val coq_FunctionalInduction_tableau_jumps :
-    (t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    (t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t) coq_FunctionalInduction
 
   val tableau_clause_1_clause_2_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
-    list -> (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t
+    list -> (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     JumpSolution.t -> Solution.t
 
   val tableau_clause_1_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t list ->
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t list ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     Solution.t
 
   val tableau_clause_1 :
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t ->
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mcnf0.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     Solution.t
 
   val tableau_functional :
-    Assumptions.t -> CplSolver.t -> Mchain.t -> (Assumptions.t -> CplSolver.t
-    -> Mchain.t -> __ -> Solution.t) -> Solution.t
+    Assumptions.t -> CplSolver.t -> Mcnf0.t -> (Assumptions.t -> CplSolver.t
+    -> Mcnf0.t -> __ -> Solution.t) -> Solution.t
 
-  val tableau : Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t
+  val tableau : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
 
   val tableau_unfold_clause_1_clause_2_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t
     list -> JumpSolution.t -> Solution.t
 
   val tableau_unfold_clause_1_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t list ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t list ->
     Solution.t
 
   val tableau_unfold_clause_1 :
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t -> Solution.t
+    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mcnf0.t -> Solution.t
 
-  val tableau_unfold : Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t
+  val tableau_unfold : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
 
   type tableau_graph =
-  | Coq_tableau_graph_refinement_1 of Assumptions.t * CplSolver.t * Mchain.t
+  | Coq_tableau_graph_refinement_1 of Assumptions.t * CplSolver.t * Mcnf0.t
      * tableau_clause_1_graph
   and tableau_clause_1_graph =
   | Coq_tableau_clause_1_graph_refinement_1 of Assumptions.t * CplSolver.t
-     * t * Mchain.t * tableau_clause_1_clause_2_graph
+     * t * Mcnf0.t * tableau_clause_1_clause_2_graph
   | Coq_tableau_clause_1_graph_equation_2 of Assumptions.t * CplSolver.t
-     * Assumptions.t * Mchain.t
+     * Assumptions.t * Mcnf0.t
   and tableau_clause_1_clause_2_graph =
   | Coq_tableau_clause_1_clause_2_graph_equation_1 of Assumptions.t
-     * CplSolver.t * t * Mchain.t
+     * CplSolver.t * t * Mcnf0.t
   | Coq_tableau_clause_1_clause_2_graph_refinement_2 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list
      * (Assumptions.t -> tableau_graph)
      * tableau_clause_1_clause_2_clause_2_graph
   and tableau_clause_1_clause_2_clause_2_graph =
   | Coq_tableau_clause_1_clause_2_clause_2_graph_equation_1 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list * Tree.t list
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list * Tree.t list
   | Coq_tableau_clause_1_clause_2_clause_2_graph_equation_2 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list * int
-     * Lit.t * Assumptions.t * Derivation.t * tableau_graph
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list * int * 
+     Lit.t * Assumptions.t * Derivation.t * tableau_graph
 
   val tableau_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t -> tableau_graph
-    -> 'a1
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> Mcnf0.t -> Solution.t -> tableau_graph -> 'a1
 
   val tableau_clause_1_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t -> Solution.t
-    -> tableau_clause_1_graph -> 'a2
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> CplSolution.t -> Mcnf0.t -> Solution.t ->
+    tableau_clause_1_graph -> 'a2
 
   val tableau_clause_1_clause_2_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Mchain.t -> Solution.t
-    -> tableau_clause_1_clause_2_graph -> 'a3
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> t -> Mcnf0.t -> Mcnf0.t -> Solution.t ->
+    tableau_clause_1_clause_2_graph -> 'a3
 
   val tableau_clause_1_clause_2_clause_2_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
-    list -> JumpSolution.t -> Solution.t ->
-    tableau_clause_1_clause_2_clause_2_graph -> 'a4
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    JumpSolution.t -> Solution.t -> tableau_clause_1_clause_2_clause_2_graph
+    -> 'a4
 
   val tableau_graph_rect :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t -> tableau_graph
-    -> 'a1
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> Mcnf0.t -> Solution.t -> tableau_graph -> 'a1
 
   val tableau_graph_correct :
-    Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_graph
+    Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_graph
 
   val tableau_elim :
-    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> __ ->
-    'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t -> __ -> __
-    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> __ ->
+    'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> __ -> __
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> Tree.t list -> __ -> __ ->
     (Assumptions.t -> 'a1) -> __ -> __ -> 'a1) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    int -> Lit.t -> Assumptions.t -> Derivation.t -> __ -> 'a1 -> __ ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int
+    -> Lit.t -> Assumptions.t -> Derivation.t -> __ -> 'a1 -> __ ->
     (Assumptions.t -> 'a1) -> __ -> __ -> 'a1) -> Assumptions.t ->
-    CplSolver.t -> Mchain.t -> 'a1
+    CplSolver.t -> Mcnf0.t -> 'a1
 
   val coq_FunctionalElimination_tableau :
-    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> __ ->
-    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t -> __ -> __
-    -> __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
-    Lclauses.t -> Lclauses.t list -> Tree.t list -> __ -> __ ->
-    (Assumptions.t -> __) -> __ -> __ -> __) -> (Assumptions.t -> CplSolver.t
-    -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t
-    -> Assumptions.t -> Derivation.t -> __ -> __ -> __ -> (Assumptions.t ->
-    __) -> __ -> __ -> __) -> Assumptions.t -> CplSolver.t -> Mchain.t -> __
+    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> __ -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t
+    -> Lclauses.t list -> Tree.t list -> __ -> __ -> (Assumptions.t -> __) ->
+    __ -> __ -> __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
+    Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t ->
+    Derivation.t -> __ -> __ -> __ -> (Assumptions.t -> __) -> __ -> __ ->
+    __) -> Assumptions.t -> CplSolver.t -> Mcnf0.t -> __
 
   val coq_FunctionalInduction_tableau :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t)
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t)
     coq_FunctionalInduction
 
-  val next_tableau : Mchain.t -> Assumptions.t -> Solution.t
+  val next_tableau : Mcnf0.t -> Assumptions.t -> Solution.t
 
-  val solve_mchain : Mchain.t -> Solution.t
+  val solve_mcnf : Mcnf0.t -> Solution.t
 
   val solve_fml : Fml.t -> Solution.t
  end
@@ -500,284 +497,280 @@ module TailRec :
 
   val tableau_jumps_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> Tree.t list -> (Assumptions.t ->
-    Solution.t) -> (t -> Lclauses.t -> Mchain.t -> Tree.t list ->
+    DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> (t -> Lclauses.t -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> __ -> JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps_functional :
-    t -> Lclauses.t -> Mchain.t -> Tree.t list -> (Assumptions.t ->
-    Solution.t) -> (t -> Lclauses.t -> Mchain.t -> Tree.t list ->
+    t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> (t -> Lclauses.t -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> __ -> JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps :
-    t -> Lclauses.t -> Mchain.t -> Tree.t list -> (Assumptions.t ->
+    t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t
 
   val tableau_jumps_unfold_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> Tree.t list -> (Assumptions.t ->
+    DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t
 
   val tableau_jumps_unfold :
-    t -> Lclauses.t -> Mchain.t -> Tree.t list -> (Assumptions.t ->
+    t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t
 
   type tableau_jumps_graph =
   | Coq_tableau_jumps_graph_equation_1 of t * CplClause.t list
-     * BoxClause.t list * Mchain.t * Tree.t list
+     * BoxClause.t list * Mcnf0.t * Tree.t list
      * (Assumptions.t -> Solution.t)
   | Coq_tableau_jumps_graph_refinement_2 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * Tree.t list * (Assumptions.t -> Solution.t)
      * tableau_jumps_clause_2_graph
   and tableau_jumps_clause_2_graph =
   | Coq_tableau_jumps_clause_2_graph_equation_1 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * Tree.t list * (Assumptions.t -> Solution.t)
      * (Tree.t -> tableau_jumps_graph)
   | Coq_tableau_jumps_clause_2_graph_equation_2 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * Tree.t list * (Assumptions.t -> Solution.t) * tableau_jumps_graph
 
   val tableau_jumps_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> Tree.t list ->
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) ->
-    tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> (Tree.t ->
-    tableau_jumps_graph) -> (Tree.t -> 'a1) -> 'a2) -> (t -> CplClause.t list
-    -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph ->
-    'a1 -> 'a2) -> t -> Lclauses.t -> Mchain.t -> Tree.t list ->
-    (Assumptions.t -> Solution.t) -> JumpSolution.t -> tableau_jumps_graph ->
-    'a1
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> Tree.t
+    list -> (Assumptions.t -> Solution.t) -> tableau_jumps_clause_2_graph ->
+    'a2 -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t
+    -> DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> (Tree.t -> tableau_jumps_graph) -> (Tree.t -> 'a1) -> 'a2)
+    -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
+    DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) -> t -> Lclauses.t ->
+    Mcnf0.t -> Tree.t list -> (Assumptions.t -> Solution.t) -> JumpSolution.t
+    -> tableau_jumps_graph -> 'a1
 
   val tableau_jumps_clause_2_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> Tree.t list ->
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) ->
-    tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> (Tree.t ->
-    tableau_jumps_graph) -> (Tree.t -> 'a1) -> 'a2) -> (t -> CplClause.t list
-    -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph ->
-    'a1 -> 'a2) -> t -> CplClause.t list -> BoxClause.t list -> int -> bool
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> Tree.t list -> (Assumptions.t
-    -> Solution.t) -> JumpSolution.t -> tableau_jumps_clause_2_graph -> 'a2
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> Tree.t
+    list -> (Assumptions.t -> Solution.t) -> tableau_jumps_clause_2_graph ->
+    'a2 -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t
+    -> DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> (Tree.t -> tableau_jumps_graph) -> (Tree.t -> 'a1) -> 'a2)
+    -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
+    DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) -> t -> CplClause.t
+    list -> BoxClause.t list -> int -> bool -> Lit.t -> DiaClause.t list ->
+    Mcnf0.t -> Tree.t list -> (Assumptions.t -> Solution.t) -> JumpSolution.t
+    -> tableau_jumps_clause_2_graph -> 'a2
 
   val tableau_jumps_graph_rect :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> Tree.t list ->
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) ->
-    tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> (Tree.t ->
-    tableau_jumps_graph) -> (Tree.t -> 'a1) -> 'a2) -> (t -> CplClause.t list
-    -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph ->
-    'a1 -> 'a2) -> t -> Lclauses.t -> Mchain.t -> Tree.t list ->
-    (Assumptions.t -> Solution.t) -> JumpSolution.t -> tableau_jumps_graph ->
-    'a1
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> Tree.t
+    list -> (Assumptions.t -> Solution.t) -> tableau_jumps_clause_2_graph ->
+    'a2 -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t
+    -> DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> (Tree.t -> tableau_jumps_graph) -> (Tree.t -> 'a1) -> 'a2)
+    -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
+    DiaClause.t list -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
+    Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) -> t -> Lclauses.t ->
+    Mcnf0.t -> Tree.t list -> (Assumptions.t -> Solution.t) -> JumpSolution.t
+    -> tableau_jumps_graph -> 'a1
 
   val tableau_jumps_graph_correct :
-    t -> Lclauses.t -> Mchain.t -> Tree.t list -> (Assumptions.t ->
+    t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_graph
 
   val tableau_jumps_elim :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> Tree.t list ->
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> (Tree.t -> 'a1) -> __ ->
-    'a1) -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> Tree.t list -> (Assumptions.t ->
-    Solution.t) -> 'a1 -> __ -> 'a1) -> t -> Lclauses.t -> Mchain.t -> Tree.t
-    list -> (Assumptions.t -> Solution.t) -> 'a1
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> Tree.t
+    list -> (Assumptions.t -> Solution.t) -> (Tree.t -> 'a1) -> __ -> 'a1) ->
+    (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
+    list -> Mcnf0.t -> Tree.t list -> (Assumptions.t -> Solution.t) -> 'a1 ->
+    __ -> 'a1) -> t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t
+    -> Solution.t) -> 'a1
 
   val coq_FunctionalElimination_tableau_jumps :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> Tree.t list ->
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> Tree.t list ->
     (Assumptions.t -> Solution.t) -> __) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
-    Tree.t list -> (Assumptions.t -> Solution.t) -> (Tree.t -> __) -> __ ->
-    __) -> (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> Tree.t list -> (Assumptions.t ->
-    Solution.t) -> __ -> __ -> __) -> t -> Lclauses.t -> Mchain.t -> Tree.t
-    list -> (Assumptions.t -> Solution.t) -> __
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> Tree.t
+    list -> (Assumptions.t -> Solution.t) -> (Tree.t -> __) -> __ -> __) ->
+    (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
+    list -> Mcnf0.t -> Tree.t list -> (Assumptions.t -> Solution.t) -> __ ->
+    __ -> __) -> t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t
+    -> Solution.t) -> __
 
   val coq_FunctionalInduction_tableau_jumps :
-    (t -> Lclauses.t -> Mchain.t -> Tree.t list -> (Assumptions.t ->
+    (t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t) coq_FunctionalInduction
 
   val tableau_clause_1_clause_2_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
-    list -> (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t
+    list -> (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     JumpSolution.t -> Solution.t
 
   val tableau_clause_1_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t list ->
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t list ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     Solution.t
 
   val tableau_clause_1 :
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t ->
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mcnf0.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     Solution.t
 
   val tableau_functional :
-    Assumptions.t -> CplSolver.t -> Mchain.t -> (Assumptions.t -> CplSolver.t
-    -> Mchain.t -> __ -> Solution.t) -> Solution.t
+    Assumptions.t -> CplSolver.t -> Mcnf0.t -> (Assumptions.t -> CplSolver.t
+    -> Mcnf0.t -> __ -> Solution.t) -> Solution.t
 
-  val tableau : Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t
+  val tableau : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
 
   val tableau_unfold_clause_1_clause_2_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t
     list -> JumpSolution.t -> Solution.t
 
   val tableau_unfold_clause_1_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t list ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t list ->
     Solution.t
 
   val tableau_unfold_clause_1 :
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t -> Solution.t
+    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mcnf0.t -> Solution.t
 
-  val tableau_unfold : Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t
+  val tableau_unfold : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
 
   type tableau_graph =
-  | Coq_tableau_graph_refinement_1 of Assumptions.t * CplSolver.t * Mchain.t
+  | Coq_tableau_graph_refinement_1 of Assumptions.t * CplSolver.t * Mcnf0.t
      * tableau_clause_1_graph
   and tableau_clause_1_graph =
   | Coq_tableau_clause_1_graph_refinement_1 of Assumptions.t * CplSolver.t
-     * t * Mchain.t * tableau_clause_1_clause_2_graph
+     * t * Mcnf0.t * tableau_clause_1_clause_2_graph
   | Coq_tableau_clause_1_graph_equation_2 of Assumptions.t * CplSolver.t
-     * Assumptions.t * Mchain.t
+     * Assumptions.t * Mcnf0.t
   and tableau_clause_1_clause_2_graph =
   | Coq_tableau_clause_1_clause_2_graph_equation_1 of Assumptions.t
-     * CplSolver.t * t * Mchain.t
+     * CplSolver.t * t * Mcnf0.t
   | Coq_tableau_clause_1_clause_2_graph_refinement_2 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list
      * (Assumptions.t -> tableau_graph)
      * tableau_clause_1_clause_2_clause_2_graph
   and tableau_clause_1_clause_2_clause_2_graph =
   | Coq_tableau_clause_1_clause_2_clause_2_graph_equation_1 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list * Tree.t list
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list * Tree.t list
   | Coq_tableau_clause_1_clause_2_clause_2_graph_equation_2 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list * int
-     * Lit.t * Assumptions.t * Derivation.t * tableau_graph
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list * int * 
+     Lit.t * Assumptions.t * Derivation.t * tableau_graph
 
   val tableau_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t -> tableau_graph
-    -> 'a1
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> Mcnf0.t -> Solution.t -> tableau_graph -> 'a1
 
   val tableau_clause_1_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t -> Solution.t
-    -> tableau_clause_1_graph -> 'a2
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> CplSolution.t -> Mcnf0.t -> Solution.t ->
+    tableau_clause_1_graph -> 'a2
 
   val tableau_clause_1_clause_2_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Mchain.t -> Solution.t
-    -> tableau_clause_1_clause_2_graph -> 'a3
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> t -> Mcnf0.t -> Mcnf0.t -> Solution.t ->
+    tableau_clause_1_clause_2_graph -> 'a3
 
   val tableau_clause_1_clause_2_clause_2_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
-    list -> JumpSolution.t -> Solution.t ->
-    tableau_clause_1_clause_2_clause_2_graph -> 'a4
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    JumpSolution.t -> Solution.t -> tableau_clause_1_clause_2_clause_2_graph
+    -> 'a4
 
   val tableau_graph_rect :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     Tree.t list -> __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t ->
-    Assumptions.t -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) ->
-    Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t -> tableau_graph
-    -> 'a1
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t
+    -> Derivation.t -> __ -> tableau_graph -> 'a1 -> 'a4) -> Assumptions.t ->
+    CplSolver.t -> Mcnf0.t -> Solution.t -> tableau_graph -> 'a1
 
   val tableau_graph_correct :
-    Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_graph
+    Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_graph
 
   val tableau_elim :
-    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> __ ->
-    'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t -> __ -> __
-    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> __ ->
+    'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> __ -> __
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> Tree.t list -> __ -> __ ->
     (Assumptions.t -> 'a1) -> __ -> __ -> 'a1) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    int -> Lit.t -> Assumptions.t -> Derivation.t -> __ -> 'a1 -> __ ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list -> int
+    -> Lit.t -> Assumptions.t -> Derivation.t -> __ -> 'a1 -> __ ->
     (Assumptions.t -> 'a1) -> __ -> __ -> 'a1) -> Assumptions.t ->
-    CplSolver.t -> Mchain.t -> 'a1
+    CplSolver.t -> Mcnf0.t -> 'a1
 
   val coq_FunctionalElimination_tableau :
-    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> __ ->
-    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t -> __ -> __
-    -> __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
-    Lclauses.t -> Lclauses.t list -> Tree.t list -> __ -> __ ->
-    (Assumptions.t -> __) -> __ -> __ -> __) -> (Assumptions.t -> CplSolver.t
-    -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list -> int -> Lit.t
-    -> Assumptions.t -> Derivation.t -> __ -> __ -> __ -> (Assumptions.t ->
-    __) -> __ -> __ -> __) -> Assumptions.t -> CplSolver.t -> Mchain.t -> __
+    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> __ -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t
+    -> Lclauses.t list -> Tree.t list -> __ -> __ -> (Assumptions.t -> __) ->
+    __ -> __ -> __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
+    Lclauses.t -> Lclauses.t list -> int -> Lit.t -> Assumptions.t ->
+    Derivation.t -> __ -> __ -> __ -> (Assumptions.t -> __) -> __ -> __ ->
+    __) -> Assumptions.t -> CplSolver.t -> Mcnf0.t -> __
 
   val coq_FunctionalInduction_tableau :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t)
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t)
     coq_FunctionalInduction
 
-  val solve_mchain : Mchain.t -> Solution.t
+  val solve_mcnf : Mcnf0.t -> Solution.t
 
   val solve_fml : Fml.t -> Solution.t
  end
@@ -810,324 +803,323 @@ module NoModel :
 
   val tableau_jumps_clause_2_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Solution.t -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Solution.t -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps_functional :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> (t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __ ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> (t ->
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __ ->
     JumpSolution.t) -> JumpSolution.t
 
   val tableau_jumps :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t
 
   val tableau_jumps_unfold_clause_2_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> Solution.t ->
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> Solution.t ->
     JumpSolution.t
 
   val tableau_jumps_unfold_clause_2 :
     t -> CplClause.t list -> BoxClause.t list -> int -> bool -> Lit.t ->
-    DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t
 
   val tableau_jumps_unfold :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t
 
   type tableau_jumps_graph =
   | Coq_tableau_jumps_graph_equation_1 of t * CplClause.t list
-     * BoxClause.t list * Mchain.t * (Assumptions.t -> Solution.t)
+     * BoxClause.t list * Mcnf0.t * (Assumptions.t -> Solution.t)
   | Coq_tableau_jumps_graph_refinement_2 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * (Assumptions.t -> Solution.t) * tableau_jumps_clause_2_graph
   and tableau_jumps_clause_2_graph =
   | Coq_tableau_jumps_clause_2_graph_refinement_1 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * (Assumptions.t -> Solution.t) * tableau_jumps_clause_2_clause_2_graph
   | Coq_tableau_jumps_clause_2_graph_equation_2 of t * CplClause.t list
-     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mchain.t
+     * BoxClause.t list * int * Lit.t * DiaClause.t list * Mcnf0.t
      * (Assumptions.t -> Solution.t) * tableau_jumps_graph
   and tableau_jumps_clause_2_clause_2_graph =
   | Coq_tableau_jumps_clause_2_clause_2_graph_equation_1 of t
      * CplClause.t list * BoxClause.t list * int * Lit.t * DiaClause.t list
-     * Mchain.t * (Assumptions.t -> Solution.t) * tableau_jumps_graph
+     * Mcnf0.t * (Assumptions.t -> Solution.t) * tableau_jumps_graph
   | Coq_tableau_jumps_clause_2_clause_2_graph_equation_2 of t
      * CplClause.t list * BoxClause.t list * int * Lit.t * DiaClause.t list
-     * Mchain.t * (Assumptions.t -> Solution.t) * Assumptions.t
+     * Mcnf0.t * (Assumptions.t -> Solution.t) * Assumptions.t
 
   val tableau_jumps_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
     -> 'a1 -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int ->
-    Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
-    Assumptions.t -> 'a3) -> t -> Lclauses.t -> Mchain.t -> (Assumptions.t ->
+    Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
+    Assumptions.t -> 'a3) -> t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t -> tableau_jumps_graph -> 'a1
 
   val tableau_jumps_clause_2_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
     -> 'a1 -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int ->
-    Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     Assumptions.t -> 'a3) -> t -> CplClause.t list -> BoxClause.t list -> int
-    -> bool -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    -> bool -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t -> tableau_jumps_clause_2_graph -> 'a2
 
   val tableau_jumps_clause_2_clause_2_graph_mut :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
     -> 'a1 -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int ->
-    Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     Assumptions.t -> 'a3) -> t -> CplClause.t list -> BoxClause.t list -> int
-    -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t)
+    -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t)
     -> Solution.t -> JumpSolution.t -> tableau_jumps_clause_2_clause_2_graph
     -> 'a3
 
   val tableau_jumps_graph_rect :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> tableau_jumps_clause_2_graph -> 'a2 -> 'a1) -> (t ->
     CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list
-    -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_clause_2_clause_2_graph -> 'a3 -> 'a2) -> (t -> CplClause.t
-    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t
+    list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t
     -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph -> 'a1 -> 'a2) ->
     (t -> CplClause.t list -> BoxClause.t list -> int -> Lit.t -> DiaClause.t
-    list -> Mchain.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
+    list -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> tableau_jumps_graph
     -> 'a1 -> 'a3) -> (t -> CplClause.t list -> BoxClause.t list -> int ->
-    Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t -> Solution.t) ->
-    Assumptions.t -> 'a3) -> t -> Lclauses.t -> Mchain.t -> (Assumptions.t ->
+    Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
+    Assumptions.t -> 'a3) -> t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> JumpSolution.t -> tableau_jumps_graph -> 'a1
 
   val tableau_jumps_graph_correct :
-    t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     tableau_jumps_graph
 
   val tableau_jumps_elim :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> 'a1) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> 'a1 -> __ -> 'a1) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> 'a1 -> __ -> __ -> 'a1) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t ->
     (Assumptions.t -> Solution.t) -> Assumptions.t -> __ -> __ -> 'a1) -> t
-    -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> 'a1
+    -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> 'a1
 
   val coq_FunctionalElimination_tableau_jumps :
-    (t -> CplClause.t list -> BoxClause.t list -> Mchain.t -> (Assumptions.t
+    (t -> CplClause.t list -> BoxClause.t list -> Mcnf0.t -> (Assumptions.t
     -> Solution.t) -> __) -> (t -> CplClause.t list -> BoxClause.t list ->
-    int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> __ -> __ -> __) -> (t -> CplClause.t list -> BoxClause.t
-    list -> int -> Lit.t -> DiaClause.t list -> Mchain.t -> (Assumptions.t ->
+    list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t -> (Assumptions.t ->
     Solution.t) -> __ -> __ -> __ -> __) -> (t -> CplClause.t list ->
-    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mchain.t ->
+    BoxClause.t list -> int -> Lit.t -> DiaClause.t list -> Mcnf0.t ->
     (Assumptions.t -> Solution.t) -> Assumptions.t -> __ -> __ -> __) -> t ->
-    Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) -> __
+    Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) -> __
 
   val coq_FunctionalInduction_tableau_jumps :
-    (t -> Lclauses.t -> Mchain.t -> (Assumptions.t -> Solution.t) ->
+    (t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Solution.t) ->
     JumpSolution.t) coq_FunctionalInduction
 
   val tableau_clause_1_clause_2_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
-    list -> (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t
+    list -> (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     JumpSolution.t -> Solution.t
 
   val tableau_clause_1_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t list ->
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t list ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     Solution.t
 
   val tableau_clause_1 :
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t ->
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> __ -> Solution.t) ->
+    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mcnf0.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> __ -> Solution.t) ->
     Solution.t
 
   val tableau_functional :
-    Assumptions.t -> CplSolver.t -> Mchain.t -> (Assumptions.t -> CplSolver.t
-    -> Mchain.t -> __ -> Solution.t) -> Solution.t
+    Assumptions.t -> CplSolver.t -> Mcnf0.t -> (Assumptions.t -> CplSolver.t
+    -> Mcnf0.t -> __ -> Solution.t) -> Solution.t
 
-  val tableau : Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t
+  val tableau : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
 
   val tableau_unfold_clause_1_clause_2_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t -> Lclauses.t
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t -> Lclauses.t
     list -> JumpSolution.t -> Solution.t
 
   val tableau_unfold_clause_1_clause_2 :
-    Assumptions.t -> CplSolver.t -> t -> Mchain.t -> Lclauses.t list ->
+    Assumptions.t -> CplSolver.t -> t -> Mcnf0.t -> Lclauses.t list ->
     Solution.t
 
   val tableau_unfold_clause_1 :
-    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mchain.t -> Solution.t
+    Assumptions.t -> CplSolver.t -> CplSolution.t -> Mcnf0.t -> Solution.t
 
-  val tableau_unfold : Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t
+  val tableau_unfold : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
 
   type tableau_graph =
-  | Coq_tableau_graph_refinement_1 of Assumptions.t * CplSolver.t * Mchain.t
+  | Coq_tableau_graph_refinement_1 of Assumptions.t * CplSolver.t * Mcnf0.t
      * tableau_clause_1_graph
   and tableau_clause_1_graph =
   | Coq_tableau_clause_1_graph_refinement_1 of Assumptions.t * CplSolver.t
-     * t * Mchain.t * tableau_clause_1_clause_2_graph
+     * t * Mcnf0.t * tableau_clause_1_clause_2_graph
   | Coq_tableau_clause_1_graph_equation_2 of Assumptions.t * CplSolver.t
-     * Assumptions.t * Mchain.t
+     * Assumptions.t * Mcnf0.t
   and tableau_clause_1_clause_2_graph =
   | Coq_tableau_clause_1_clause_2_graph_equation_1 of Assumptions.t
-     * CplSolver.t * t * Mchain.t
+     * CplSolver.t * t * Mcnf0.t
   | Coq_tableau_clause_1_clause_2_graph_refinement_2 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list
      * (Assumptions.t -> tableau_graph)
      * tableau_clause_1_clause_2_clause_2_graph
   and tableau_clause_1_clause_2_clause_2_graph =
   | Coq_tableau_clause_1_clause_2_clause_2_graph_equation_1 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list
   | Coq_tableau_clause_1_clause_2_clause_2_graph_equation_2 of Assumptions.t
-     * CplSolver.t * t * Mchain.t * Lclauses.t * Lclauses.t list * int
+     * CplSolver.t * t * Mcnf0.t * Lclauses.t * Lclauses.t list * int
      * Assumptions.t * tableau_graph
 
   val tableau_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ ->
-    tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t -> Mchain.t
+    tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t -> Mcnf0.t
     -> Solution.t -> tableau_graph -> 'a1
 
   val tableau_clause_1_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ ->
     tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t ->
-    CplSolution.t -> Mchain.t -> Solution.t -> tableau_clause_1_graph -> 'a2
+    CplSolution.t -> Mcnf0.t -> Solution.t -> tableau_clause_1_graph -> 'a2
 
   val tableau_clause_1_clause_2_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ ->
     tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t -> t ->
-    Mchain.t -> Mchain.t -> Solution.t -> tableau_clause_1_clause_2_graph ->
-    'a3
+    Mcnf0.t -> Mcnf0.t -> Solution.t -> tableau_clause_1_clause_2_graph -> 'a3
 
   val tableau_clause_1_clause_2_clause_2_graph_mut :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ ->
     tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t -> t ->
-    Mchain.t -> Lclauses.t -> Lclauses.t list -> JumpSolution.t -> Solution.t
+    Mcnf0.t -> Lclauses.t -> Lclauses.t list -> JumpSolution.t -> Solution.t
     -> tableau_clause_1_clause_2_clause_2_graph -> 'a4
 
   val tableau_graph_rect :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_clause_1_graph ->
-    'a2 -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_clause_1_graph -> 'a2
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     tableau_clause_1_clause_2_graph -> 'a3 -> 'a2) -> (Assumptions.t ->
-    CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> 'a2) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> 'a3) -> (Assumptions.t ->
-    CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
+    CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> 'a2) -> (Assumptions.t
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> 'a3) -> (Assumptions.t ->
+    CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
     (Assumptions.t -> tableau_graph) -> (Assumptions.t -> 'a1) ->
     tableau_clause_1_clause_2_clause_2_graph -> 'a4 -> 'a3) -> (Assumptions.t
-    -> CplSolver.t -> t -> __ -> Mchain.t -> Lclauses.t -> Lclauses.t list ->
-    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t -> Lclauses.t list ->
+    __ -> 'a4) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ ->
-    tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t -> Mchain.t
+    tableau_graph -> 'a1 -> 'a4) -> Assumptions.t -> CplSolver.t -> Mcnf0.t
     -> Solution.t -> tableau_graph -> 'a1
 
   val tableau_graph_correct :
-    Assumptions.t -> CplSolver.t -> Mchain.t -> tableau_graph
+    Assumptions.t -> CplSolver.t -> Mcnf0.t -> tableau_graph
 
   val tableau_elim :
-    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> __ ->
-    'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t -> __ -> __
-    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> __ ->
+    'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> __ -> __
+    -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> __ -> __ -> (Assumptions.t -> 'a1) -> __
-    -> __ -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
+    -> __ -> 'a1) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t ->
     Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ -> 'a1 -> __
     -> (Assumptions.t -> 'a1) -> __ -> __ -> 'a1) -> Assumptions.t ->
-    CplSolver.t -> Mchain.t -> 'a1
+    CplSolver.t -> Mcnf0.t -> 'a1
 
   val coq_FunctionalElimination_tableau :
-    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mchain.t -> __ ->
-    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t -> __ -> __
-    -> __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
-    Lclauses.t -> Lclauses.t list -> __ -> __ -> (Assumptions.t -> __) -> __
-    -> __ -> __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mchain.t ->
-    Lclauses.t -> Lclauses.t list -> int -> Assumptions.t -> __ -> __ -> __
-    -> (Assumptions.t -> __) -> __ -> __ -> __) -> Assumptions.t ->
-    CplSolver.t -> Mchain.t -> __
+    (Assumptions.t -> CplSolver.t -> Assumptions.t -> __ -> Mcnf0.t -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> __ -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t
+    -> Lclauses.t list -> __ -> __ -> (Assumptions.t -> __) -> __ -> __ ->
+    __) -> (Assumptions.t -> CplSolver.t -> t -> __ -> Mcnf0.t -> Lclauses.t
+    -> Lclauses.t list -> int -> Assumptions.t -> __ -> __ -> __ ->
+    (Assumptions.t -> __) -> __ -> __ -> __) -> Assumptions.t -> CplSolver.t
+    -> Mcnf0.t -> __
 
   val coq_FunctionalInduction_tableau :
-    (Assumptions.t -> CplSolver.t -> Mchain.t -> Solution.t)
+    (Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t)
     coq_FunctionalInduction
 
-  val solve_mchain : Mchain.t -> Solution.t
+  val solve_mcnf : Mcnf0.t -> Solution.t
 
   val solve_fml : Fml.t -> Solution.t
 
-  val next_tableau : Mchain.t -> Assumptions.t -> Solution.t
+  val next_tableau : Mcnf0.t -> Assumptions.t -> Solution.t
  end

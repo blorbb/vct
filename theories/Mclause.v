@@ -1,5 +1,5 @@
 From CegarTableaux Require Lit Kripke CplClause BoxClause DiaClause.
-From CegarTableaux Require Import ImportStd Utils.
+From CegarTableaux Require Import ImportStd.
 
 (** An MCNF clause with an arbitrary number of boxes. *)
 Inductive t : Type :=

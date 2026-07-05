@@ -13,9 +13,12 @@ Require Export Equations.Prop.Logic.
 Create HintDb ct.
 Create Rewrite HintDb ct.
 
-From CegarTableaux Require Export Utils ListExt.
+From CegarTableaux Require Export Tactics ListExt.
 
-Hint Rewrite Exists_cons Forall_cons_iff Exists_app Forall_app Exists_nil Forall_nil_iff : datatypes.
+Hint Rewrite
+  Exists_cons Forall_cons_iff
+  Exists_app Forall_app
+  Exists_nil Forall_nil_iff : list.
 
 Lemma or_false_l : forall P, P \/ False <-> P.
 Proof. tauto. Qed.
@@ -42,5 +45,29 @@ Proof. tauto. Qed.
 Lemma not_true : ~ False <-> True.
 Proof. tauto. Qed.
 
-Create Rewrite HintDb fold_prop.
-Hint Rewrite or_false_l or_false_r and_true_l and_true_r idem_f idem_t imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true : fold_prop.
+Create Rewrite HintDb prop.
+Hint Rewrite or_false_l or_false_r and_true_l and_true_r idem_f idem_t imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true : prop.
+
+
+(** Function pipeline operator *)
+Definition apply {A B} (x : A) (f : A -> B) := f x.
+Arguments apply {A B} x f /.
+Infix "|>" := apply (at level 51, left associativity).
+
+
+Lemma negb_exb_forallb : forall {A} (f : A -> bool) (l : list A),
+  negb (List.existsb f l) = List.forallb (fun a => negb (f a)) l.
+Proof.
+  intros A f l.
+  induction l.
+  - cbn. reflexivity.
+  - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
+Qed.
+
+
+Lemma nat_leb_total : forall n m, (n <=? m) = true \/ (m <=? n) = true.
+Proof.
+  intros n m. destruct (Nat.leb_spec n m).
+  - now left.
+  - right. rewrite Nat.leb_le. now apply Nat.lt_le_incl.
+Qed.

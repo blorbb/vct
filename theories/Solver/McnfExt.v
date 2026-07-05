@@ -1,31 +1,31 @@
-(** Helpers to manipulate an [Mchain.t] for the CEGARBox implementation. *)
+(** Helpers to manipulate an [Mcnf.t] for the CEGARBox implementation. *)
 
-From CegarTableaux Require CplSolver Lit Mchain Assumptions Valuation Tree.
+From CegarTableaux Require CplSolver Lit Assumptions Valuation Tree Mcnf.
 From CegarTableaux Require Import ImportStd.
 
 
 
-Definition first_ctx (mc0 : Mchain.t) :=
+Definition first_ctx (mc0 : Mcnf.t) :=
   match mc0 with
   | [] => Lclauses.empty
   | l0::_ => l0
   end.
 
-Definition first_cpls (mc0 : Mchain.t) :=
+Definition first_cpls (mc0 : Mcnf.t) :=
   Lclauses.cpls (first_ctx mc0).
 
-Definition first_boxes (mc0 : Mchain.t) :=
+Definition first_boxes (mc0 : Mcnf.t) :=
   Lclauses.boxes (first_ctx mc0).
 
-Definition first_dias (mc0 : Mchain.t) :=
+Definition first_dias (mc0 : Mcnf.t) :=
   Lclauses.dias (first_ctx mc0).
 
-Definition fired_boxes (mc0 : Mchain.t) (V : Valuation.t) :=
+Definition fired_boxes (mc0 : Mcnf.t) (V : Valuation.t) :=
   first_boxes mc0
   |> List.filter (fun '(a,b) => Valuation.forces_atm V a)
   |> List.map snd.
 
-Definition next_ctx (mc0 : Mchain.t) :=
+Definition next_ctx (mc0 : Mcnf.t) :=
   match mc0 with
   | [] => []
   | _::mc1 => mc1
@@ -54,7 +54,7 @@ Definition add_neg_assumptions mc0 A :=
 Arguments add_neg_assumptions mc0 A /.
 
 
-Definition cpl_solve (mc0 : Mchain.t) (A : Assumptions.t) :=
+Definition cpl_solve (mc0 : Mcnf.t) (A : Assumptions.t) :=
   CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls mc0)) A.
 
 

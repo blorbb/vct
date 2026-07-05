@@ -68,7 +68,7 @@ let parse_str str =
   Vct.Parser.file Vct.Lexer.next_token lexbuf
 ;;
 
-let convert fml = fml |> Vct.Nnf.from_fml |> Vct.Mcnf0.from_nnf |> Vct.Mchain.from_mcnf
+let convert fml = fml |> Vct.Nnf.from_fml |> Vct.Mcnf0.from_nnf
 (* |> Vct.Mchain.simplify *)
 
 let print_solution str =
@@ -77,7 +77,7 @@ let print_solution str =
   let mc0 = convert fml in
   (* print_endline "as mchain:";
   print_endline (Mchain.show mc0); *)
-  (match Vct.Solver.TailRec.solve_mchain mc0 with
+  (match Vct.Solver.TailRec.solve_mcnf mc0 with
    | Sat t ->
      print_endline "SAT";
      print_endline (t |> RTree.of_vct_tree |> RTree.show)

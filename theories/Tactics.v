@@ -1,4 +1,4 @@
-(** A collection of useful tactics / misc. *)
+(** A collection of useful tactics. *)
 
 From Stdlib Require Import PeanoNat Arith Lia.
 Import List.ListNotations.
@@ -197,30 +197,6 @@ end.
 Tactic Notation "replace_hyp" ident(H) "with" constr(P) :=
   let Hnew := fresh H in
   assert P as Hnew; [|clear H; rename Hnew into H].
-
-
-(** Function pipeline operator *)
-Definition apply {A B} (x : A) (f : A -> B) := f x.
-Arguments apply {A B} x f /.
-Infix "|>" := apply (at level 51, left associativity).
-
-
-Lemma negb_exb_forallb : forall {A} (f : A -> bool) (l : list A),
-  negb (List.existsb f l) = List.forallb (fun a => negb (f a)) l.
-Proof.
-  intros A f l.
-  induction l.
-  - cbn. reflexivity.
-  - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
-Qed.
-
-
-Lemma nat_leb_total : forall n m, (n <=? m) = true \/ (m <=? n) = true.
-Proof.
-  intros n m. destruct (Nat.leb_spec n m).
-  - now left.
-  - right. rewrite Nat.leb_le. now apply Nat.lt_le_incl.
-Qed.
 
 
 (** Destructs a match using the convoy pattern.
