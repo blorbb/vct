@@ -556,7 +556,7 @@ Module NoModel.
     - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
       rewrite Heq0. unfold tableau_jumps_unfold_clause_2_clause_2.
 
-      set (fired_boxes := d::boxes |> filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
+      set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
       specialize (Hsol_match fired_boxes).
       unfold Solution.matches_spec in Hsol_match.
       rewrite Heq in Hsol_match.
@@ -568,7 +568,7 @@ Module NoModel.
 
       specialize (Hind next_tableau1 Hsol_match).
 
-      set (fired_boxes := d::boxes |> filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
+      set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
       specialize (Hsol_match fired_boxes).
       unfold Solution.matches_spec in Hsol_match.
       rewrite Heq0 in Hsol_match.
@@ -580,7 +580,7 @@ Module NoModel.
 
       specialize (Hind next_tableau1 Hsol_match).
 
-      set (fired_boxes := d::boxes |> filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
+      set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
       specialize (Hsol_match fired_boxes).
       unfold Solution.matches_spec in Hsol_match.
       rewrite Heq0 in Hsol_match.

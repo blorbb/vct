@@ -10,7 +10,7 @@ Definition clash_free (V : t) := List.NoDup V.
 
 
 Lemma clash_free_nil : clash_free [].
-Proof. unfold clash_free. apply NoDup_nil. Qed.
+Proof. unfold clash_free. apply List.NoDup_nil. Qed.
 
 
 Definition forces_atm (V : t) (p : nat) : bool := List.existsb (Nat.eqb p) V.
@@ -36,7 +36,7 @@ Proof with auto.
   - assumption.
 Qed.
 
-Lemma eq_in : forall (p : nat) (V V' : t), eq V V' -> In p V <-> In p V'.
+Lemma eq_in : forall (p : nat) (V V' : t), eq V V' -> List.In p V <-> List.In p V'.
 Proof with auto.
   intros p V V' Heq.
   unfold eq in Heq.
@@ -99,7 +99,7 @@ Section AllValuations.
       destruct Hval_in as [Hval_in_t | Hval_in_ht].
       + apply IH...
       + apply List.in_map_iff in Hval_in_ht as [t' [Ht' Ht'_in]]. subst V.
-        unfold clash_free. apply NoDup_cons.
+        unfold clash_free. apply List.NoDup_cons.
         * intro Hhead_in. apply Hhead_nin.
           pose proof (every_valuation_exact_atms tail) as Hatms_of_val.
           rewrite List.Forall_forall in Hatms_of_val.
@@ -211,7 +211,7 @@ Section AllValuations.
         apply (Hatm_nin_vals v).
         * apply in_eq.
         * apply Permutation_in with (l := v')...
-          apply in_map_iff in Hv'_in.
+          apply List.in_map_iff in Hv'_in.
           destruct Hv'_in as [tl [Htl_eq _]]. subst v'.
           apply in_eq.
 

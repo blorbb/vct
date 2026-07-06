@@ -1,5 +1,13 @@
 (** Common standard library imports. *)
 
+(** Overrides a bunch of stdlib definitions with non-definitionally-equal equivalents.
+
+    They seem nicer than the stdlib versions, but for now it's easier to continue
+    with the stdlib ones to avoid making a bunch of tiny changes to proofs.
+
+    TODO: someday fully use stdpp. *)
+From stdpp Require Export prelude.
+
 From Stdlib Require List.
 Export List.ListNotations.
 Open Scope list_scope.
@@ -9,6 +17,7 @@ From Stdlib Require Export
   FunInd Recdef PeanoNat Nat Program.Wf Classical.
 From Equations Require Export Equations.
 Require Export Equations.Prop.Logic.
+
 
 Create HintDb ct.
 Create Rewrite HintDb ct.

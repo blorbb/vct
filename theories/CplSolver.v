@@ -257,7 +257,7 @@ Proof with auto.
       apply or_comm, or_assoc in Hclause_in_clauses.
       destruct Hclause_in_clauses as [Heq_new | Hin_existing].
       (* p in new clause *)
-      * subst clause'. unfold In in Hclause_incl.
+      * subst clause'. unfold List.In in Hclause_incl.
         apply Cnf.in_atms_of. apply Hclause_incl.
         cbn. assumption.
       (* p in solver or assumptions *)

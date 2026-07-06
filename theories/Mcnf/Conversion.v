@@ -353,7 +353,7 @@ Section EquisatModelRange.
       ];
       intros M w n k p Hmnp_lt k' Hx_range; apply not_or_and in Hx_range.
     (* literal *)
-    - simpl. ifauto. reflexivity.
+    - simpl. ifauto.
 
     (* and *)
     - set (MA := named_model M n A k).

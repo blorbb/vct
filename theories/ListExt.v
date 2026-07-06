@@ -188,7 +188,7 @@ Qed.
 
 Lemma NoDupA_filter : forall {A} (eqA : relation A) (f : A -> bool) (l : list A),
   Proper (eqA ==> eq) f ->
-  NoDupA eqA l -> NoDupA eqA (filter f l).
+  NoDupA eqA l -> NoDupA eqA (List.filter f l).
 Proof.
   intros A eqA f l Hequiv Hnd. induction Hnd.
   - cbn. apply NoDupA_nil.
