@@ -6,7 +6,7 @@
     with the stdlib ones to avoid making a bunch of tiny changes to proofs.
 
     TODO: someday fully use stdpp. *)
-From stdpp Require Export prelude.
+From stdpp Require Export prelude countable.
 
 From Stdlib Require List.
 Export List.ListNotations.

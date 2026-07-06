@@ -48,9 +48,16 @@ Proof.
 Qed. Global Hint Rewrite eqb_eq : ct.
 
 
-Lemma eq_dec (a b : t) : {a = b} + {a <> b}.
+Global Instance eq_dec : EqDecision t.
+Proof. solve_decision. Qed.
+
+
+Global Instance lit_countable : Countable t.
 Proof.
-  decide equality; apply Nat.eq_dec.
+  apply (inj_countable
+    (fun l => match l with | Pos p => inl p | Neg p => inr p end)
+    (fun x => match x with | inl p => Some (Pos p) | inr p => Some (Neg p) end)).
+  now intros [p|p].
 Qed.
 
 
