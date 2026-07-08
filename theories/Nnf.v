@@ -55,13 +55,48 @@ Proof.
   all: reflexivity.
 Qed.
 
-
 Ltac destruct_lit A :=
   let l := fresh "l" in
   let H := fresh in
   destruct (as_lit A) as [l|] eqn:H;
     [ rewrite as_lit_some_inv in H; repeat (rewrite H in *)
     | repeat (rewrite (as_lit_none A _ _ H) in *)].
+
+
+Definition as_lit2 (A B : t) : option (Lit.t * Lit.t) :=
+  match A, B with
+  | Lit lA, Lit lB => Some (lA, lB)
+  | _, _ => None
+  end.
+
+Lemma as_lit2_some_inv : forall A B lA lB,
+  as_lit2 A B = Some (lA, lB) ->
+  A = Lit lA /\ B = Lit lB.
+Proof.
+  intros * Hlits.
+  destruct A; destruct B; try easy.
+  cbn in Hlits. now inv_clear Hlits.
+Qed.
+
+Lemma as_lit2_none : forall {X} (A B : t) (f : Lit.t -> Lit.t -> X) (other : X),
+  as_lit2 A B = None ->
+  (match A, B with | Lit lA, Lit lB => f lA lB | _, _ => other end) = other.
+Proof.
+  intros * Hnone.
+  destruct A; destruct B; easy.
+Qed.
+
+Ltac destruct_lit2 A B :=
+  let lA := fresh "l" A in
+  let lB := fresh "l" B in
+  let H := fresh in
+  let HA := fresh "H" A in
+  let HB := fresh "H" B in
+  destruct (as_lit2 A B) as [[lA lB] |] eqn:H;
+    [ apply as_lit2_some_inv in H as [HA HB];
+      repeat (rewrite HA in *);
+      repeat (rewrite HB in *)
+    | repeat (rewrite (as_lit2_none A B _ _ H) in *)].
 
 
 Section Conversion.

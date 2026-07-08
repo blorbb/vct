@@ -27,6 +27,12 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
       Mcnf.zip_merge A_mcnf B_mcnf,
       k
     )
+  (* TODO: properly optimise OR case. Any size disjunction of literals can use this. *)
+  | Nnf.Or (Nnf.Lit Al) (Nnf.Lit Bl) =>
+    (
+      [Lclauses.make_cpls [[Lit.Neg n ; Al ; Bl]]],
+      k
+    )
   (* n -> A \/ B  =>  n -> nA \/ nB ; nA -> A ; nB -> B *)
   | Nnf.Or A B =>
     let (nA, k) := (k, S k) in
@@ -101,8 +107,10 @@ Proof with auto.
   - repeat destruct_pair. cbn.
     transitivity k0; subst k0 k1...
   - repeat destruct_pair. cbn.
-    transitivity (S (S k))...
-    transitivity k0; subst k0 k1...
+    Nnf.destruct_lit2 A B.
+    + reflexivity.
+    + cbn. transitivity (S (S k))...
+      transitivity k0; subst k0 k1...
   - destruct_pair. Nnf.destruct_lit A.
     + cbn...
     + cbn. transitivity (S k)... subst k0...
@@ -212,6 +220,10 @@ Proof with finish.
 
   (* or *)
   - cbn -[Mcnf.zip_merge Mcnf.atm_in].
+    Nnf.destruct_lit2 A B. {
+      repeat (cbn; autorewrite with list prop). lia.
+    }
+
     destruct_pair (from_n_nnf k A (S (S k))) as [A_mcnf kA].
     destruct_pair (from_n_nnf (S k) B kA) as [B_mcnf kB].
     intro Hp_mcnf. cbn [fst] in Hp_mcnf.
@@ -306,6 +318,10 @@ Section EquisatModel.
       let M' := named_model M' n B k in
         set_kripke_at_n_iff_force M' n M phi
 
+    (* TODO: properly optimise OR case. Any size disjunction of literals can use this. *)
+    | Nnf.Or (Nnf.Lit Al) (Nnf.Lit Bl) =>
+        set_kripke_at_n_iff_force M n M phi
+
     (* n -> A \/ B  =>  n -> nA \/ nB ; nA -> A ; nB -> B *)
     | Nnf.Or A B =>
       let (nA, k) := (k, S k) in
@@ -388,24 +404,18 @@ Section EquisatModelRange.
       simpl. ifauto. fold MA kA MB. tauto.
 
     (* or *)
-    - set (MA := named_model M k A (S (S k))).
+    - subst k'. cbn in Hx_range |- *.
+      Nnf.destruct_lit2 A B. { cbn. ifauto. }
+
+      set (MA := named_model M k A (S (S k))).
       set (kA := snd (from_n_nnf k A (S (S k)))).
       set (MB := named_model MA (S k) B kA).
       set (kB := snd (from_n_nnf (S k) B kA)).
 
+      repeat inline_pair in Hx_range.
+      fold kA kB in Hx_range. cbn in Hx_range.
+
       simpl in Hmnp_lt.
-      assert (kA <= k') as Hqs.
-      {
-        unfold k'. simpl.
-        repeat inline_pair. simpl.
-        fold kA. apply sur_input_le_return.
-      }
-      assert (kB = k') as Hrs.
-      {
-        unfold k'. simpl.
-        repeat inline_pair. simpl.
-        fold kA. fold kB. reflexivity.
-      }
 
       assert (Kripke.valuation M w p <-> Kripke.valuation MA w p) as Hval_M_MA.
       {
@@ -454,7 +464,12 @@ Section EquisatModelRange.
       | A IHA
       | A IHA
       ];
-      intros w n k; cbn; (try Nnf.destruct_lit A; cbn); ifauto; reflexivity.
+      intros w n k; cbn.
+    - ifauto.
+    - ifauto.
+    - Nnf.destruct_lit2 A B; cbn; ifauto.
+    - Nnf.destruct_lit A; cbn; ifauto.
+    - Nnf.destruct_lit A; cbn; ifauto.
   Qed.
 
 
@@ -525,7 +540,10 @@ Section EquisatModelRange.
           rewrite <- (named_model_changes_sur_only M)...
           apply (Nnf.agree_r A B)...
 
-    - set (MA := named_model M k A (S (S k))).
+    - subst k'. cbn in Hx_range |- *.
+      Nnf.destruct_lit2 A B. { cbn in Hx_range. lia. }
+
+      set (MA := named_model M k A (S (S k))).
       set (q := snd (from_n_nnf k A (S (S k)))).
       set (MB := named_model MA (S k) B q).
       set (r := snd (from_n_nnf (S k) B q)).
@@ -533,23 +551,13 @@ Section EquisatModelRange.
       set (M'A := named_model M' k A (S (S k))).
       set (M'B := named_model M'A (S k) B q).
 
+      repeat inline_pair in Hx_range.
+      fold q r in Hx_range. cbn in Hx_range.
 
       simpl in Hmnp_lt.
-      assert (q <= k') as Hqs.
-      {
-        unfold k'. simpl.
-        repeat inline_pair. simpl.
-        fold q. apply sur_input_le_return.
-      }
-      assert (r = k') as Hrs.
-      {
-        unfold k'. simpl.
-        repeat inline_pair. simpl.
-        fold q. fold r. reflexivity.
-      }
 
       simpl. ifauto. fold MA M'A q MB M'B.
-      assert (p = k \/ p = S k \/ (S (S k)) <= p < q \/ q <= p < k') as [Hxp | [HxSp | [Hpxq | Hqxs]]] by lia.
+      assert (p = k \/ p = S k \/ (S (S k)) <= p < q \/ q <= p < r) as [Hxp | [HxSp | [Hpxq | Hqxs]]] by lia.
       (* p = k *)
       + unfold MB, M'B.
         rewrite <- (named_model_changes_sur_only M'A)...
@@ -586,12 +594,11 @@ Section EquisatModelRange.
       (* q <= p < k' *)
       + unfold MB, M'B.
         apply IHB...
-        * fold r. lia.
-        * intros w' p' Hx'_in_B.
-          unfold MA, M'A.
-          rewrite <- (named_model_changes_sur_only M')...
-          rewrite <- (named_model_changes_sur_only M)...
-          apply (Nnf.agree_r A B)...
+        intros w' p' Hx'_in_B.
+        unfold MA, M'A.
+        rewrite <- (named_model_changes_sur_only M')...
+        rewrite <- (named_model_changes_sur_only M)...
+        apply (Nnf.agree_r A B)...
 
     - subst k'. cbn in *.
       Nnf.destruct_lit A. { cbn in *. lia. }
@@ -741,14 +748,29 @@ Section NnfToMcnf.
   Lemma or_sat : forall (A B : Nnf.t) (IHA : IH A) (IHB : IH B), IH (Nnf.Or A B).
   Proof with try finish.
     intros A B IHA IHB w0 n k Hmnk_lt M' n_val Hn_val.
-    cbn -[Mcnf.zip_merge].
+    subst M'. cbn -[Mcnf.zip_merge].
+    Nnf.destruct_lit2 A B. {
+      cbn in Hmnk_lt, Hn_val |- *. autorewrite with list prop. cbn.
+      destruct (classic (n_val w0)) as [Hnval_w0 | Hnnval_w0].
+      - specialize (Hn_val w0 Hnval_w0).
+        destruct Hn_val as [Hforce_lA | Hforce_lB].
+        + exists lA. split...
+          eapply Lit.meaningful_valuations. 2: exact Hforce_lA.
+          intros w p Hp_lA. cbn in Hp_lA.
+          cbn. ifauto.
+        + exists lB. split...
+          eapply Lit.meaningful_valuations. 2: exact Hforce_lB.
+          intros w p Hp_lB. cbn in Hp_lB.
+          cbn. ifauto.
+      - exists (Lit.Neg n). split...
+    }
     destruct_pair as [A_mcnf kA].
     destruct_pair as [B_mcnf kB].
     cbn -[Mcnf.zip_merge] in *.
 
     set (MA := named_model M k A (S (S k))).
     set (MB := named_model MA (S k) B kA).
-    fold MA kA MB in M'. fold M'.
+    set (M' := set_kripke_at_n_iff_force MB n M (Nnf.Or A B)).
 
     specialize (IHA w0 k (S (S k))). forward IHA by lia.
     fold MA A_mcnf in IHA. cbn in IHA.
@@ -1074,6 +1096,19 @@ Proof with try finish.
   - cbn in Hmnk_lt.
     unfold from_nnf_with_sur in Hforce_mcnf.
     cbn [from_n_nnf] in Hforce_mcnf.
+
+    Nnf.destruct_lit2 A B. {
+      cbn in Hforce_mcnf |- *.
+      autorewrite with list prop in Hforce_mcnf.
+      cbn in Hforce_mcnf.
+      destruct Hforce_mcnf as [
+        [l1 [[Hl1_n | F] Hforce_l1]]
+        [l2 [[Hl2_nn | [Hl2_lA | [Hl2_lB | F2]]] Hforce_l2]]]...
+      - subst l1 l2. cbn in Hforce_l1, Hforce_l2. contradiction.
+      - subst l1 l2. now left.
+      - subst l1 l2. now right.
+    }
+
     destruct_pair in Hforce_mcnf as [A_mcnf kA].
     destruct_pair in Hforce_mcnf as [B_mcnf kB].
     cbn [fst] in Hforce_mcnf.

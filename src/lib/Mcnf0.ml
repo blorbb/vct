@@ -15,14 +15,29 @@ let rec from_n_nnf n phi k =
     let (a_mcnf, k0) = from_n_nnf n a k in
     let (b_mcnf, k1) = from_n_nnf n b k0 in ((zip_merge a_mcnf b_mcnf), k1)
   | Or (a, b) ->
-    let k0 = Stdlib.Int.succ k in
-    let k1 = Stdlib.Int.succ k0 in
-    let (a_mcnf, k2) = from_n_nnf k a k1 in
-    let (b_mcnf, k3) = from_n_nnf k0 b k2 in
-    ((zip_merge
-       ((make_cpls (((Neg n) :: ((Pos k) :: ((Pos k0) :: []))) :: [])) :: [])
-       (zip_merge a_mcnf b_mcnf)),
-    k3)
+    (match a with
+     | Lit al ->
+       (match b with
+        | Lit bl ->
+          (((make_cpls (((Neg n) :: (al :: (bl :: []))) :: [])) :: []), k)
+        | _ ->
+          let k0 = Stdlib.Int.succ k in
+          let k1 = Stdlib.Int.succ k0 in
+          let (a_mcnf, k2) = from_n_nnf k a k1 in
+          let (b_mcnf, k3) = from_n_nnf k0 b k2 in
+          ((zip_merge
+             ((make_cpls (((Neg n) :: ((Pos k) :: ((Pos k0) :: []))) :: [])) :: [])
+             (zip_merge a_mcnf b_mcnf)),
+          k3))
+     | _ ->
+       let k0 = Stdlib.Int.succ k in
+       let k1 = Stdlib.Int.succ k0 in
+       let (a_mcnf, k2) = from_n_nnf k a k1 in
+       let (b_mcnf, k3) = from_n_nnf k0 b k2 in
+       ((zip_merge
+          ((make_cpls (((Neg n) :: ((Pos k) :: ((Pos k0) :: []))) :: [])) :: [])
+          (zip_merge a_mcnf b_mcnf)),
+       k3))
   | Box a ->
     (match a with
      | Lit l -> (({ cpls = []; boxes = ((n, l) :: []); dias = [] } :: []), k)
