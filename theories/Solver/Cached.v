@@ -162,7 +162,7 @@ with Caches.contains caches A =>
             let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
             let s0' := CplSolver.add_conflict_set s0 conflict_set in
             let mc0' := add_conflict_set (l0::mc1) conflict_set in
-            tableau A s0' mc0' caches1'
+            tableau A s0' mc0' (cache0::caches1')
 .
 Next Obligation.
   (* JUMP call measure decreasing. *)

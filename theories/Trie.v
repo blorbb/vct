@@ -10,9 +10,6 @@ From Stdlib.Structures Require Import Orders.
 Module Make (K : OrderedTypeFull).
   (** Split trie and sorted definitions. *)
   Module Split.
-    Scheme All for prod.
-    Scheme All for list.
-
     (** Same as a [list (K.t * t)], but easier to do induction on. *)
     Inductive forest :=
       | Nil
