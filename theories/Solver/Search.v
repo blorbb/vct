@@ -15,7 +15,6 @@ From CegarTableaux Require CplSolver Lit Mcnf Assumptions Valuation Tree.
 From CegarTableaux Require Import ImportStd.
 From CegarTableaux.Solver Require Import McnfExt.
 From CegarTableaux.Solver Require Derivation.
-From stdpp Require Import gmap.
 
 
 (** Default auto-solver simplifies a bit too much. *)
@@ -653,23 +652,23 @@ Module NoModel.
 End NoModel.
 
 
+From CegarTableaux Require Trie.
+From Stdlib.Structures Require Import Orders.
 
 Module Cached.
   (** With a satisfiability cache. *)
-  Module Cache.
-    (** Cache of satisfiable assumptions at the current modal level. *)
-    Definition t := gset Assumptions.t.
+  Module LitOrd <: OrderedTypeFull.
+    Module T <: TotalTransitiveLeBool'.
+      Definition t := Lit.t.
+      Definition leb := Lit.leb.
+      Definition leb_total := Lit.leb_total.
+      Definition leb_trans := Lit.leb_trans.
+    End T.
 
-    Definition empty : t := empty.
+    Include Orders.TTLB_to_OTF T.
+  End LitOrd.
 
-    Definition singleton (A : Assumptions.t) : t := singleton A.
-
-    Definition contains (cache : t) (A : Assumptions.t) :=
-      bool_decide (elem_of A cache).
-
-    Definition add (cache : t) (A : Assumptions.t) :=
-      union (singleton A) cache.
-  End Cache.
+  Module Cache := Trie.Make (LitOrd).
 
   Module Caches.
     (** Caches for every modal level from the current one onwards. *)

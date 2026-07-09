@@ -369,7 +369,7 @@ Section EquisatModelRange.
       ];
       intros M w n k p Hmnp_lt k' Hx_range; apply not_or_and in Hx_range.
     (* literal *)
-    - simpl. ifauto.
+    - simpl. now ifauto.
 
     (* and *)
     - set (MA := named_model M n A k).
@@ -405,7 +405,7 @@ Section EquisatModelRange.
 
     (* or *)
     - subst k'. cbn in Hx_range |- *.
-      Nnf.destruct_lit2 A B. { cbn. ifauto. }
+      Nnf.destruct_lit2 A B. { cbn. now ifauto. }
 
       set (MA := named_model M k A (S (S k))).
       set (kA := snd (from_n_nnf k A (S (S k)))).
@@ -465,11 +465,11 @@ Section EquisatModelRange.
       | A IHA
       ];
       intros w n k; cbn.
-    - ifauto.
-    - ifauto.
-    - Nnf.destruct_lit2 A B; cbn; ifauto.
-    - Nnf.destruct_lit A; cbn; ifauto.
-    - Nnf.destruct_lit A; cbn; ifauto.
+    - now ifauto.
+    - now ifauto.
+    - Nnf.destruct_lit2 A B; cbn; now ifauto.
+    - Nnf.destruct_lit A; cbn; now ifauto.
+    - Nnf.destruct_lit A; cbn; now ifauto.
   Qed.
 
 
@@ -757,11 +757,11 @@ Section NnfToMcnf.
         + exists lA. split...
           eapply Lit.meaningful_valuations. 2: exact Hforce_lA.
           intros w p Hp_lA. cbn in Hp_lA.
-          cbn. ifauto.
+          cbn. now ifauto.
         + exists lB. split...
           eapply Lit.meaningful_valuations. 2: exact Hforce_lB.
           intros w p Hp_lB. cbn in Hp_lB.
-          cbn. ifauto.
+          cbn. now ifauto.
       - exists (Lit.Neg n). split...
     }
     destruct_pair as [A_mcnf kA].

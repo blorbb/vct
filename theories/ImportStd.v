@@ -1,13 +1,5 @@
 (** Common standard library imports. *)
 
-(** Overrides a bunch of stdlib definitions with non-definitionally-equal equivalents.
-
-    They seem nicer than the stdlib versions, but for now it's easier to continue
-    with the stdlib ones to avoid making a bunch of tiny changes to proofs.
-
-    TODO: someday fully use stdpp. *)
-From stdpp Require Export prelude countable.
-
 From Stdlib Require List.
 Export List.ListNotations.
 Open Scope list_scope.
@@ -18,6 +10,8 @@ From Stdlib Require Export
 From Equations Require Export Equations.
 Require Export Equations.Prop.Logic.
 
+(* Use booleans as Prop *)
+Coercion is_true : bool >-> Sortclass.
 
 Create HintDb ct.
 Create Rewrite HintDb ct.

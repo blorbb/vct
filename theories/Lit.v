@@ -48,17 +48,8 @@ Proof.
 Qed. Global Hint Rewrite eqb_eq : ct.
 
 
-Global Instance eq_dec : EqDecision t.
-Proof. solve_decision. Qed.
-
-
-Global Instance lit_countable : Countable t.
-Proof.
-  apply (inj_countable
-    (fun l => match l with | Pos p => inl p | Neg p => inr p end)
-    (fun x => match x with | inl p => Some (Pos p) | inr p => Some (Neg p) end)).
-  now intros [p|p].
-Qed.
+Lemma eq_dec (a b : t) : {a = b} + {a <> b}.
+Proof. decide equality; apply Nat.eq_dec. Qed.
 
 
 Lemma negate_eq_atm (l : t) : atm (negate l) = atm l.
@@ -122,6 +113,15 @@ Proof.
   - tauto.
   - tauto.
   - apply nat_leb_total.
+Qed.
+
+
+Global Instance leb_trans : Transitive leb.
+Proof.
+  intros x y z Hxy Hyz.
+  destruct x; destruct y; destruct z; try easy.
+  - cbn in *. unfold is_true in *. rewrite Nat.leb_le in *. transitivity p0; easy.
+  - cbn in *. unfold is_true in *. rewrite Nat.leb_le in *. transitivity p0; easy.
 Qed.
 
 
