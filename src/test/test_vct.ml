@@ -76,7 +76,7 @@ let print_solution str =
   let fml = parse_str str in
   let mc0 = convert fml in
   Printf.printf "MCNF:\n%s\n\n" (Mcnf.show mc0);
-  (match Vct.Solver.TailRec.solve_mcnf mc0 with
+  (match Vct.TailRec.solve_mcnf mc0 with
    | Sat t -> Printf.printf "SAT:\n%s\n\n" (t |> RTree.of_vct_tree |> RTree.show)
    | Unsat (_a, d) ->
      Printf.printf "UNSAT:\n%s\n\n" (d |> Deriv.of_vct_deriv |> Deriv.show));

@@ -1,8 +1,7 @@
-From CegarTableaux.Solver Require Search Derivation Soundness Completeness.
+From CegarTableaux.Solver Require Spec TailRec NoModel Cached Derivation Soundness Completeness.
 From CegarTableaux.Solver Require Import McnfExt.
 From CegarTableaux Require Import ImportStd.
 
-Include Search.
 Include Soundness.
 Include Completeness.
 

@@ -1,6 +1,6 @@
 From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import Search McnfExt.
-From CegarTableaux.Solver Require Derivation.
+From CegarTableaux.Solver Require Import McnfExt.
+From CegarTableaux.Solver Require Derivation Spec.
 From CegarTableaux Require Cnf.
 
 (** Some basic properties about the solutions returned by [tableau] and [tableau_jumps].  *)

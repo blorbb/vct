@@ -5,16 +5,16 @@ let parse_file path =
 ;;
 
 let check fml =
-  let result = Vct.Solver.NoModel.solve_fml fml in
-  match Vct.Solver.NoModel.Solution.is_sat result with
+  let result = Vct.NoModel.solve_fml fml in
+  match Vct.NoModel.Solution.is_sat result with
   | true -> print_endline "SAT"
   | false -> print_endline "UNSAT"
 ;;
 
 (* TODO: print out the model *)
 let check_with_model fml =
-  let result = Vct.Solver.TailRec.solve_fml fml in
-  match Vct.Solver.TailRec.Solution.is_sat result with
+  let result = Vct.TailRec.solve_fml fml in
+  match Vct.TailRec.Solution.is_sat result with
   | true -> print_endline "SAT"
   | false -> print_endline "UNSAT"
 ;;
