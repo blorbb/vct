@@ -419,3 +419,5 @@ Lemma Exists_singleton : forall {A} (P : A -> Prop) (x : A),
   List.Exists P [x] <-> P x.
 Proof. intros *. rewrite Exists_cons, Exists_nil. tauto. Qed.
 Hint Rewrite @Exists_singleton : list.
+
+Definition is_prefix {A} (prefix l : list A) := exists suffix, prefix++suffix = l.

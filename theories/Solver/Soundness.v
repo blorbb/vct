@@ -6,21 +6,21 @@ From CegarTableaux Require Cnf.
 (** Some basic properties about the solutions returned by [tableau] and [tableau_jumps].  *)
 
 Lemma tableau_deriv_core : forall A s0 mc0 core deriv,
-  Spec.Solution.Unsat core deriv = Spec.tableau A s0 mc0 ->
-  core = Derivation.get_core deriv.
+  Spec.tableau A s0 mc0 = Spec.Solution.Unsat core deriv ->
+  Derivation.get_core deriv = core.
 Proof.
   intros *. intro Hunsat.
   funelim (Spec.tableau A s0 mc0); rewrite <- Heqcall in Hunsat.
-  - inversion_clear Hunsat. reflexivity.
+  - inv_clear Hunsat. reflexivity.
   - discriminate.
   - discriminate.
   - destruct (Spec.tableau _ _ _).
     + discriminate.
-    + inversion_clear Hunsat. cbn. now apply H.
+    + inv_clear Hunsat. cbn. now apply H.
 Qed.
 
 Lemma jump_failed_dia : forall V l0 mc1 failed_dia core deriv,
-  Spec.JumpSolution.Unsat failed_dia core deriv = Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) ->
+  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   List.In failed_dia (Lclauses.dias l0).
 Proof.
   intros *. intro Hunsat.
@@ -28,32 +28,32 @@ Proof.
     cbn in *; rewrite <- Heqcall in Hunsat.
   - discriminate.
   - right. eapply H. exact Hunsat.
-  - left. now inversion_clear Hunsat.
+  - left. now inv_clear Hunsat.
   - discriminate.
-  - right. inversion_clear Hunsat. eapply Hind. symmetry. exact Heq.
+  - right. inv_clear Hunsat. eapply Hind. exact Heq.
 Qed.
 
 Lemma jump_deriv_core : forall V l0 mc1 failed_dia core deriv,
-  Spec.JumpSolution.Unsat failed_dia core deriv = Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) ->
-  core = Derivation.get_core deriv.
+  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
+  Derivation.get_core deriv = core.
 Proof.
   intros *. intros Hunsat.
   funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1));
     cbn in *; rewrite <- Heqcall in Hunsat.
   - discriminate.
   - eapply H. exact Hunsat.
-  - inversion_clear Hunsat.
-    eapply tableau_deriv_core. symmetry. exact Heq.
+  - inv_clear Hunsat.
+    eapply tableau_deriv_core. exact Heq.
   - discriminate.
-  - inversion_clear Hunsat. eapply Hind. symmetry. exact Heq.
+  - inv_clear Hunsat. eapply Hind. exact Heq.
 Qed.
 
 (** * [Derivation.conds] proofs *)
 
 Lemma tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
-  Spec.JumpSolution.Unsat failed_dia core deriv = Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) ->
+  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   (forall A' core deriv,
-    Spec.Solution.Unsat core deriv = Spec.next_tableau mc1 A' ->
+    Spec.next_tableau mc1 A' = Spec.Solution.Unsat core deriv ->
     Derivation.conds mc1 A' deriv) ->
   Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof.
@@ -63,17 +63,17 @@ Proof.
   - eapply H.
     + exact Hunsat.
     + exact IHnt.
-  - inversion_clear Hunsat. cbn. unfold "|>" in Heq.
-    eapply IHnt. symmetry. exact Heq.
+  - inv_clear Hunsat. cbn. unfold "|>" in Heq.
+    eapply IHnt. exact Heq.
   - discriminate.
-  - inversion_clear Hunsat. eapply Hind.
-    + symmetry. exact Heq.
+  - inv_clear Hunsat. eapply Hind.
+    + exact Heq.
     + exact IHnt.
 Qed.
 
 Lemma tableau_deriv : forall A s0 mc0 core deriv,
-  Spec.Solution.Unsat core deriv = Spec.tableau A s0 mc0 ->
-  s0 = CplSolver.make_with_clauses (first_cpls mc0) ->
+  Spec.tableau A s0 mc0 = Spec.Solution.Unsat core deriv ->
+  CplSolver.make_with_clauses (first_cpls mc0) = s0 ->
   Derivation.conds mc0 A deriv.
 Proof with auto.
   intros *. intros Hunsat Hs0. funelim (Spec.tableau A s0 mc0).
@@ -89,16 +89,16 @@ Proof with auto.
     + unfold first_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using Spec.jump_c_forced.
     + apply tableau_jumps_deriv with (core := jump_core).
-      * symmetry. apply Hj_eq.
+      * apply Hj_eq.
       * intros. apply (Hind A' core1 deriv)...
-    + cbn [first_ctx fst]. erewrite <- jump_deriv_core.
-      2: { symmetry. exact Hj_eq. }
+    + cbn [first_ctx fst]. erewrite jump_deriv_core.
+      2: { exact Hj_eq. }
       apply H with (core := core0)...
 Qed.
 
 (** The derivation conditions are held for the [solve_*] functions. *)
 Corollary solve_mcnf_deriv : forall phi core deriv,
-  Spec.Solution.Unsat core deriv = Spec.solve_mcnf phi ->
+  Spec.solve_mcnf phi = Spec.Solution.Unsat core deriv ->
   Derivation.conds phi [] deriv.
 Proof.
   intros *. intros Hunsat.
@@ -108,7 +108,7 @@ Proof.
 Qed.
 
 Corollary solve_fml_deriv : forall phi core deriv,
-  Spec.Solution.Unsat core deriv = Spec.solve_fml phi ->
+  Spec.solve_fml phi = Spec.Solution.Unsat core deriv ->
   Derivation.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf) [] deriv.
 Proof.
   intros. eapply solve_mcnf_deriv. exact H.
@@ -199,7 +199,7 @@ Proof.
     apply Forall_app; auto.
 Qed.
 
-Lemma Mcnf_resolution : forall mc0 (A : list Lit.t),
+Lemma mcnf_resolution : forall mc0 (A : list Lit.t),
   Mcnf.unsatisfiable (add_assumptions mc0 A) ->
   Mcnf.unsatisfiable (add_neg_assumptions mc0 A) ->
   Mcnf.unsatisfiable mc0.
@@ -216,12 +216,12 @@ Proof with try easy; auto.
   - apply (force_first_cpls mc0 cpls boxes dias)...
 Qed.
 
-Corollary Mcnf_resolution_cs : forall mc0 (cs : list nat),
+Corollary mcnf_resolution_cs : forall mc0 (cs : list nat),
   Mcnf.unsatisfiable (add_conflict_set mc0 cs) ->
   Mcnf.unsatisfiable (add_assumptions mc0 (List.map Lit.Pos cs)) ->
   Mcnf.unsatisfiable mc0.
 Proof.
-  intros * Hcs HA. apply Mcnf_resolution with (A := (List.map Lit.Pos cs)).
+  intros * Hcs HA. apply mcnf_resolution with (A := (List.map Lit.Pos cs)).
   - easy.
   - cbn in *. rewrite List.map_map. cbn. apply Hcs.
 Qed.
@@ -271,7 +271,7 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   - destruct failed_dia as [c d]; cbn [fst snd] in *.
     cbn [Derivation.get_core].
     set (cs := conflict_set_of mc0 V c (Derivation.get_core jump_deriv)) in *.
-    apply Mcnf_resolution_cs with (cs := cs).
+    apply mcnf_resolution_cs with (cs := cs).
     (* mc0 /\ ~cs *)
     + clear -IHrs. fold cs.
       destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
@@ -338,16 +338,44 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
         cbn in Hforce_a'. exact Hforce_a'.
 Qed.
 
+
 (** ** Soundness of tableau *)
+
+Lemma tableau_sound : forall A s0 mc0,
+  CplSolver.make_with_clauses (first_cpls mc0) = s0 ->
+  negb (Spec.Solution.is_sat (Spec.tableau A s0 mc0)) ->
+  Mcnf.unsatisfiable (add_assumptions mc0 A).
+Proof with try easy.
+  intros A s0 mc0 Hs0 Hunsat.
+  destruct (Spec.tableau A s0 mc0) eqn:Hsolve... clear Hunsat.
+  pose proof (tableau_deriv A s0 mc0 core deriv Hsolve Hs0) as Hconds.
+  pose proof (deriv_sound mc0 A deriv Hconds) as Hunsat.
+  pose proof (deriv_core_incl_A mc0 A deriv Hconds) as Hincl.
+  intros Hsat. unfold Mcnf.satisfiable in Hsat. deex.
+  apply Hunsat. exists W, R, M, w0.
+  apply incl_force with (A' := A)...
+Qed.
+
+
+Corollary tableau_sound_contrapos : forall A s0 mc0,
+  CplSolver.make_with_clauses (first_cpls mc0) = s0 ->
+  Mcnf.satisfiable (add_assumptions mc0 A) ->
+  Spec.Solution.is_sat (Spec.tableau A s0 mc0).
+Proof with try easy.
+  intros A s0 mc0 Hs0 Hsat.
+  destruct (Spec.tableau A s0 mc0) eqn:Hunsat...
+  exfalso. apply (tableau_sound A s0 mc0)...
+  now rewrite Hunsat.
+Qed.
 
 
 Corollary solve_mcnf_sound : forall mc0,
-  Spec.Solution.is_sat (Spec.solve_mcnf mc0) = false ->
+  negb (Spec.Solution.is_sat (Spec.solve_mcnf mc0)) ->
   Mcnf.unsatisfiable mc0.
 Proof with try easy.
   intros mc0 Hunsat. destruct (Spec.solve_mcnf mc0) eqn:Hsolve...
   clear Hunsat.
-  pose proof (solve_mcnf_deriv mc0 core deriv (eq_sym Hsolve)) as Hconds.
+  pose proof (solve_mcnf_deriv mc0 core deriv Hsolve) as Hconds.
   pose proof (deriv_sound mc0 [] deriv Hconds) as Hunsat.
   assert (Derivation.get_core deriv = []) as Hderiv. {
     apply incl_l_nil. apply deriv_core_incl_A with (mc0 := mc0)...
@@ -361,7 +389,7 @@ Qed.
 
 
 Corollary solve_fml_sound : forall phi,
-  Spec.Solution.is_sat (Spec.solve_fml phi) = false ->
+  negb (Spec.Solution.is_sat (Spec.solve_fml phi)) ->
   Fml.unsatisfiable phi.
 Proof.
   intros phi Hunsat Hsat.
@@ -375,7 +403,7 @@ Qed.
 
 Corollary solve_mcnf_sound_contrapos : forall mc0,
   Mcnf.satisfiable mc0 ->
-  Spec.Solution.is_sat (Spec.solve_mcnf mc0) = true.
+  Spec.Solution.is_sat (Spec.solve_mcnf mc0).
 Proof with try easy.
   intros mc0 Hsat. unfold Spec.Solution.is_sat.
   destruct (Spec.solve_mcnf mc0) eqn:Hunsat...
@@ -386,7 +414,7 @@ Qed.
 
 Corollary solve_fml_sound_contrapos : forall phi,
   Fml.satisfiable phi ->
-  Spec.Solution.is_sat (Spec.solve_fml phi) = true.
+  Spec.Solution.is_sat (Spec.solve_fml phi).
 Proof with try easy.
   intros phi. unfold Spec.solve_fml, "|>".
   rewrite Nnf.equisat_fml, Mcnf.equisat_nnf.

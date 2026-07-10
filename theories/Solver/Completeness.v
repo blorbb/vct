@@ -5,8 +5,8 @@ From CegarTableaux.Solver Require Derivation Spec.
 (** Completeness of the [Spec] implementation. *)
 
 Lemma singleton_tree_force : forall s0 A V cpls boxes mc1,
-  CplSolution.Sat V = CplSolver.solve_with_assumptions s0 A ->
-  cpls = CplSolver.clauses_of s0 ->
+  CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
+  CplSolver.clauses_of s0 = cpls ->
   Mcnf.force Tree.as_kripke (Tree.make V [])
     (add_assumptions (Lclauses.make cpls boxes [] :: mc1) A).
 Proof with try easy; auto with datatypes ct.
@@ -30,12 +30,12 @@ Qed.
 
 
 Lemma tableau_jumps_completeness : forall s0 A V l0 mc1 T1s,
-  Spec.JumpSolution.Sat T1s = Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) ->
+  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Sat T1s ->
   (forall A' T0,
     Spec.Solution.Sat T0 = Spec.next_tableau mc1 A' ->
     Mcnf.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
-  s0 = CplSolver.make_with_clauses (Lclauses.cpls l0) ->
-  CplSolution.Sat V = CplSolver.solve_with_assumptions s0 A ->
+  CplSolver.make_with_clauses (Lclauses.cpls l0) = s0 ->
+  CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
   Mcnf.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsat IHnt Hs0 Hcpl_sat.
@@ -55,7 +55,7 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 
     cbn [Lclauses.cpls] in Hcpl_sat.
     specialize (Hind (CplSolver.make_with_clauses cpls) A T1s').
-    forward Hind by symmetry; exact Heq.
+    forward Hind by exact Heq.
     forward Hind by exact IHnt.
     forward Hind by reflexivity.
     forward Hind by exact Hcpl_sat.
@@ -107,9 +107,9 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 Qed.
 
 
-Theorem tableau_completeness : forall A s0 mc0 T,
-  Spec.Solution.Sat T = Spec.tableau A s0 mc0 ->
-  s0 = CplSolver.make_with_clauses (first_cpls mc0) ->
+Theorem tableau_completeness_force : forall A s0 mc0 T,
+  Spec.tableau A s0 mc0 = Spec.Solution.Sat T ->
+  CplSolver.make_with_clauses (first_cpls mc0) = s0 ->
   Mcnf.force Tree.as_kripke T (add_assumptions mc0 A).
 Proof with try easy; auto with datatypes ct.
   intros A s0 mc0 T Hsat Hs0.
@@ -120,16 +120,16 @@ Proof with try easy; auto with datatypes ct.
     rewrite List.Forall_forall. intros clause Hclause_in.
     rewrite CplClause.force_cpl_forceb with (V:=V)...
     set (s0 := CplSolver.make_with_clauses (first_cpls [])) in *.
-    pose proof (CplSolver.solution_completeness s0 A V (eq_sym Hcsol_eq)) as Hforce.
+    pose proof (CplSolver.solution_completeness s0 A V Hcsol_eq) as Hforce.
     unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. rewrite forallb_forall in Hforce.
     apply Hforce. rewrite List.in_app_iff. left.
     rewrite <- app_nil_r. exact Hclause_in.
   - clear H H0. inversion_clear Hsat.
     eapply tableau_jumps_completeness...
   - clear H0 H1.
-    destruct (Spec.tableau _ _ _)... inversion Hsat. subst T. clear Hsat.
+    destruct (Spec.tableau _ _ _)... inv_clear Hsat.
     (* H assumes that T forces an over constrained formula. *)
-    specialize (H T0 eq_refl).
+    specialize (H T eq_refl).
     cbn in H |- *. intuition.
     eapply incl_Forall. 2: { exact H0. }
     apply List.incl_app.
@@ -139,12 +139,12 @@ Qed.
 
 
 Corollary solve_mcnf_complete_force : forall mc0 T,
-  Spec.Solution.Sat T = Spec.solve_mcnf mc0 ->
+  Spec.solve_mcnf mc0 = Spec.Solution.Sat T ->
   Mcnf.force Tree.as_kripke T mc0.
 Proof.
   intros mc0 T Hsat.
   unfold Spec.solve_mcnf in Hsat.
-  apply tableau_completeness in Hsat; auto.
+  apply tableau_completeness_force in Hsat; auto.
   destruct mc0.
   - cbn. apply I.
   - cbn in *. exact Hsat.
@@ -154,7 +154,7 @@ Qed.
 (** The model will have valuations for more atoms than in [phi] due to the
     fresh atoms introduced by [Mcnf.from_nnf], but it is still a satisfying model. *)
 Corollary solve_fml_complete_force : forall phi T,
-  Spec.Solution.Sat T = Spec.solve_fml phi ->
+  Spec.solve_fml phi = Spec.Solution.Sat T ->
   Fml.force Tree.as_kripke T phi.
 Proof.
   intros phi T Hsat.
@@ -166,27 +166,36 @@ Proof.
 Qed.
 
 
-Corollary solve_mcnf_complete : forall mc0,
-  Spec.Solution.is_sat (Spec.solve_mcnf mc0) = true ->
+Corollary tableau_completeness_sat : forall mc0 A,
+  Spec.Solution.is_sat (Spec.tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0) ->
+  Mcnf.satisfiable (add_assumptions mc0 A).
+Proof with try easy.
+  intros mc0 A Hsat.
+  destruct (Spec.tableau _ _ _) eqn:H...
+  apply tableau_completeness_force in H...
+  exists _, _, Tree.as_kripke, T0. exact H.
+Qed.
+
+
+Corollary solve_mcnf_complete_sat : forall mc0,
+  Spec.Solution.is_sat (Spec.solve_mcnf mc0) ->
   Mcnf.satisfiable mc0.
 Proof with try easy.
   intros mc0 Hsat.
   unfold Spec.Solution.is_sat in Hsat.
   destruct (Spec.solve_mcnf mc0) eqn:Hsol_sat...
-  symmetry in Hsol_sat.
   apply solve_mcnf_complete_force in Hsol_sat.
   exists _, _, Tree.as_kripke, T0. exact Hsol_sat.
 Qed.
 
 
-Corollary solve_fml_complete : forall phi,
+Corollary solve_fml_complete_sat : forall phi,
   Spec.Solution.is_sat (Spec.solve_fml phi) = true ->
   Fml.satisfiable phi.
 Proof with try easy.
   intros phi Hsat.
   unfold Spec.Solution.is_sat in Hsat.
   destruct (Spec.solve_fml phi) eqn:Hsol_sat...
-  symmetry in Hsol_sat.
   apply solve_fml_complete_force in Hsol_sat.
   exists _, _, Tree.as_kripke, T0. exact Hsol_sat.
 Qed.

@@ -97,27 +97,27 @@ Arguments clause_atms_incl clause s A /.
 
 (** The valuation returned by a satisfiable result is [clash_free]. *)
 Axiom valuation_clash_free : forall s A V,
-  CplSolution.Sat V = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Sat V ->
   Valuation.clash_free V.
 
 (** Every atom in the valuation is an atom in the solver or assumptions. *)
 Axiom valuation_in_clauses : forall s A V,
-  CplSolution.Sat V = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Sat V ->
   forall p, List.In p V -> atm_in p s A.
 
 (** The unsatisfiable core is a subset of the unit assumptions. *)
 Axiom core_subset_assumptions : forall s A core,
-  CplSolution.Unsat core = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Unsat core ->
   List.incl core A.
 
 (** The solver + unsatisfiable core is still unsatisfiable. *)
 Axiom solution_soundness : forall s A core,
-  CplSolution.Unsat core = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Unsat core ->
   Cnf.unsatisfiable (solved_clauses s core).
 
 (** The valuation satisfies the solver clauses. *)
 Axiom solution_completeness : forall s A V,
-  CplSolution.Sat V = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Sat V ->
   Cnf.cpl_forceb V (solved_clauses s A) = true.
 
 (** The empty SAT-solver contains no clauses. *)
@@ -191,7 +191,7 @@ Qed. Global Hint Resolve every_sat_valuation_nodup : ct.
 (** A satisfiable valuation is in [every_valuation] of the solver. *)
 Lemma valuation_in_every_valuation_of :
   forall (s : t) (A : Assumptions.t) (V : Valuation.t),
-  CplSolution.Sat V = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Sat V ->
   Valuation.val_in_vals V (every_valuation s A).
 Proof with auto.
   intros s A V Hsat.
@@ -206,7 +206,7 @@ Qed.
 
 Lemma valuation_in_every_sat_valuation :
   forall s A V,
-  CplSolution.Sat V = solve_with_assumptions s A ->
+  solve_with_assumptions s A = CplSolution.Sat V ->
   Valuation.val_in_vals V (every_sat_valuation s A).
 Proof with auto.
   intros solver assumptions val Hsat.
@@ -322,7 +322,7 @@ Qed.
 (** Adding an extra clause only restricts the possible sat valuations. *)
 Lemma refined_solver_sat_vals_subset : forall s A clause s',
   clause_atms_incl clause s A ->
-  s' = add_clause s clause ->
+  add_clause s clause = s' ->
   inclA Valuation.eq (every_sat_valuation s' A) (every_sat_valuation s A).
 Proof with auto using Valuation.eq_equivalence.
   intros s A clause s' Hclause Hs' V HV_in_s'.

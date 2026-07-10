@@ -93,17 +93,23 @@ Proof.
 Qed.
 
 
-Lemma unsat_subset : forall A B, List.incl A B -> Cnf.unsatisfiable A -> Cnf.unsatisfiable B.
+Lemma incl_force : forall {W} {R} {M : @Kripke.t W R} {w0 : W} A A',
+  List.incl A A' -> Cnf.force M w0 A' -> Cnf.force M w0 A.
 Proof.
-  intros A B Hincl HA_unsat HB_sat.
+  intros * Hincl Hforce_A'.
+  cbn in *. apply List.incl_Forall with (l1 := A'); easy.
+Qed.
+
+
+Lemma incl_unsat : forall A A', List.incl A A' -> Cnf.unsatisfiable A -> Cnf.unsatisfiable A'.
+Proof.
+  intros A A' Hincl HA_unsat HB_sat.
   apply HA_unsat.
   unfold Cnf.satisfiable in *.
   destruct HB_sat as [W [R [M [w0 Hforce]]]].
   exists W,R,M,w0.
   cbn in Hforce |- *.
-  rewrite List.Forall_forall in *.
-  intros c Hc_in.
-  apply Hforce. now apply Hincl.
+  apply incl_force with (A' := A'); easy.
 Qed.
 
 

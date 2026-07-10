@@ -1,7 +1,7 @@
 (** Does not construct a model/derivation. *)
 
 From CegarTableaux.Solver Require Import SearchBasics.
-From CegarTableaux.Solver Require Spec.
+From CegarTableaux.Solver Require Spec Soundness Completeness.
 
 
 Module JumpSolution.
@@ -241,7 +241,7 @@ Qed.
 
 
 Corollary is_sat_spec : forall A s0 mc0,
-  Solution.is_sat (tableau A s0 mc0) = true <-> Spec.Solution.is_sat (Spec.tableau A s0 mc0) = true.
+  Solution.is_sat (tableau A s0 mc0) = Spec.Solution.is_sat (Spec.tableau A s0 mc0).
 Proof.
   intros A s0 mc0.
   pose proof (tableau_spec A s0 mc0).
