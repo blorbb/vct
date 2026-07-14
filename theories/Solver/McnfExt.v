@@ -67,6 +67,7 @@ Definition conflict_set_of mc0 V dia_antecedent core :=
   |> List.filter (fun box => List.existsb (Lit.eqb (snd box)) core)
   |> List.map fst
   |> cons dia_antecedent.
+Arguments conflict_set_of mc0 V dia_antecedent core : simpl never.
 
 
 (** The conflict set is a subset of the valuation. *)
@@ -113,4 +114,56 @@ Proof with auto.
 
   rewrite List.map_map in Hx_in_subset. cbn in Hx_in_subset. rewrite List.map_id in Hx_in_subset.
   now apply Hsubset.
+Qed.
+
+
+Lemma incl_force : forall {W} {R} {M : @Kripke.t W R} {w0 : W} mc0 A A',
+  List.incl A A' ->
+  Mcnf.force M w0 (add_assumptions mc0 A') ->
+  Mcnf.force M w0 (add_assumptions mc0 A).
+Proof with try easy.
+  intros * Hincl Hforce.
+  cbn in *. intuition. clear H0 H H3.
+  rewrite List.Forall_app in *. split...
+  destruct H1 as [Hforce_A' _].
+  apply Cnf.incl_force with (A' := (Cnf.from_assumptions A'))...
+  unfold Cnf.from_assumptions.
+  now apply incl_map.
+Qed.
+
+Corollary incl_sat : forall mc0 A A',
+  List.incl A A' ->
+  Mcnf.satisfiable (add_assumptions mc0 A') ->
+  Mcnf.satisfiable (add_assumptions mc0 A).
+Proof.
+  intros mc0 A A' Hincl Hsat.
+  unfold Mcnf.satisfiable in *. deex.
+  exists W, R, M, w0.
+  apply incl_force with A'; easy.
+Qed.
+
+
+Lemma force_assumptions_comm : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A B,
+  Mcnf.force M w0 (add_assumptions (add_assumptions mc0 A) B) <->
+  Mcnf.force M w0 (add_assumptions (add_assumptions mc0 B) A).
+Proof.
+  intros *. cbn. intuition; repeat rewrite List.Forall_app in *; tauto.
+Qed.
+
+
+Lemma force_ctx_first_next : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0,
+  Mcnf.force M w0 (first_ctx mc0 :: next_ctx mc0) <-> Mcnf.force M w0 mc0.
+Proof.
+  intros *. destruct mc0 as [|l0 mc1].
+  - cbn. now autorewrite with list prop.
+  - reflexivity.
+Qed.
+
+Lemma force_rm_assumptions : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
+  Mcnf.force M w0 (add_assumptions mc0 A) ->
+  Mcnf.force M w0 mc0.
+Proof.
+  intros * Hforce. destruct mc0 as [|l0 mc1].
+  - apply I.
+  - cbn in *. intuition. now rewrite List.Forall_app in H1.
 Qed.

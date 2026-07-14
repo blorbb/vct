@@ -170,10 +170,17 @@ Module Make (K : OrderedTypeFull).
       contains trie ks1.
     Proof. Admitted.
 
-    Lemma add_contains : forall trie ks,
+    Lemma add_contains : forall trie prefix ks,
       sorted trie ->
-      contains (add trie ks) ks.
+      is_prefix prefix ks ->
+      contains (add trie ks) prefix.
     Proof. Admitted.
+
+    Lemma add_contains_inv : forall trie prefix ks,
+      sorted trie ->
+      contains (add trie ks) prefix = true ->
+      contains trie prefix = true \/ is_prefix prefix ks.
+    Admitted.
 
     (** Adding other words does not remove existing words. *)
     Lemma add_other_contains : forall trie ks ks',
@@ -198,7 +205,7 @@ Module Make (K : OrderedTypeFull).
   Definition singleton := add empty.
 
   Lemma contains_prefix : forall trie ks1 ks2,
-    contains trie (ks1 ++ ks2) = true -> contains trie ks1 = true.
+    contains trie (ks1 ++ ks2) -> contains trie ks1.
   Proof.
     intros * Hcontains.
     apply Split.contains_prefix with ks2.
@@ -206,7 +213,8 @@ Module Make (K : OrderedTypeFull).
     - exact Hcontains.
   Qed.
 
-  Lemma add_contains : forall trie ks, contains (add trie ks) ks = true.
+  Lemma add_contains : forall trie prefix ks,
+    is_prefix prefix ks -> contains (add trie ks) prefix.
   Proof.
     intros *. apply Split.add_contains. apply proj2_sig.
   Qed.
@@ -221,11 +229,33 @@ Module Make (K : OrderedTypeFull).
     - exact Hcontains.
   Qed.
 
-  Lemma contains_empty : forall ks, contains empty ks = false.
-  Proof. tauto. Qed.
 
-  Lemma contains_singleton : forall ks, contains (singleton ks) ks.
-  Proof. apply add_contains. Qed.
+  Lemma add_contains_iff : forall trie prefix ks,
+    contains (add trie ks) prefix <->
+    contains trie prefix \/ is_prefix prefix ks.
+  Proof.
+    intros *. split.
+    - apply Split.add_contains_inv.
+      apply proj2_sig.
+    - intros [Hcontains | Hprefix].
+      + now apply add_other_contains.
+      + now apply add_contains.
+  Qed.
+
+
+  Lemma contains_empty : forall ks, negb (contains empty ks).
+  Proof. easy. Qed.
+
+
+  Lemma contains_singleton : forall prefix ks,
+    is_prefix prefix ks <-> contains (singleton ks) prefix.
+  Proof.
+    intros. split.
+    - apply add_contains.
+    - intro Hsingleton.
+      apply add_contains_iff in Hsingleton.
+      destruct Hsingleton; easy.
+  Qed.
 
   (** Don't simplify these defs, other modules should use the lemmas above. *)
   Global Opaque contains add.

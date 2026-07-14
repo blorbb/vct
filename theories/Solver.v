@@ -11,7 +11,7 @@ Theorem solve_fml_sound_complete : forall phi,
 Proof with try easy; auto.
   intros mc0. split.
   - apply solve_fml_sound_contrapos.
-  - apply solve_fml_complete.
+  - apply solve_fml_complete_sat.
 Qed.
 
 Corollary tailrec_solve_fml_sound_complete : forall phi,

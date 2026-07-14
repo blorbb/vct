@@ -87,6 +87,18 @@ Definition from_lit (l : Lit.t) : t := [l].
 Arguments from_lit l /.
 
 
+Lemma force_singleton : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (l : Lit.t),
+  CplClause.force M w0 (from_lit l) <->
+  Lit.force M w0 l.
+Proof.
+  intros *. split.
+  - intros Hforce_clause. cbn in Hforce_clause.
+    destruct Hforce_clause as [l' [[Hl_l' | F] Hforce_l']]; subst; easy.
+  - intros Hforce_lit. cbn.
+    exists l. auto.
+Qed.
+
+
 Global Instance proper_cpl_forceb (clause : t) :
   Proper (Valuation.eq ==> eq) (fun val => cpl_forceb val clause).
 Proof.

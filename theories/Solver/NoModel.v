@@ -10,11 +10,10 @@ Module JumpSolution.
     | Unsat (c : nat) (core : Assumptions.t).
 
 
-  Definition matches_spec (t : t) (spec : Spec.JumpSolution.t) :=
-    match t, spec with
-    | Sat, Spec.JumpSolution.Sat _ => True
-    | Unsat c core, Spec.JumpSolution.Unsat (c',_) core' _ => c = c' /\ core = core'
-    | _, _ => False
+  Definition from_spec (s : Spec.JumpSolution.t) : t :=
+    match s with
+    | Spec.JumpSolution.Sat _ => Sat
+    | Spec.JumpSolution.Unsat failed_dia core _ => Unsat (fst failed_dia) core
     end.
 End JumpSolution.
 
@@ -29,11 +28,14 @@ Module Solution.
     | Unsat _ => false
     end.
 
-  Definition matches_spec (t : t) (spec : Spec.Solution.t) :=
-    match t, spec with
-    | Sat, Spec.Solution.Sat _ => True
-    | Unsat core, Spec.Solution.Unsat core' _ => core = core'
-    | _, _ => False
+  Lemma is_sat_eq : forall (s : t), is_sat s <-> s = Sat.
+  Proof. intro s. destruct s; easy. Qed.
+  Global Hint Resolve is_sat_eq : ct.
+
+  Definition from_spec (s : Spec.Solution.t) : t :=
+    match s with
+    | Spec.Solution.Sat _ => Sat
+    | Spec.Solution.Unsat core _ => Unsat core
     end.
 End Solution.
 
@@ -136,14 +138,13 @@ Definition next_tableau mc1 := fun A' =>
   tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1.
 
 
-Lemma tableau_jumps_spec : forall V l0 mc1 next_tableau next_tableau',
-  (forall A, Solution.matches_spec (next_tableau A) (next_tableau' A)) ->
-  JumpSolution.matches_spec (tableau_jumps V l0 mc1 next_tableau) (Spec.tableau_jumps V l0 mc1 next_tableau').
+Lemma tableau_jumps_spec_ind : forall V l0 mc1 next_tableau next_tableau_spec,
+  (forall A, Solution.from_spec (next_tableau_spec A) = next_tableau A) ->
+  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 next_tableau_spec) = tableau_jumps V l0 mc1 next_tableau.
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsol_match.
-  funelim (Spec.tableau_jumps V l0 mc1 next_tableau').
-  - unfold JumpSolution.matches_spec. destruct matches.
-    simp tableau_jumps in Heqt. discriminate.
+  funelim (Spec.tableau_jumps V l0 mc1 next_tableau_spec).
+  - cbn. now simp tableau_jumps.
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
     rewrite Heq.
     apply H. apply Hsol_match.
@@ -152,9 +153,8 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 
     set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     specialize (Hsol_match fired_boxes).
-    unfold Solution.matches_spec in Hsol_match.
-    rewrite Heq in Hsol_match.
-    destruct (next_tableau1 fired_boxes)...
+    rewrite Heq in Hsol_match. cbn in Hsol_match.
+    rewrite <- Hsol_match. reflexivity.
 
   (* TODO: both cases below are identical. *)
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
@@ -164,11 +164,9 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 
     set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     specialize (Hsol_match fired_boxes).
-    unfold Solution.matches_spec in Hsol_match.
-    rewrite Heq0 in Hsol_match.
-    destruct (next_tableau1 fired_boxes)...
-
-    unfold JumpSolution.matches_spec in *. destruct matches.
+    rewrite Heq0 in Hsol_match. cbn in Hsol_match.
+    rewrite <- Hsol_match.
+    rewrite <- Hind. rewrite Heq. reflexivity.
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
     rewrite Heq1. unfold tableau_jumps_unfold_clause_2_clause_2.
 
@@ -176,16 +174,14 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 
     set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     specialize (Hsol_match fired_boxes).
-    unfold Solution.matches_spec in Hsol_match.
-    rewrite Heq0 in Hsol_match.
-    destruct (next_tableau1 fired_boxes)...
-
-    unfold JumpSolution.matches_spec in *. destruct matches.
+    rewrite Heq0 in Hsol_match. cbn in Hsol_match.
+    rewrite <- Hsol_match.
+    rewrite <- Hind. rewrite Heq. reflexivity.
 Qed.
 
 
 Lemma tableau_spec : forall A s0 mc0,
-  Solution.matches_spec (tableau A s0 mc0) (Spec.tableau A s0 mc0).
+  Solution.from_spec (Spec.tableau A s0 mc0) = tableau A s0 mc0.
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros *.
   funelim (Spec.tableau A s0 mc0).
@@ -208,14 +204,14 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
       (* contradiction between Hj_eq and Hj_unsat *)
       fold (next_tableau mc1) in *.
       fold (Spec.next_tableau mc1) in *.
-      pose proof (tableau_jumps_spec V l0 mc1
+      pose proof (tableau_jumps_spec_ind V l0 mc1
         (next_tableau mc1)
         (Spec.next_tableau mc1)
         Hind
       ) as Hj_matches.
 
       destruct (tableau_jumps _ _ _ _) eqn:Hj_unsat...
-      cbn in Hj_matches. rewrite Hj_eq in Hj_matches. contradiction.
+      rewrite Hj_eq in Hj_matches. cbn in Hj_matches. discriminate.
 
     + rewrite Hs_eq in Hcsol_eq. discriminate.
 
@@ -226,17 +222,27 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
     + cbn -[add_conflict_set]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
       fold (next_tableau mc1) in *.
       fold (Spec.next_tableau mc1) in *.
-      pose proof (tableau_jumps_spec V l0 mc1
+      pose proof (tableau_jumps_spec_ind V l0 mc1
         (next_tableau mc1)
         (Spec.next_tableau mc1)
         Hind
       ) as Hj_matches.
 
       destruct (tableau_jumps _ _ _ _).
-      * cbn in Hj_matches. rewrite Hj_eq in Hj_matches. contradiction.
-      * cbn in Hj_matches. rewrite Hj_eq in Hj_matches. destruct Hj_matches as [Hc Hcore]. subst.
+      * rewrite Hj_eq in Hj_matches. cbn in Hj_matches. discriminate.
+      * rewrite Hj_eq in Hj_matches. cbn in Hj_matches.
+        inv_clear Hj_matches.
         destruct spec_call...
     + rewrite Hs_eq in Hcsol_eq. discriminate.
+Qed.
+
+
+Lemma tableau_jumps_spec : forall V l0 mc1,
+  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)) = tableau_jumps V l0 mc1 (next_tableau mc1).
+Proof with try easy.
+  intros *.
+  apply tableau_jumps_spec_ind.
+  intro A. apply tableau_spec.
 Qed.
 
 
@@ -244,7 +250,17 @@ Corollary is_sat_spec : forall A s0 mc0,
   Solution.is_sat (tableau A s0 mc0) = Spec.Solution.is_sat (Spec.tableau A s0 mc0).
 Proof.
   intros A s0 mc0.
-  pose proof (tableau_spec A s0 mc0).
-  unfold Solution.matches_spec in H.
-  destruct matches in *; tauto.
+  rewrite <- (tableau_spec A s0 mc0).
+  destruct (Spec.tableau A s0 mc0); easy.
+Qed.
+
+
+Theorem tableau_sound_complete : forall mc0 A,
+  Solution.is_sat (tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0) <->
+  Mcnf.satisfiable (add_assumptions mc0 A).
+Proof.
+  intros mc0 A. split.
+  - intro Hsat. apply Completeness.tableau_completeness_sat.
+    now rewrite <- is_sat_spec.
+  - intro Hsat. rewrite is_sat_spec. now apply Soundness.tableau_sound_contrapos.
 Qed.

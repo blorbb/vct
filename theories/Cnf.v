@@ -120,6 +120,17 @@ Proof.
   intros. unfold force. apply List.Forall_app.
 Qed. Global Hint Resolve force_app : ct.
 
+
+Lemma force_from_assumptions : forall {W} {R} (M : @Kripke.t W R) (w0 : W) A,
+  Cnf.force M w0 (Cnf.from_assumptions A) <-> List.Forall (Lit.force M w0) A.
+Proof.
+  intros *. cbn. unfold from_assumptions.
+  rewrite List.Forall_map.
+  repeat rewrite List.Forall_forall.
+  setoid_rewrite CplClause.force_singleton.
+  reflexivity.
+Qed.
+
 Lemma permutation_force : forall A B {W} {R} (M : @Kripke.t W R) (w0 : W),
   Permutation A B -> Cnf.force M w0 A <-> Cnf.force M w0 B.
 Proof.

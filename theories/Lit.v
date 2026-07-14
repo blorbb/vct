@@ -38,14 +38,23 @@ Definition eqb (a b : t) : bool :=
 
 (** * Equality lemmas *)
 
-Lemma eqb_eq (a b : t) : eqb a b = true <-> a = b.
+Lemma eqb_eq (a b : t) : eqb a b <-> a = b.
 Proof.
-  destruct a, b; cbn.
+  unfold is_true. destruct a, b; cbn.
   - rewrite Nat.eqb_eq. split; congruence.
   - split; discriminate.
   - split; discriminate.
   - rewrite Nat.eqb_eq. split; congruence.
 Qed. Global Hint Rewrite eqb_eq : ct.
+
+
+Global Instance eqb_equiv : Equivalence eqb.
+Proof.
+  constructor.
+  - intros a. now rewrite eqb_eq.
+  - intros a b. now repeat rewrite eqb_eq.
+  - intros a b c. repeat rewrite eqb_eq. congruence.
+Qed.
 
 
 Lemma eq_dec (a b : t) : {a = b} + {a <> b}.

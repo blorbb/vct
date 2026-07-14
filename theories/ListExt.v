@@ -420,4 +420,15 @@ Lemma Exists_singleton : forall {A} (P : A -> Prop) (x : A),
 Proof. intros *. rewrite Exists_cons, Exists_nil. tauto. Qed.
 Hint Rewrite @Exists_singleton : list.
 
+
 Definition is_prefix {A} (prefix l : list A) := exists suffix, prefix++suffix = l.
+
+
+Lemma prefix_incl : forall {A} (prefix l : list A),
+  is_prefix prefix l -> List.incl prefix l.
+Proof.
+  intros * Hprefix. 
+  unfold is_prefix in Hprefix. deex. subst l.
+  now apply List.incl_appl.
+Qed.
+Hint Resolve prefix_incl : datatypes.

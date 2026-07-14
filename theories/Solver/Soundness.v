@@ -50,7 +50,7 @@ Qed.
 
 (** * [Derivation.conds] proofs *)
 
-Lemma tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
+Lemma tableau_jumps_deriv_ind : forall V l0 mc1 failed_dia core deriv,
   Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   (forall A' core deriv,
     Spec.next_tableau mc1 A' = Spec.Solution.Unsat core deriv ->
@@ -88,13 +88,28 @@ Proof with auto.
     + auto.
     + unfold first_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using Spec.jump_c_forced.
-    + apply tableau_jumps_deriv with (core := jump_core).
+    + apply tableau_jumps_deriv_ind with (core := jump_core).
       * apply Hj_eq.
       * intros. apply (Hind A' core1 deriv)...
     + cbn [first_ctx fst]. erewrite jump_deriv_core.
       2: { exact Hj_eq. }
       apply H with (core := core0)...
 Qed.
+
+
+Corollary tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
+  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
+  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+Proof with try easy.
+  intros * Hunsat.
+  apply tableau_jumps_deriv_ind with (core := core)...
+  intros A' core' deriv' Hnext_tableau.
+  apply tableau_deriv with
+    (s0 := CplSolver.make_with_clauses (first_cpls mc1))
+    (core := core')...
+Qed.
+
+
 
 (** The derivation conditions are held for the [solve_*] functions. *)
 Corollary solve_mcnf_deriv : forall phi core deriv,
@@ -142,7 +157,7 @@ Proof.
 Qed.
 
 
-Lemma Mcnf_cpls : forall {cpls cpls' boxes dias mc1},
+Lemma mcnf_cpls : forall {cpls cpls' boxes dias mc1},
   Mcnf.unsatisfiable (Lclauses.make cpls boxes dias :: mc1) ->
   (forall W R (M : @Kripke.t W R) mc0, Cnf.force M mc0 cpls' -> Cnf.force M mc0 cpls) ->
   Mcnf.unsatisfiable (Lclauses.make cpls' boxes dias :: mc1).
@@ -249,6 +264,64 @@ Proof.
 Qed.
 
 
+
+
+Lemma force_pos_cs_forces_jump : forall l0 mc1 V c d child_A {W} {R} (M : @Kripke.t W R) w0,
+  let cs := conflict_set_of (l0::mc1) V c child_A in
+  List.In (c,d) (Lclauses.dias l0) ->
+  Kripke.valuation M w0 c ->
+  List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
+  Mcnf.force M w0 (add_assumptions (l0::mc1) (List.map Lit.Pos cs)) ->
+  exists w1, (*R w0 w1 /\*) Mcnf.force M w1 (add_assumptions mc1 child_A).
+Proof with try easy; auto with datatypes typeclass_instances.
+  intros * Hdia_in Hforce_c Hchild_A_incl Hparent_force.
+  set (mc0 := l0::mc1) in *.
+  destruct l0 as [cpls boxes dias] eqn:Hl0.
+  cbn in *.
+  destruct Hparent_force as [[Hf_cpls0 [Hf_boxes0 Hf_dias0]] Hf_w1].
+
+  (* get the world where the dia clause must be forced *)
+  rewrite List.Forall_forall in *.
+  specialize (Hf_dias0 (c,d) Hdia_in Hforce_c).
+  destruct Hf_dias0 as [w1d [HR_w1d Hw1d_force_d]]. cbn in Hw1d_force_d.
+
+  (* w1d must be the satisfying world *)
+  exists w1d. (* split... *)
+
+  destruct (first_ctx mc1) as [cpls1 boxes1 dias1] eqn:Hl1. cbn.
+  apply force_new_cpls...
+
+  (* apply Cnf.incl_force with (A' := Cnf.from_assumptions (d :: fired_boxes (l0::mc1) V)). {
+    apply List.incl_map. rewrite Hl0. cbn. exact Hchild_A_incl.
+  } *)
+
+  rewrite Cnf.force_from_assumptions, List.Forall_forall.
+  intros l Hl_in_child_A.
+  (* d is forced from above *)
+  pose proof (Hchild_A_incl _ Hl_in_child_A) as [Hl_d | Hl_boxes]. { now subst l. }
+
+  (* force the boxes too *)
+  rewrite List.in_map_iff in Hl_boxes.
+  destruct Hl_boxes as [(a,b) [Hab Hab_in]]. cbn in Hab. subst l.
+  apply List.filter_In in Hab_in as [Hab_in Hforce_a].
+  apply (Hf_boxes0 (a,b))... cbn.
+
+  (* a must also be forced *)
+  specialize (Hf_cpls0 (CplClause.from_lit (Lit.Pos a))).
+  rewrite CplClause.force_singleton in Hf_cpls0.
+  apply Hf_cpls0.
+
+  cbn. apply List.in_app_iff. left.
+  unfold Cnf.from_assumptions. apply List.in_map_iff. exists (Lit.Pos a). split...
+  apply List.in_map_iff. exists a. split...
+
+  subst cs. unfold conflict_set_of. cbn. right.
+  apply List.in_map_iff. exists (a, b). split...
+  repeat rewrite List.filter_In. repeat split...
+  cbn. rewrite List.existsb_exists. exists b. split... apply Lit.eqb_equiv.
+Qed.
+
+
 Theorem deriv_sound : forall mc0 A deriv,
   Derivation.conds mc0 A deriv ->
   Mcnf.unsatisfiable (add_assumptions mc0 (Derivation.get_core deriv)).
@@ -273,69 +346,35 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
     set (cs := conflict_set_of mc0 V c (Derivation.get_core jump_deriv)) in *.
     apply mcnf_resolution_cs with (cs := cs).
     (* mc0 /\ ~cs *)
-    + clear -IHrs. fold cs.
+    + clear -IHrs.
       destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
-      apply (Mcnf_cpls IHrs).
+      apply (mcnf_cpls IHrs).
       intros W R M w0 Hforce.
       rewrite Cnf.permutation_force. { exact Hforce. }
       symmetry. cbn. apply Permutation_middle.
     (* mc0 /\ cs *)
-    (* TODO: clean up simplification and core proof parts. *)
     + clear IHrs.
-      destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
+      destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
       set (mc1 := next_ctx mc0) in *.
       pose proof (deriv_core_incl_A mc1 (d::fired_boxes mc0 V) jump_deriv Hjump) as Hcore_incl.
 
-      intros Hmsat. apply IHjump.
+      intro Hmsat. apply IHjump.
+      unfold Mcnf.satisfiable in *. deex. exists W, R, M.
 
-      destruct Hmsat as [W [R [M [mc1M Hmc1M]]]].
-      cbn in Hmc1M. destruct Hmc1M as [[Hf_cpls1 [Hf_boxes1 Hf_dias1]] Hf_w2].
-      unfold first_dias in Hdia_in. rewrite Hl0_eq in *. cbn in *.
-
-      (* get the adjacent dia world that must be forced *)
-      rewrite List.Forall_forall in Hf_cpls1, Hf_boxes1, Hf_dias1.
-      specialize (Hf_dias1 (c,d)).
-      unfold first_dias in Hdia_in. forward Hf_dias1 by exact Hdia_in.
-      unfold DiaClause.force in Hf_dias1.
-      forward Hf_dias1. {
-        cbn. specialize (Hf_cpls1 [Lit.Pos c]).
-        forward Hf_cpls1 by now left.
-        cbn in Hf_cpls1. destruct Hf_cpls1 as [c' [Hc' Hforce_c']].
-        destruct Hc'... subst c'.
-        cbn in Hforce_c'. assumption.
-      }
-
-      destruct Hf_dias1 as [w2M [Hw2R Hw2_force]]. cbn in Hw2_force.
-      exists W, R, M, w2M.
-
-      (* assumptions must be forced by boxes *)
-      destruct (first_ctx mc1) as [cpls1 boxes1 dias1] eqn:Hl1_eq; cbn in *.
-      apply (force_new_cpls mc1)...
-      rewrite List.Forall_forall.
-      intros cl Hcl_in.
-      unfold Cnf.from_assumptions in Hcl_in.
-      rewrite List.in_map_iff in Hcl_in. destruct Hcl_in as [l [Hl_cl Hl_in]]. subst cl.
-      cbn. exists l. intuition.
-      apply Hcore_incl in Hl_in as Hl_in_db. destruct Hl_in_db as [Hld | Hlb].
-      * subst. cbn. auto.
-      * rewrite List.in_map_iff in Hlb. destruct Hlb as [(a, b) [Hab Hab_in]]; cbn in *; subst.
-        rewrite List.filter_In in Hab_in. destruct Hab_in as [Hab_in Hforce_a].
-        apply (Hf_boxes1 (a,l))... { unfold first_boxes in Hab_in; rewrite Hl0_eq in Hab_in; cbn in Hab_in. easy. }
-        specialize (Hf_cpls1 [Lit.Pos a]).
-        forward Hf_cpls1. {
-          right. apply List.in_app_iff. left.
-          apply List.in_map_iff. exists (Lit.Pos a). split...
-          apply List.in_map_iff. exists a. split...
-          apply List.in_map_iff. exists (a, l). split...
-          repeat rewrite List.filter_In. repeat split.
-          - assumption.
-          - cbn. exact Hforce_a.
-          - rewrite List.existsb_exists. exists l.
-            split... apply Lit.eqb_eq...
-        }
-        destruct Hf_cpls1 as [a' [Ha'_eq Hforce_a']].
-        cbn in Ha'_eq. destruct Ha'_eq... subst.
-        cbn in Hforce_a'. exact Hforce_a'.
+      apply force_pos_cs_forces_jump with (l0 := first_ctx mc0) (V := V) (c := c) (d := d) (w0 := w0).
+      * now unfold first_dias in Hdia_in.
+      * cbn in Hmsat. destruct Hmsat as [[Hforce_cpls _] _].
+        apply List.Forall_app in Hforce_cpls as [Hforce_cs _].
+        rewrite List.Forall_forall in Hforce_cs.
+        specialize (Hforce_cs (CplClause.from_lit (Lit.Pos c))).
+        forward Hforce_cs by now left.
+        rewrite CplClause.force_singleton in Hforce_cs.
+        cbn in Hforce_cs.
+        exact Hforce_cs.
+      * exact Hcore_incl.
+      * rewrite force_assumptions_comm in Hmsat.
+        apply force_rm_assumptions in Hmsat.
+        cbn in Hmsat |- *. tauto.
 Qed.
 
 

@@ -132,9 +132,7 @@ Proof with try easy; auto with datatypes ct.
     specialize (H T eq_refl).
     cbn in H |- *. intuition.
     eapply incl_Forall. 2: { exact H0. }
-    apply List.incl_app.
-    + apply List.incl_appl...
-    + apply List.incl_appr. apply List.incl_tl...
+    apply List.incl_app...
 Qed.
 
 
