@@ -54,6 +54,11 @@ Definition add_neg_assumptions mc0 A :=
 Arguments add_neg_assumptions mc0 A /.
 
 
+Lemma add_conflict_set_neg_assumptions : forall mc0 cs,
+  add_conflict_set mc0 cs = add_neg_assumptions mc0 (List.map Lit.Pos cs).
+Proof. intros mc0 cs. cbn. rewrite List.map_map. cbn. reflexivity. Qed.
+
+
 Definition cpl_solve (mc0 : Mcnf.t) (A : Assumptions.t) :=
   CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls mc0)) A.
 
@@ -166,4 +171,18 @@ Proof.
   intros * Hforce. destruct mc0 as [|l0 mc1].
   - apply I.
   - cbn in *. intuition. now rewrite List.Forall_app in H1.
+Qed.
+
+
+Lemma force_app_and : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
+  Mcnf.force M w0 (add_assumptions mc0 A) <->
+  Mcnf.force M w0 mc0 /\ Cnf.force M w0 (Cnf.from_assumptions A).
+Proof with try easy.
+  intros *. split.
+  - intro Hforce_mc0A. split.
+    + cbn in *. autorewrite with list in Hforce_mc0A. destruct mc0...
+    + cbn in *. autorewrite with list in Hforce_mc0A...
+  - intros [Hforce_mc0 Hforce_A].
+    cbn in *. autorewrite with list. destruct mc0...
+    cbn in *. tauto.
 Qed.

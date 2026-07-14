@@ -53,6 +53,22 @@ Definition satisfiable (phi : t) : Prop :=
 Definition unsatisfiable (phi : t) : Prop := ~ satisfiable phi.
 
 
+Lemma cpl_forceb_sat : forall V phi,
+  cpl_forceb V phi = true -> satisfiable phi.
+Proof.
+  intros V phi Hforceb.
+  set (W := unit).
+  set (R := fun (_ _ : W) => False).
+  set (val := fun (w : W) (p : nat) => Valuation.forces_atm V p = true).
+  set (M := Kripke.make W R val).
+  exists W, R, M, tt.
+  rewrite force_cpl_forceb.
+  - exact Hforceb.
+  - intros p. subst val. cbn. reflexivity.
+Qed.
+
+
+
 (** The set of atoms that exist in the formula.
 
     Duplicates are removed. *)
@@ -151,3 +167,18 @@ Qed.
 
 Definition logically_equivalent A B := forall W R (M : @Kripke.t W R) (w0 : W),
   force M w0 A <-> force M w0 B.
+
+
+Lemma force_singleton : forall {W} {R} (M : @Kripke.t W R) (w0 : W) clause,
+  Cnf.force M w0 [clause] <-> CplClause.force M w0 clause.
+Proof.
+  intros *. cbn. split.
+  - intros Hforce.
+    rewrite List.Forall_forall in Hforce.
+    apply Hforce.
+    now apply In_singleton.
+  - rewrite List.Forall_forall.
+    intros Hforce clause' Hclause'.
+    rewrite In_singleton in Hclause'. subst.
+    apply Hforce.
+Qed.

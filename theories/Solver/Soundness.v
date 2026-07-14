@@ -241,6 +241,35 @@ Proof.
   - cbn in *. rewrite List.map_map. cbn. apply Hcs.
 Qed.
 
+
+Corollary force_not_A_neg_A : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
+  Mcnf.force M w0 mc0 ->
+  ~ Mcnf.force M w0 (add_assumptions mc0 A) ->
+  Mcnf.force M w0 (add_neg_assumptions mc0 A).
+Proof with try easy; auto.
+  intros * Hforce_mc0 Hnforce_A.
+  unfold add_neg_assumptions, with_first_cpls.
+  destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
+  apply (force_new_cpls mc0 [List.map Lit.negate A])...
+  apply Cnf.force_singleton.
+  apply not_all_some_true. intros Hforce_A. apply Hnforce_A.
+  apply force_app_and. split...
+Qed.
+
+
+
+Corollary sat_not_A_neg_A : forall mc0 A,
+  Mcnf.satisfiable mc0 ->
+  Mcnf.unsatisfiable (add_assumptions mc0 A) ->
+  Mcnf.satisfiable (add_neg_assumptions mc0 A).
+Proof with try easy.
+  intros * Hsat_mc0 Hunsat_mc0A.
+  unfold Mcnf.satisfiable in *. deex. exists W,R,M,w0.
+  apply force_not_A_neg_A...
+  intro Hforce_mc0A. apply Hunsat_mc0A. now exists W,R,M,w0.
+Qed.
+
+
 (** ** Soundness of derivation *)
 
 Lemma cpls_of_add_assumptions : forall mc0 A,
@@ -265,16 +294,14 @@ Qed.
 
 
 
-
-Lemma force_pos_cs_forces_jump : forall l0 mc1 V c d child_A {W} {R} (M : @Kripke.t W R) w0,
+Lemma force_pos_cs_jump : forall l0 mc1 V c d child_A {W} {R} (M : @Kripke.t W R) w0,
   let cs := conflict_set_of (l0::mc1) V c child_A in
   List.In (c,d) (Lclauses.dias l0) ->
-  Kripke.valuation M w0 c ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
   Mcnf.force M w0 (add_assumptions (l0::mc1) (List.map Lit.Pos cs)) ->
   exists w1, (*R w0 w1 /\*) Mcnf.force M w1 (add_assumptions mc1 child_A).
-Proof with try easy; auto with datatypes typeclass_instances.
-  intros * Hdia_in Hforce_c Hchild_A_incl Hparent_force.
+Proof with try easy; auto with datatypes.
+  intros * Hdia_in Hchild_A_incl Hparent_force.
   set (mc0 := l0::mc1) in *.
   destruct l0 as [cpls boxes dias] eqn:Hl0.
   cbn in *.
@@ -282,7 +309,19 @@ Proof with try easy; auto with datatypes typeclass_instances.
 
   (* get the world where the dia clause must be forced *)
   rewrite List.Forall_forall in *.
-  specialize (Hf_dias0 (c,d) Hdia_in Hforce_c).
+  specialize (Hf_dias0 (c,d) Hdia_in).
+  unfold DiaClause.force in Hf_dias0.
+  forward Hf_dias0. {
+    cbn.
+    fold (Lit.force M w0 (Lit.Pos c)).
+    rewrite <- CplClause.force_singleton.
+    apply Hf_cpls0.
+    rewrite List.in_app_iff. left.
+    unfold Cnf.from_assumptions.
+    rewrite List.in_map_iff. exists (Lit.Pos c). split...
+    rewrite List.in_map_iff. exists c. split...
+    unfold cs, conflict_set_of. cbn. now left.
+  }
   destruct Hf_dias0 as [w1d [HR_w1d Hw1d_force_d]]. cbn in Hw1d_force_d.
 
   (* w1d must be the satisfying world *)
@@ -290,10 +329,6 @@ Proof with try easy; auto with datatypes typeclass_instances.
 
   destruct (first_ctx mc1) as [cpls1 boxes1 dias1] eqn:Hl1. cbn.
   apply force_new_cpls...
-
-  (* apply Cnf.incl_force with (A' := Cnf.from_assumptions (d :: fired_boxes (l0::mc1) V)). {
-    apply List.incl_map. rewrite Hl0. cbn. exact Hchild_A_incl.
-  } *)
 
   rewrite Cnf.force_from_assumptions, List.Forall_forall.
   intros l Hl_in_child_A.
@@ -319,6 +354,44 @@ Proof with try easy; auto with datatypes typeclass_instances.
   apply List.in_map_iff. exists (a, b). split...
   repeat rewrite List.filter_In. repeat split...
   cbn. rewrite List.existsb_exists. exists b. split... apply Lit.eqb_equiv.
+Qed.
+
+
+Lemma sat_pos_cs_jump : forall l0 mc1 V c d child_A,
+  let cs := conflict_set_of (l0::mc1) V c child_A in
+  List.In (c,d) (Lclauses.dias l0) ->
+  List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
+  Mcnf.satisfiable (add_assumptions (l0::mc1) (List.map Lit.Pos cs)) ->
+  Mcnf.satisfiable (add_assumptions mc1 child_A).
+Proof with try easy; auto with datatypes.
+Proof.
+  intros * Hdia_in Hchild_A_incl Hsat.
+  unfold Mcnf.satisfiable in Hsat. deex.
+  exists W, R, M.
+  eapply force_pos_cs_jump.
+  - exact Hdia_in.
+  - exact Hchild_A_incl.
+  - exact Hsat.
+Qed.
+
+
+(** Has an extra [A] that is basically unused as this pattern appears several times. *)
+Lemma unsat_pos_cs_jump : forall l0 mc1 V c d child_A A,
+  let cs := conflict_set_of (l0::mc1) V c child_A in
+  List.In (c,d) (Lclauses.dias l0) ->
+  List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
+  Mcnf.unsatisfiable (add_assumptions mc1 child_A) ->
+  Mcnf.unsatisfiable (add_assumptions (add_assumptions (l0::mc1) A) (List.map Lit.Pos cs)).
+Proof with try easy; auto with datatypes.
+Proof.
+  intros * Hdia_in Hchild_A_incl Hunsat Hsat. apply Hunsat.
+  eapply sat_pos_cs_jump.
+  - exact Hdia_in.
+  - exact Hchild_A_incl.
+  - fold cs. unfold Mcnf.satisfiable in *. deex. exists W,R,M,w0.
+    apply force_assumptions_comm in Hsat.
+    apply force_rm_assumptions in Hsat.
+    exact Hsat.
 Qed.
 
 
@@ -358,23 +431,7 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
       set (mc1 := next_ctx mc0) in *.
       pose proof (deriv_core_incl_A mc1 (d::fired_boxes mc0 V) jump_deriv Hjump) as Hcore_incl.
 
-      intro Hmsat. apply IHjump.
-      unfold Mcnf.satisfiable in *. deex. exists W, R, M.
-
-      apply force_pos_cs_forces_jump with (l0 := first_ctx mc0) (V := V) (c := c) (d := d) (w0 := w0).
-      * now unfold first_dias in Hdia_in.
-      * cbn in Hmsat. destruct Hmsat as [[Hforce_cpls _] _].
-        apply List.Forall_app in Hforce_cpls as [Hforce_cs _].
-        rewrite List.Forall_forall in Hforce_cs.
-        specialize (Hforce_cs (CplClause.from_lit (Lit.Pos c))).
-        forward Hforce_cs by now left.
-        rewrite CplClause.force_singleton in Hforce_cs.
-        cbn in Hforce_cs.
-        exact Hforce_cs.
-      * exact Hcore_incl.
-      * rewrite force_assumptions_comm in Hmsat.
-        apply force_rm_assumptions in Hmsat.
-        cbn in Hmsat |- *. tauto.
+      apply unsat_pos_cs_jump with (d := d)...
 Qed.
 
 
