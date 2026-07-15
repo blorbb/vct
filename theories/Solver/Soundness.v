@@ -475,12 +475,10 @@ Proof with try easy.
   pose proof (deriv_sound mc0 [] deriv Hconds) as Hunsat.
   assert (Derivation.get_core deriv = []) as Hderiv. {
     apply incl_l_nil. apply deriv_core_incl_A with (mc0 := mc0)...
-  } rewrite Hderiv in Hunsat.
-  intro Hsat. apply Hunsat.
-  destruct Hsat as [W [R [M [w0 Hforce]]]]. exists W, R, M, w0.
-  destruct mc0 as [|l0 mc1].
-  - cbn. intuition.
-  - cbn in Hforce |- *. intuition.
+  }
+  rewrite Hderiv in Hunsat.
+  unfold Mcnf.unsatisfiable in *.
+  now rewrite <- sat_add_no_assumptions.
 Qed.
 
 

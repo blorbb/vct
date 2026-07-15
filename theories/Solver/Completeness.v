@@ -143,9 +143,7 @@ Proof.
   intros mc0 T Hsat.
   unfold Spec.solve_mcnf in Hsat.
   apply tableau_completeness_force in Hsat; auto.
-  destruct mc0.
-  - cbn. apply I.
-  - cbn in *. exact Hsat.
+  now apply force_add_no_assumptions.
 Qed.
 
 

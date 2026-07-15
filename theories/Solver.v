@@ -14,6 +14,7 @@ Proof with try easy; auto.
   - apply solve_fml_complete_sat.
 Qed.
 
+
 Corollary tailrec_solve_fml_sound_complete : forall phi,
   Fml.satisfiable phi <-> TailRec.Solution.is_sat (TailRec.solve_fml phi) = true.
 Proof.
@@ -22,11 +23,21 @@ Proof.
   apply solve_fml_sound_complete.
 Qed.
 
+
 Corollary nomodel_solve_fml_sound_complete : forall phi,
   Fml.satisfiable phi <-> NoModel.Solution.is_sat (NoModel.solve_fml phi) = true.
 Proof.
   setoid_rewrite NoModel.is_sat_spec. exact solve_fml_sound_complete.
 Qed.
+
+
+Theorem solve_mcnf_sound_complete : forall mc0,
+  Cached.Solution.is_sat (Cached.solve_mcnf mc0) <-> Mcnf.satisfiable mc0.
+Proof.
+  unfold Cached.solve_mcnf.
+  setoid_rewrite Cached.tableau_sound_complete; auto with ct.
+Qed.
+
 
 
 (** Running [Print Assumptions solve_fml_sound_complete.]

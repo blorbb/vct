@@ -186,3 +186,14 @@ Proof with try easy.
     cbn in *. autorewrite with list. destruct mc0...
     cbn in *. tauto.
 Qed.
+
+
+Lemma force_add_no_assumptions : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0,
+  Mcnf.force M w0 (add_assumptions mc0 []) <-> Mcnf.force M w0 mc0.
+Proof. intros *. destruct mc0 as [|l0 mc1]; cbn; intuition. Qed.
+Global Hint Resolve force_add_no_assumptions : ct.
+
+Lemma sat_add_no_assumptions : forall mc0,
+  Mcnf.satisfiable (add_assumptions mc0 []) <-> Mcnf.satisfiable mc0.
+Proof. unfold Mcnf.satisfiable. setoid_rewrite force_add_no_assumptions. tauto. Qed.
+Global Hint Resolve sat_add_no_assumptions : ct.
