@@ -57,8 +57,12 @@ Proof.
 Qed.
 
 
+(** This also has computational content that needs to be extracted.
+
+    It generates the 'obvious' implementation, matching on the variants
+    and checking equality of the [nat]s. *)
 Lemma eq_dec (a b : t) : {a = b} + {a <> b}.
-Proof. decide equality; apply Nat.eq_dec. Qed.
+Proof. decide equality; apply Nat.eq_dec. Defined.
 
 
 Lemma negate_eq_atm (l : t) : atm (negate l) = atm l.

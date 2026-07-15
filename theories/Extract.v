@@ -12,7 +12,10 @@ Extract Constant CplSolver.make => "Bindings.make".
 Extract Constant CplSolver.add_clause => "Bindings.add_clause".
 Extract Constant CplSolver.solve_with_assumptions => "Bindings.solve_with_assumptions".
 
+(** Not covered by ExtrOcamlNatInt. *)
+Extract Inlined Constant Nat.eqb => "(=)".
+Extract Inlined Constant PeanoNat.Nat.max => "Stdlib.max".
 
 Separate Extraction
-  Solver.Spec.solve_fml Solver.TailRec.solve_fml Solver.NoModel.solve_fml
-  Solver.Spec.Solution.is_sat Solver.NoModel.Solution.is_sat.
+  Solver.Spec.solve_fml Solver.TailRec.solve_fml Solver.NoModel.solve_fml Solver.Cached.solve_fml
+  Solver.Spec.Solution.is_sat Solver.NoModel.Solution.is_sat Solver.Cached.Solution.is_sat.

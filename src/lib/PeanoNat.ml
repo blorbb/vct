@@ -1,15 +1,8 @@
+open Datatypes
 
 module Nat =
  struct
-  (** val max : int -> int -> int **)
+  (** val compare : int -> int -> comparison **)
 
-  let rec max n m =
-    (fun fO fS n -> if n=0 then fO () else fS (n-1))
-      (fun _ -> m)
-      (fun n' ->
-      (fun fO fS n -> if n=0 then fO () else fS (n-1))
-        (fun _ -> n)
-        (fun m' -> Stdlib.Int.succ (max n' m'))
-        m)
-      n
+  let rec compare = fun n m -> if n=m then Eq else if n<m then Lt else Gt
  end

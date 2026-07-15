@@ -1,6 +1,5 @@
 open Fml
 open Lit
-open PeanoNat
 
 type t =
 | Lit of Lit.t

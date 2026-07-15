@@ -1,5 +1,6 @@
+open Datatypes
 
 module Nat :
  sig
-  val max : int -> int -> int
+  val compare : int -> int -> comparison
  end

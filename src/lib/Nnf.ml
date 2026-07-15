@@ -1,6 +1,5 @@
 open Fml
 open Lit
-open PeanoNat
 
 type t =
 | Lit of Lit.t
@@ -33,7 +32,7 @@ let rec from_fml = function
 
 let rec max_atm = function
 | Lit l -> atm l
-| And (a, b) -> Nat.max (max_atm a) (max_atm b)
-| Or (a, b) -> Nat.max (max_atm a) (max_atm b)
+| And (a, b) -> Stdlib.max (max_atm a) (max_atm b)
+| Or (a, b) -> Stdlib.max (max_atm a) (max_atm b)
 | Box a -> max_atm a
 | Dia a -> max_atm a
