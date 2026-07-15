@@ -7,16 +7,16 @@ Include Completeness.
 
 
 Theorem solve_fml_sound_complete : forall phi,
-  Fml.satisfiable phi <-> Spec.Solution.is_sat (Spec.solve_fml phi) = true.
+  Spec.Solution.is_sat (Spec.solve_fml phi) <-> Fml.satisfiable phi.
 Proof with try easy; auto.
   intros mc0. split.
-  - apply solve_fml_sound_contrapos.
   - apply solve_fml_complete_sat.
+  - apply solve_fml_sound_contrapos.
 Qed.
 
 
-Corollary tailrec_solve_fml_sound_complete : forall phi,
-  Fml.satisfiable phi <-> TailRec.Solution.is_sat (TailRec.solve_fml phi) = true.
+Theorem tailrec_solve_fml_sound_complete : forall phi,
+  TailRec.Solution.is_sat (TailRec.solve_fml phi) <-> Fml.satisfiable phi.
 Proof.
   unfold TailRec.solve_fml, TailRec.solve_mcnf.
   setoid_rewrite <- TailRec.tableau_spec.
@@ -24,18 +24,21 @@ Proof.
 Qed.
 
 
-Corollary nomodel_solve_fml_sound_complete : forall phi,
-  Fml.satisfiable phi <-> NoModel.Solution.is_sat (NoModel.solve_fml phi) = true.
+Theorem nomodel_solve_fml_sound_complete : forall phi,
+  NoModel.Solution.is_sat (NoModel.solve_fml phi) <-> Fml.satisfiable phi.
 Proof.
   setoid_rewrite NoModel.is_sat_spec. exact solve_fml_sound_complete.
 Qed.
 
 
-Theorem solve_mcnf_sound_complete : forall mc0,
-  Cached.Solution.is_sat (Cached.solve_mcnf mc0) <-> Mcnf.satisfiable mc0.
+Theorem cached_solve_fml_sound_complete : forall phi,
+  Cached.Solution.is_sat (Cached.solve_fml phi) <-> Fml.satisfiable phi.
 Proof.
-  unfold Cached.solve_mcnf.
+  intros phi.
+  unfold Cached.solve_fml, Cached.solve_mcnf.
   setoid_rewrite Cached.tableau_sound_complete; auto with ct.
+  rewrite sat_add_no_assumptions.
+  rewrite Nnf.equisat_fml, Mcnf.equisat_nnf. reflexivity.
 Qed.
 
 
@@ -76,7 +79,7 @@ Qed.
       CplSolver.solution_completeness :
         forall (s : CplSolver.t) (A : Assumptions.t) (V : Valuation.t),
         CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
-        Cnf.cpl_forceb V (CplSolver.solved_clauses s A) = true
+        Cnf.cpl_forceb V (CplSolver.solved_clauses s A)
       CplSolver.core_subset_assumptions :
         forall (s : CplSolver.t) (A core : Assumptions.t),
         CplSolution.Unsat core = CplSolver.solve_with_assumptions s A ->
