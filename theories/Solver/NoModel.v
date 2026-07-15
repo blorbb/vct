@@ -74,7 +74,7 @@ Fail Next Obligation.
 (** Reproving this is much easier than proving the equivalence of tableau_jumps to the spec for now. *)
 Lemma jump_c_forced : forall V l0 mc1 next_tableau c core,
   tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat c core ->
-  Valuation.forces_atm V c = true.
+  Valuation.forces_atm V c.
 Proof with auto.
   intros * Hunsat. funelim (tableau_jumps V l0 mc1 next_tableau); rewrite <- Heqcall in Hunsat.
   - discriminate.

@@ -43,7 +43,7 @@ Qed.
 
 Lemma decreasing_sat_vals : forall s0 A mc0 V c jump_core,
   CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
-  Valuation.forces_atm V c = true ->
+  Valuation.forces_atm V c ->
   let cs := conflict_set_of mc0 V c jump_core in
   let s0' := CplSolver.add_conflict_set s0 cs in
   List.length (CplSolver.every_sat_valuation s0' A) <

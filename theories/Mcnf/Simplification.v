@@ -9,14 +9,14 @@ From CegarTableaux.Mcnf Require Mcnf.
 Module ClauseOrd1 <: Orders.TotalLeBool'.
   Definition t := BoxClause.t.
   Definition leb (x y : t) := fst x <=? fst y.
-  Lemma leb_total : forall n m, leb n m = true \/ leb m n = true.
+  Lemma leb_total : forall n m, leb n m \/ leb m n.
   Proof. intros n m. apply nat_leb_total. Qed.
 End ClauseOrd1.
 
 Module ClauseOrd2 <: Orders.TotalLeBool'.
   Definition t := BoxClause.t.
   Definition leb (x y : t) := Lit.leb (snd x) (snd y).
-  Lemma leb_total : forall n m, leb n m = true \/ leb m n = true.
+  Lemma leb_total : forall n m, leb n m \/ leb m n.
   Proof. intros n m. apply Lit.leb_total. Qed.
 End ClauseOrd2.
 

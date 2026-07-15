@@ -14,7 +14,7 @@ Proof with try easy; auto with datatypes ct.
   intros clause Hclause_in.
   rewrite CplClause.force_cpl_forceb with (V := V)...
   pose proof (CplSolver.solution_completeness s0 A V Hsat) as Hforce.
-  unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. rewrite forallb_forall in Hforce.
+  unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. =rewrite forallb_forall in Hforce.
   apply Hforce. subst cpls. exact Hclause_in.
 Qed.
 
@@ -121,7 +121,7 @@ Proof with try easy; auto with datatypes ct.
     rewrite CplClause.force_cpl_forceb with (V:=V)...
     set (s0 := CplSolver.make_with_clauses (first_cpls [])) in *.
     pose proof (CplSolver.solution_completeness s0 A V Hcsol_eq) as Hforce.
-    unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. rewrite forallb_forall in Hforce.
+    unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. =rewrite forallb_forall in Hforce.
     apply Hforce. rewrite List.in_app_iff. left.
     rewrite <- app_nil_r. exact Hclause_in.
   - clear H H0. inversion_clear Hsat.
@@ -186,7 +186,7 @@ Qed.
 
 
 Corollary solve_fml_complete_sat : forall phi,
-  Spec.Solution.is_sat (Spec.solve_fml phi) = true ->
+  Spec.Solution.is_sat (Spec.solve_fml phi) ->
   Fml.satisfiable phi.
 Proof with try easy.
   intros phi Hsat.

@@ -10,8 +10,11 @@ From Stdlib Require Export
 From Equations Require Export Equations.
 Require Export Equations.Prop.Logic.
 
-(* Use booleans as Prop *)
+(** Use booleans as Prop *)
 Coercion is_true : bool >-> Sortclass.
+(** Add [=] before a tactic to unfold [is_true], sometimes needed to work with
+    stdlib lemmas that usually use [= true] instead. *)
+Tactic Notation "=" tactic(H) := unfold is_true in *; H.
 
 Create HintDb ct.
 Create Rewrite HintDb ct.
@@ -31,10 +34,6 @@ Lemma and_true_l : forall P, P /\ True <-> P.
 Proof. tauto. Qed.
 Lemma and_true_r : forall P, True /\ P <-> P.
 Proof. tauto. Qed.
-Lemma idem_f : False /\ False <-> False.
-Proof. tauto. Qed.
-Lemma idem_t : True /\ True <-> True.
-Proof. tauto. Qed.
 Lemma imp_false_r : forall P, (False -> P) <-> True.
 Proof. tauto. Qed.
 Lemma imp_true_r : forall P, (True -> P) <-> P.
@@ -45,13 +44,13 @@ Lemma imp_true_l_forall : forall {A} P, (forall (a : A), P a -> True) <-> True. 
 Proof. tauto. Qed.
 Lemma not_false : ~ False <-> True.
 Proof. tauto. Qed.
-Lemma not_true : ~ False <-> True.
+Lemma not_true : ~ True <-> False.
 Proof. tauto. Qed.
 Lemma eq_true : forall {A} (a : A), a = a <-> True.
 Proof. tauto. Qed.
 
 Create Rewrite HintDb prop.
-Hint Rewrite or_false_l or_false_r and_true_l and_true_r idem_f idem_t imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true @eq_true : prop.
+Hint Rewrite or_false_l or_false_r and_true_l and_true_r imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true @eq_true : prop.
 
 
 (** Function pipeline operator *)
@@ -70,9 +69,9 @@ Proof.
 Qed.
 
 
-Lemma nat_leb_total : forall n m, (n <=? m) = true \/ (m <=? n) = true.
+Lemma nat_leb_total : forall n m, (n <=? m) \/ (m <=? n).
 Proof.
   intros n m. destruct (Nat.leb_spec n m).
   - now left.
-  - right. rewrite Nat.leb_le. now apply Nat.lt_le_incl.
+  - right. =rewrite Nat.leb_le. now apply Nat.lt_le_incl.
 Qed.

@@ -40,11 +40,11 @@ Definition eqb (a b : t) : bool :=
 
 Lemma eqb_eq (a b : t) : eqb a b <-> a = b.
 Proof.
-  unfold is_true. destruct a, b; cbn.
-  - rewrite Nat.eqb_eq. split; congruence.
+  destruct a, b; cbn.
+  - =rewrite Nat.eqb_eq. split; congruence.
   - split; discriminate.
   - split; discriminate.
-  - rewrite Nat.eqb_eq. split; congruence.
+  - =rewrite Nat.eqb_eq. split; congruence.
 Qed. Global Hint Rewrite eqb_eq : ct.
 
 
@@ -122,13 +122,13 @@ Definition leb (x y : t) : bool :=
   end.
 
 
-Lemma leb_total : forall (x y : t), leb x y = true \/ leb y x = true.
+Lemma leb_total : forall (x y : t), leb x y \/ leb y x.
 Proof.
   intros x y.
   induction x; destruct y; cbn.
   - apply nat_leb_total.
-  - tauto.
-  - tauto.
+  - =tauto.
+  - =tauto.
   - apply nat_leb_total.
 Qed.
 
@@ -137,8 +137,8 @@ Global Instance leb_trans : Transitive leb.
 Proof.
   intros x y z Hxy Hyz.
   destruct x; destruct y; destruct z; try easy.
-  - cbn in *. unfold is_true in *. rewrite Nat.leb_le in *. transitivity p0; easy.
-  - cbn in *. unfold is_true in *. rewrite Nat.leb_le in *. transitivity p0; easy.
+  - cbn in *. =rewrite Nat.leb_le in *. transitivity p0; easy.
+  - cbn in *. =rewrite Nat.leb_le in *. transitivity p0; easy.
 Qed.
 
 
@@ -159,12 +159,12 @@ Definition cpl_forceb (val : Valuation.t) (l : t) : bool :=
 
 
 Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V l,
-  Kripke.valuation M w0 (Lit.atm l) <-> Valuation.forces_atm V (Lit.atm l) = true ->
-  force M w0 l <-> cpl_forceb V l = true.
+  Kripke.valuation M w0 (Lit.atm l) <-> Valuation.forces_atm V (Lit.atm l) ->
+  force M w0 l <-> cpl_forceb V l.
 Proof.
   intros * HV. unfold Valuation.forces_atm in HV. destruct l as [p|p].
   - now cbn in *.
-  - cbn in *. rewrite <- Bool.eq_true_not_negb_iff. tauto.
+  - cbn in *. =rewrite <- Bool.eq_true_not_negb_iff. tauto.
 Qed.
 
 

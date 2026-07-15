@@ -158,7 +158,7 @@ Fail Next Obligation.
 (** Reproving this is much easier than proving the equivalence of tableau_jumps to the spec for now. *)
 Lemma jump_c_forced : forall V l0 mc1 next_tableau c core cache cache',
   tableau_jumps V l0 mc1 next_tableau cache = JumpSolution.Unsat c core cache' ->
-  Valuation.forces_atm V c = true.
+  Valuation.forces_atm V c.
 Proof with auto.
   intros * Hunsat. funelim (tableau_jumps V l0 mc1 next_tableau cache); rewrite <- Heqcall in Hunsat.
   - discriminate.

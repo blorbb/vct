@@ -78,7 +78,7 @@ Arguments conflict_set_of mc0 V dia_antecedent core : simpl never.
 (** The conflict set is a subset of the valuation. *)
 Lemma conflict_set_incl_val : forall mc0 V dia_antecedent core s A,
   CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
-  Valuation.forces_atm V dia_antecedent = true ->
+  Valuation.forces_atm V dia_antecedent ->
   let conflict_set := conflict_set_of mc0 V dia_antecedent core in
   List.incl conflict_set V.
 Proof.

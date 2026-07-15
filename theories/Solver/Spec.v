@@ -69,7 +69,7 @@ Fail Next Obligation.
 
 Lemma jump_c_forced : forall V l0 mc1 next_tableau c d core deriv,
   tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat (c,d) core deriv ->
-  Valuation.forces_atm V c = true.
+  Valuation.forces_atm V c.
 Proof with auto.
   intros * Hunsat. funelim (tableau_jumps V l0 mc1 next_tableau); rewrite <- Heqcall in Hunsat.
   - discriminate.

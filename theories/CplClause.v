@@ -16,16 +16,16 @@ Definition cpl_forceb (val : Valuation.t) (phi : t) : bool :=
 
 
 Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V phi,
-  (forall p, Kripke.valuation M w0 p <-> Valuation.forces_atm V p = true) ->
-  force M w0 phi <-> cpl_forceb V phi = true.
+  (forall p, Kripke.valuation M w0 p <-> Valuation.forces_atm V p) ->
+  force M w0 phi <-> cpl_forceb V phi.
 Proof with try easy; auto.
   intros * HV. unfold Valuation.forces_atm in HV. split.
   - cbn. intros [l [Hl_in Hforce_l]].
     unfold cpl_forceb.
-    rewrite existsb_exists. exists l. split...
+    =rewrite existsb_exists. exists l. split...
     rewrite Lit.force_cpl_forceb with (V := V) in Hforce_l...
   - cbn. intros Hforceb.
-    unfold cpl_forceb in Hforceb. rewrite existsb_exists in Hforceb.
+    unfold cpl_forceb in Hforceb. =rewrite existsb_exists in Hforceb.
     destruct Hforceb as [l [Hl_in Hforce_l]].
     exists l. split... rewrite Lit.force_cpl_forceb with (V := V)...
 Qed.

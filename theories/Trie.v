@@ -53,6 +53,7 @@ Module Make (K : UsualOrderedTypeFull).
     | Empty
     | Root (f : forest).
 
+  Definition empty := Empty.
 
   (** Conventions: kt = k in the trie, kn = new k (from the input list). *)
 
@@ -240,7 +241,6 @@ Module Make (K : UsualOrderedTypeFull).
     - destruct (K.compare kn2 kt) eqn:Hcmp_kn2.
       + cbn. rewrite Hcmp_kn1...
       + cbn. rewrite Hcmp_kn1.
-        Print KFacts.
         destruct (K.compare kn1 kn2) eqn:Hcmp_kn.
         * rewrite KFacts.compare_eq_iff' in Hcmp_kn. subst kn1.
           congruence.
@@ -283,5 +283,5 @@ Module Make (K : UsualOrderedTypeFull).
   Qed.
 
   (** Don't simplify these defs, other modules should use the lemmas above. *)
-  Global Opaque contains add containsf addf.
+  Global Opaque empty contains add containsf addf.
 End Make.

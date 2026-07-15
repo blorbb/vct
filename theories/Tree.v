@@ -22,7 +22,7 @@ Definition cons_child tree child :=
 
 Definition valuation (tree : t) (atm : nat) : Prop :=
   match tree with
-  | make V _ => Valuation.forces_atm V atm = true
+  | make V _ => Valuation.forces_atm V atm
   end.
 
 

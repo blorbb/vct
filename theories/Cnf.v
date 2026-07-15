@@ -19,14 +19,15 @@ Definition cpl_forceb (V : Valuation.t) (phi : t) : bool :=
 
 (* TODO: maybe add a [atm_in p phi] premise? *)
 Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V phi,
-  (forall p, Kripke.valuation M w0 p <-> Valuation.forces_atm V p = true) ->
-  force M w0 phi <-> cpl_forceb V phi = true.
+  (forall p, Kripke.valuation M w0 p <-> Valuation.forces_atm V p) ->
+  force M w0 phi <-> cpl_forceb V phi.
 Proof with try easy; auto.
   intros * HV.
-  cbn. unfold cpl_forceb. rewrite List.Forall_forall, forallb_forall.
+  cbn. unfold cpl_forceb. =rewrite List.Forall_forall, List.forallb_forall.
   split.
   - intros Hforce clause Hclause_in.
     setoid_rewrite CplClause.force_cpl_forceb with (V := V) in Hforce...
+    apply Hforce...
   - intros Hforceb clause Hclause_in.
     rewrite CplClause.force_cpl_forceb with (V := V)...
 Qed.
@@ -54,12 +55,12 @@ Definition unsatisfiable (phi : t) : Prop := ~ satisfiable phi.
 
 
 Lemma cpl_forceb_sat : forall V phi,
-  cpl_forceb V phi = true -> satisfiable phi.
+  cpl_forceb V phi -> satisfiable phi.
 Proof.
   intros V phi Hforceb.
   set (W := unit).
   set (R := fun (_ _ : W) => False).
-  set (val := fun (w : W) (p : nat) => Valuation.forces_atm V p = true).
+  set (val := fun (w : W) (p : nat) => Valuation.forces_atm V p).
   set (M := Kripke.make W R val).
   exists W, R, M, tt.
   rewrite force_cpl_forceb.

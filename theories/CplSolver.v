@@ -118,7 +118,7 @@ Axiom solution_soundness : forall s A core,
 (** The valuation satisfies the solver clauses. *)
 Axiom solution_completeness : forall s A V,
   solve_with_assumptions s A = CplSolution.Sat V ->
-  Cnf.cpl_forceb V (solved_clauses s A) = true.
+  Cnf.cpl_forceb V (solved_clauses s A).
 
 (** The empty SAT-solver contains no clauses. *)
 Axiom make_is_empty : clauses_of (make tt) = [].
