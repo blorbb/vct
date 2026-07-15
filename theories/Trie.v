@@ -5,7 +5,10 @@
     We likewise implement the trie assuming that the items in the trie are
     sorted according to the provided order. However, we do not need a [sorted] constraint,
     as the lemmas we need work fine without it ([add] and [contains] follow the same
-    'path' for each given string). *)
+    'path' for each given string).
+
+    In case the [sorted] constraint is required again in the future, proofs of it
+    can be found in the diff of commit 67549035066024664d04c7ec236c8d283bd94046. *)
 
 From CegarTableaux Require Import ImportStd.
 From Stdlib.Structures Require Import Orders.
