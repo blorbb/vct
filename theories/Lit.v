@@ -105,6 +105,14 @@ Global Instance eq_atm_equivalence : Equivalence eq_atm := {
 
 
 (** Pos < Neg to match inductive definition order. *)
+Definition compare (x y : t) : comparison :=
+  match x, y with
+  | Pos p, Pos q => Nat.compare p q
+  | Neg p, Neg q => Nat.compare p q
+  | Pos p, Neg q => Lt
+  | Neg p, Pos q => Gt
+  end.
+
 Definition leb (x y : t) : bool :=
   match x, y with
   | Pos p, Pos q => p <=? q
@@ -203,3 +211,49 @@ Proof.
     cbn in *. tauto.
   - intros Hforcen Hforce. destruct l; auto.
 Qed.
+
+
+Module Ordered <: Orders.UsualOrderedTypeFull.
+  (** Should give the full definitions instead of using [Orders.TTLB_to_OTF]
+      for a more efficient [compare] implementation. *)
+  Definition t := Lit.t.
+
+  Definition eq := @eq Lit.t.
+
+  Definition eq_dec := eq_dec.
+
+  Definition eq_equiv := @eq_equivalence Lit.t.
+
+  Definition lt (x y : t) := compare x y = Lt.
+  Arguments lt x y /.
+
+  Definition compare := compare.
+
+  Lemma compare_spec : forall (x y : t),
+    CompareSpec (x = y) (lt x y) (lt y x) (compare x y).
+  Proof with try congruence.
+    intros [p|p] [q|q]; cbn.
+    - destruct (Nat.compare_spec p q); constructor...
+      rewrite Nat.compare_lt_iff...
+    - now constructor.
+    - now constructor.
+    - destruct (Nat.compare_spec p q); constructor...
+      rewrite Nat.compare_lt_iff...
+  Qed.
+
+  Lemma lt_strorder : StrictOrder lt.
+  Proof with try easy.
+    split.
+    - intros [p|p] Hlt; cbn in Hlt; now rewrite Nat.compare_refl in Hlt.
+    - intros [p|p] [q|q] [r|r]...
+      all: cbn; repeat rewrite Nat.compare_lt_iff; apply Nat.lt_trans.
+  Qed.
+
+  Lemma lt_compat : Proper (Logic.eq ==> Logic.eq ==> iff) lt.
+  Proof. intros x x' Hx y y' Hy. now subst. Qed.
+
+  Definition le (x y : t) := lt x y \/ x = y.
+
+  Lemma le_lteq : forall x y : t, le x y <-> lt x y \/ x = y.
+  Proof. reflexivity. Qed.
+End Ordered.

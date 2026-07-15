@@ -1,232 +1,263 @@
 (** A trie that can only check if a string is a _prefix_
     of a previously added string.
 
-    Inspired by https://github.com/xavierleroy/canonical-binary-tries/blob/main/CharTrie.v. *)
+    Inspired by https://github.com/xavierleroy/canonical-binary-tries/blob/main/CharTrie.v.
+    We likewise implement the trie assuming that the items in the trie are
+    sorted according to the provided order. However, we do not need a [sorted] constraint,
+    as the lemmas we need work fine without it ([add] and [contains] follow the same
+    'path' for each given string). *)
 
 From CegarTableaux Require Import ImportStd.
 From Stdlib.Structures Require Import Orders.
 
 
-Module Make (K : OrderedTypeFull).
-  (** Split trie and sorted definitions. *)
-  Module Split.
-    (** Same as a [list (K.t * t)], but easier to do induction on. *)
-    Inductive forest :=
-      | Nil
-      | Cons (key : K.t) (child : forest) (next : forest).
+(** The ordered type must also be [Usual] so that its [eq] matches Leibniz equality.
 
-    (** Empty contains nothing, Root contains at least the empty prefix [[]]. *)
-    Inductive t :=
-      | Empty
-      | Root (f : forest).
+    This could in theory support any equivalence class [eq], but we don't need this
+    and would complicate the definition of [is_prefix]. *)
+Module Make (K : UsualOrderedTypeFull).
+  (** Trying [K' := K] reaches a compiler bug :( *)
+  Module K' <: OrderedTypeFull.
+    Definition t := K.t.
+    Definition eq := K.eq.
+    Definition eq_equiv := K.eq_equiv.
+    Definition lt := K.lt.
+    Definition lt_strorder := K.lt_strorder.
+    Definition lt_compat := K.lt_compat.
+    Definition compare := K.compare.
+    Definition compare_spec := K.compare_spec.
+    Definition eq_dec := K.eq_dec.
+    Definition le := K.le.
+    Definition le_lteq := K.le_lteq.
+  End K'.
 
-    (** Conventions: kt = k in the trie, kn = new k (from the input list). *)
+  Module KFacts.
+    Include Structures.OrdersFacts.OrderedTypeFacts K'.
 
-    (** Checks if a character is any key of the current level. *)
-    Local Fixpoint in_level kn f :=
-      match f with
-      | Nil => False
-      | Cons kt _ next => K.compare kn kt = Eq \/ in_level kn next
-      end.
-
-    (** A condition the forest must satisfy for all operations to be correct.
-
-        The forest must be sorted so that search can short circuit if a greater
-        key is found. *)
-    Inductive sortedf : forest -> Prop :=
-      | sorted_nil : sortedf Nil
-      | sorted_cons : forall kn child next,
-        sortedf child ->
-        sortedf next ->
-        (forall kt, in_level kt next -> K.lt kn kt) ->
-        sortedf (Cons kn child next).
-
-    Inductive sorted : t -> Prop :=
-      | sorted_empty : sorted Empty
-      | sorted_root : forall f, sortedf f -> sorted (Root f).
-
-    Fixpoint containsf (f : forest) (ks : list K.t) : bool :=
-      match ks, f with
-      | [], _ => true
-      | kn::ks', Nil => false
-      | kn::ks', Cons kt child next =>
-        match K.compare kn kt with
-        | Lt => false
-        | Eq => containsf child ks'
-        | Gt => containsf next (kn::ks')
-        end
-      end.
-
-    Definition contains (trie : t) (ks : list K.t) : bool :=
-      match trie with
-      | Empty => false
-      | Root f => containsf f ks
-      end.
-
-    Fixpoint singletonf (ks : list K.t) : forest :=
-      match ks with
-      | [] => Nil
-      | kn::ks' => Cons kn (singletonf ks') Nil
-      end.
-
-    Fixpoint addf (f : forest) (ks : list K.t) : forest :=
-      match f, ks with
-      | Nil, _ => singletonf ks
-      | Cons _ _ _, [] => f
-      | Cons kt child next, kn::ks' =>
-        match K.compare kn kt with
-        | Lt => Cons kn (singletonf ks') f
-        | Eq => Cons kt (addf child ks') next
-        | Gt => Cons kt child (addf next (kn::ks'))
-        end
-      end.
-
-    Definition add (trie : t) (ks : list K.t) : t :=
-      match trie with
-      | Empty => Root (singletonf ks)
-      | Root f => Root (addf f ks)
-      end.
+    Lemma compare_eq_iff' : forall x y, K.compare x y = Eq <-> x = y.
+    Proof. setoid_rewrite compare_eq_iff. tauto. Qed.
+  End KFacts.
 
 
-    Lemma sorted_singletonf ks : sortedf (singletonf ks).
-    Proof.
-      induction ks as [|kn ks'].
-      - cbn. exact sorted_nil.
-      - cbn. apply sorted_cons.
-        + exact IHks'.
-        + exact sorted_nil.
-        + intros kt Hkt_in.
-          cbn in Hkt_in. contradiction.
-    Qed.
-
-    Lemma in_level_addf : forall f kt kn ks,
-      in_level kt (addf f (kn::ks)) ->
-      K.compare kt kn = Eq \/ in_level kt f.
-    Proof with try easy; auto.
-      intros f.
-      induction f as [|kt' child IHadd_child next IHadd_next];
-        intros kt kn ks Hin_level.
-      { cbn in Hin_level. destruct Hin_level... }
-
-      cbn in Hin_level. destruct (K.compare kn kt') eqn:Hcmp; cbn.
-      - cbn in Hin_level. destruct Hin_level...
-      - cbn in Hin_level. exact Hin_level.
-      - cbn in Hin_level. destruct Hin_level...
-        apply IHadd_next in H. tauto.
-    Qed.
+  (** Same as a [list (K.t * t)], but easier to do induction on. *)
+  Inductive forest :=
+    | Nil
+    | Cons (key : K.t) (child : forest) (next : forest).
 
 
-    Lemma sorted_addf : forall f ks, sortedf f -> sortedf (addf f ks).
-    Proof with try easy.
-      intros f ks Hsortedf. revert ks.
-      induction Hsortedf as
-        [| k child next Hsorted_child IHsorted_add_child Hsorted_next IHsorted_add_next Hlevel];
-        intro ks.
-      { cbn. apply sorted_singletonf. }
-
-      cbn. destruct ks as [|kn ks'].
-      { apply sorted_cons... }
-
-      destruct matches.
-      - apply sorted_cons...
-      - apply sorted_cons.
-        + apply sorted_singletonf.
-        + apply sorted_cons...
-        + intros kt Hkt_in_level.
-          (* convert compare result to lt *)
-          assert (K.lt kn k) as Hlt by now destruct (K.compare_spec kn k). 
-          cbn in Hkt_in_level.
-          destruct Hkt_in_level as [Hkt_eq_k | Hkt_in_next].
-          * assert (K.eq kt k) as Heq by now destruct (K.compare_spec kt k). 
-            now rewrite Heq.
-          * apply Hlevel in Hkt_in_next.
-            transitivity k...
-      - apply sorted_cons...
-        intros kt Hkt_in_level.
-        cbn in IHsorted_add_next.
-        apply in_level_addf in Hkt_in_level as [Heq_ktkn | Hkt_in_next].
-        + assert (K.eq kt kn) as Heq by now destruct (K.compare_spec kt kn).
-          assert (K.lt k kn) as Hlt by now destruct (K.compare_spec kn k).
-          now rewrite Heq.
-        + now apply Hlevel in Hkt_in_next.
-    Qed.
+  (** Empty contains nothing, Root contains at least the empty prefix [[]]. *)
+  Inductive t :=
+    | Empty
+    | Root (f : forest).
 
 
-    Lemma sorted_add : forall trie ks, sorted trie -> sorted (add trie ks).
-    Proof.
-      intros trie ks Hsorted_trie.
-      destruct trie.
-      - cbn. apply sorted_root.
-        apply sorted_singletonf.
-      - cbn. apply sorted_root.
-        inv_clear Hsorted_trie.
-        now apply sorted_addf.
-    Qed.
+  (** Conventions: kt = k in the trie, kn = new k (from the input list). *)
+
+  Fixpoint containsf (f : forest) (ks : list K.t) : bool :=
+    match ks, f with
+    | [], _ => true
+    | kn::ks', Nil => false
+    | kn::ks', Cons kt child next =>
+      match K.compare kn kt with
+      | Lt => false
+      | Eq => containsf child ks'
+      | Gt => containsf next (kn::ks')
+      end
+    end.
 
 
-    Lemma contains_prefix : forall trie ks1 ks2,
-      sorted trie ->
-      contains trie (ks1++ks2) ->
-      contains trie ks1.
-    Proof. Admitted.
-
-    Lemma add_contains : forall trie prefix ks,
-      sorted trie ->
-      is_prefix prefix ks ->
-      contains (add trie ks) prefix.
-    Proof. Admitted.
-
-    Lemma add_contains_inv : forall trie prefix ks,
-      sorted trie ->
-      contains (add trie ks) prefix = true ->
-      contains trie prefix = true \/ is_prefix prefix ks.
-    Admitted.
-
-    (** Adding other words does not remove existing words. *)
-    Lemma add_other_contains : forall trie ks ks',
-      sorted trie ->
-      contains trie ks ->
-      contains (add trie ks') ks.
-    Admitted.
-  End Split.
-
-  (** Merge the trie and sorted defs to be easier to use. *)
-  Definition t := { tr : Split.t | Split.sorted tr }.
-
-  Program Definition empty : t := Split.Empty.
-  Next Obligation. exact Split.sorted_empty. Qed.
-
-  Definition contains (trie : t) (ks : list K.t) : bool := Split.contains (`trie) ks.
-
-  Program Definition add (trie : t) (ks : list K.t) : t := Split.add (`trie) ks.
-  Next Obligation. apply Split.sorted_add. apply proj2_sig. Qed.
+  Definition contains (trie : t) (ks : list K.t) : bool :=
+    match trie with
+    | Empty => false
+    | Root f => containsf f ks
+    end.
 
 
-  Definition singleton := add empty.
+  Fixpoint singletonf (ks : list K.t) : forest :=
+    match ks with
+    | [] => Nil
+    | kn::ks' => Cons kn (singletonf ks') Nil
+    end.
 
-  Lemma contains_prefix : forall trie ks1 ks2,
-    contains trie (ks1 ++ ks2) -> contains trie ks1.
-  Proof.
-    intros * Hcontains.
-    apply Split.contains_prefix with ks2.
-    - apply proj2_sig.
-    - exact Hcontains.
+
+  Fixpoint addf (f : forest) (ks : list K.t) : forest :=
+    match f, ks with
+    | Nil, _ => singletonf ks
+    | Cons _ _ _, [] => f
+    | Cons kt child next, kn::ks' =>
+      match K.compare kn kt with
+      | Lt => Cons kn (singletonf ks') f
+      | Eq => Cons kt (addf child ks') next
+      | Gt => Cons kt child (addf next (kn::ks'))
+      end
+    end.
+
+
+  Definition add (trie : t) (ks : list K.t) : t :=
+    match trie with
+    | Empty => Root (singletonf ks)
+    | Root f => Root (addf f ks)
+    end.
+
+
+  Definition singleton := add Empty.
+
+
+  Lemma contains_singletonf : forall prefix ks,
+    is_prefix prefix ks <-> containsf (singletonf ks) prefix.
+  Proof with try easy; auto with datatypes.
+    intros prefix ks. revert prefix. induction ks as [|kn ks'].
+    - intros prefix. rewrite prefix_of_empty. split.
+      + intro Hprefix. now subst prefix.
+      + intro Hcontains_prefix.
+        cbn in Hcontains_prefix. destruct prefix...
+    - intros prefix. split.
+      + intros Hprefix. cbn. destruct prefix as [|p0 p1s]...
+        apply prefix_cons in Hprefix as [Hp0 Hprefix].
+        subst p0.
+        rewrite KFacts.compare_refl.
+        now apply IHks'.
+      + intros Hcontains. cbn in Hcontains.
+        destruct prefix as [|p0 p1s] eqn:H...
+        destruct (K.compare p0 kn) eqn:Hcmp...
+        apply prefix_cons.
+        rewrite KFacts.compare_eq_iff' in Hcmp.
+        rewrite <- IHks' in Hcontains.
+        tauto.
   Qed.
 
-  Lemma add_contains : forall trie prefix ks,
-    is_prefix prefix ks -> contains (add trie ks) prefix.
-  Proof.
-    intros *. apply Split.add_contains. apply proj2_sig.
+
+  (** [sortedf f] is not needed as [addf] and [containsf] follow the
+      same path. *)
+  Lemma contains_addf : forall f prefix ks,
+    is_prefix prefix ks ->
+    containsf (addf f ks) prefix.
+  Proof with try easy; auto with datatypes.
+    intros f.
+    induction f as [| kt child IHchild next IHnext]; intros prefix ks Hprefix.
+    { cbn. now apply contains_singletonf. }
+
+    destruct ks as [|kn ks'].
+    { rewrite prefix_of_empty in Hprefix. subst prefix... }
+
+    destruct (K.compare kn kt) eqn:Hcmp.
+    - cbn. rewrite Hcmp.
+      cbn. destruct prefix as [|p0 p1s]...
+      apply prefix_cons in Hprefix as [Heq Hprefix]. subst p0.
+      rewrite Hcmp.
+      apply IHchild...
+    - cbn. rewrite Hcmp.
+      cbn. destruct prefix as [|p0 p1s]...
+      apply prefix_cons in Hprefix as [Heq Hprefix]. subst p0.
+      rewrite KFacts.compare_refl.
+      apply contains_singletonf...
+    - cbn. rewrite Hcmp.
+      cbn. destruct prefix as [|p0 p1s]...
+      apply prefix_cons in Hprefix as [Heq Hprefix]. subst p0.
+      rewrite Hcmp.
+      apply IHnext...
+      apply prefix_cons...
   Qed.
 
-  Lemma add_other_contains : forall trie ks ks',
-    contains trie ks ->
-    contains (add trie ks') ks.
-  Proof.
+
+  Lemma contains_add : forall trie prefix ks,
+    is_prefix prefix ks ->
+    contains (add trie ks) prefix.
+  Proof with try easy.
+    intros * Hprefix.
+    destruct trie.
+    - cbn. apply contains_singletonf...
+    - cbn. apply contains_addf...
+  Qed.
+
+
+  Lemma contains_addf_inv : forall f prefix ks,
+    containsf (addf f ks) prefix ->
+    containsf f prefix \/ is_prefix prefix ks.
+  Proof with try easy; auto with datatypes.
+    intros f.
+    induction f as [| kt child IHchild next IHnext];
+    intros prefix ks Hcontains.
+    { cbn in Hcontains. right. now apply contains_singletonf. }
+
+    destruct prefix as [|p0 p1s]...
+    destruct ks as [|kn ks'].
+    { cbn in *. now left. }
+
+    cbn in *.
+    destruct (K.compare kn kt) eqn:Hcmp_kn in Hcontains.
+    - cbn in *. destruct (K.compare p0 kt) eqn:Hcmp_p0...
+      rewrite KFacts.compare_eq_iff' in *. subst kn p0.
+      rewrite prefix_cons. autorewrite with prop.
+      apply IHchild...
+    - cbn in *. destruct (K.compare p0 kn) eqn:Hcmp_p0...
+      rewrite KFacts.compare_eq_iff' in *. subst p0.
+      rewrite Hcmp_kn. right.
+      apply prefix_cons. split...
+      apply contains_singletonf...
+    - cbn in *. destruct (K.compare p0 kt) eqn:Hcmp_p0...
+  Qed.
+
+
+  Lemma contains_add_inv : forall trie prefix ks,
+    contains (add trie ks) prefix ->
+    contains trie prefix \/ is_prefix prefix ks.
+  Proof with try easy; auto with datatypes.
     intros * Hcontains.
-    apply Split.add_other_contains.
-    - apply proj2_sig.
-    - exact Hcontains.
+    destruct trie.
+    - cbn in *. right. apply contains_singletonf...
+    - cbn in *. apply contains_addf_inv...
+  Qed.
+
+
+  Lemma contains_addf_other : forall f ks1 ks2,
+    containsf f ks1 ->
+    containsf (addf f ks2) ks1.
+  Proof with try easy; auto with datatypes.
+    intros f.
+    induction f as [| kt child IHchild next IHnext];
+    intros ks1 ks2 Hcontains.
+    { destruct ks1... cbn. apply contains_singletonf... }
+
+    destruct ks1 as [|kn1 ks1'].
+    { apply contains_addf... }
+    destruct ks2 as [|kn2 ks2'].
+    { exact Hcontains. }
+
+    cbn in *.
+    destruct (K.compare kn1 kt) eqn:Hcmp_kn1.
+    - destruct (K.compare kn2 kt) eqn:Hcmp_kn2.
+      + cbn. rewrite Hcmp_kn1...
+      + cbn. rewrite Hcmp_kn1.
+        apply KFacts.compare_eq_iff' in Hcmp_kn1. subst kn1.
+        rewrite KFacts.compare_antisym in Hcmp_kn2.
+        destruct (K.compare kt kn2)...
+      + cbn. rewrite Hcmp_kn1...
+    - discriminate.
+    - destruct (K.compare kn2 kt) eqn:Hcmp_kn2.
+      + cbn. rewrite Hcmp_kn1...
+      + cbn. rewrite Hcmp_kn1.
+        Print KFacts.
+        destruct (K.compare kn1 kn2) eqn:Hcmp_kn.
+        * rewrite KFacts.compare_eq_iff' in Hcmp_kn. subst kn1.
+          congruence.
+        * rewrite KFacts.compare_lt_iff in *.
+          pose proof (KFacts.lt_trans Hcmp_kn Hcmp_kn2) as Hkn1_kt.
+          rewrite <- KFacts.compare_lt_iff in Hkn1_kt.
+          congruence.
+        * exact Hcontains.
+      + cbn. rewrite Hcmp_kn1...
+  Qed.
+
+
+  Lemma contains_add_other : forall trie ks1 ks2,
+    contains trie ks1 ->
+    contains (add trie ks2) ks1.
+  Proof with try easy.
+    intros * Hcontains.
+    destruct trie.
+    - cbn in *...
+    - cbn in *. apply contains_addf_other...
   Qed.
 
 
@@ -235,28 +266,19 @@ Module Make (K : OrderedTypeFull).
     contains trie prefix \/ is_prefix prefix ks.
   Proof.
     intros *. split.
-    - apply Split.add_contains_inv.
-      apply proj2_sig.
+    - apply contains_add_inv.
     - intros [Hcontains | Hprefix].
-      + now apply add_other_contains.
-      + now apply add_contains.
+      + now apply contains_add_other.
+      + now apply contains_add.
   Qed.
-
-
-  Lemma contains_empty : forall ks, negb (contains empty ks).
-  Proof. easy. Qed.
 
 
   Lemma contains_singleton : forall prefix ks,
     is_prefix prefix ks <-> contains (singleton ks) prefix.
   Proof.
-    intros. split.
-    - apply add_contains.
-    - intro Hsingleton.
-      apply add_contains_iff in Hsingleton.
-      destruct Hsingleton; easy.
+    intros. rewrite contains_singletonf. reflexivity.
   Qed.
 
   (** Don't simplify these defs, other modules should use the lemmas above. *)
-  Global Opaque contains add.
+  Global Opaque contains add containsf addf.
 End Make.

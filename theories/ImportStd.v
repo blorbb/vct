@@ -47,9 +47,11 @@ Lemma not_false : ~ False <-> True.
 Proof. tauto. Qed.
 Lemma not_true : ~ False <-> True.
 Proof. tauto. Qed.
+Lemma eq_true : forall {A} (a : A), a = a <-> True.
+Proof. tauto. Qed.
 
 Create Rewrite HintDb prop.
-Hint Rewrite or_false_l or_false_r and_true_l and_true_r idem_f idem_t imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true : prop.
+Hint Rewrite or_false_l or_false_r and_true_l and_true_r idem_f idem_t imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true @eq_true : prop.
 
 
 (** Function pipeline operator *)

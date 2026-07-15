@@ -431,4 +431,49 @@ Proof.
   unfold is_prefix in Hprefix. deex. subst l.
   now apply List.incl_appl.
 Qed.
-Hint Resolve prefix_incl : datatypes.
+Global Hint Resolve prefix_incl : datatypes.
+
+Lemma prefix_empty_of : forall {A} (l : list A),
+  is_prefix [] l.
+Proof. intros A l. now exists l. Qed.
+Global Hint Resolve prefix_empty_of : datatypes.
+
+Lemma prefix_of_empty : forall {A} (prefix : list A),
+  is_prefix prefix [] <-> prefix = [].
+Proof.
+  intros A prefix. split.
+  - intros Hprefix.
+    apply List.incl_l_nil.
+    now apply prefix_incl.
+  - intros Hprefix. subst prefix.
+    exists []. reflexivity.
+Qed.
+Global Hint Resolve prefix_of_empty : datatypes.
+Global Hint Rewrite @prefix_of_empty : list.
+
+Lemma prefix_of_singleton : forall {A} (p1 : A) p2 l1,
+  is_prefix (p1::p2) [l1] <-> p1 = l1 /\ p2 = [].
+Proof with try easy.
+  intros *. unfold is_prefix. split.
+  - intros Hsuffix. deex. inv_clear Hsuffix.
+    destruct p2, suffix...
+  - intros [Hp1 Hp2]. subst. exists []...
+Qed.
+Global Hint Resolve prefix_of_singleton : datatypes.
+Global Hint Rewrite @prefix_of_singleton : list.
+
+
+Lemma prefix_cons : forall {A} (p1 : A) (p2 : list A) (l1 : A) (l2 : list A),
+  is_prefix (p1::p2) (l1::l2) <-> p1 = l1 /\ is_prefix p2 l2.
+Proof with try easy.
+  intros *. revert p1 p2 l1. induction l2 as [|l1 l2 IH].
+  - intros *. rewrite prefix_of_empty. apply prefix_of_singleton.
+  - intros *. unfold is_prefix. split.
+    + intros [suffix Hsuffix].
+      cbn in Hsuffix. inv_clear Hsuffix. split...
+      exists suffix...
+    + intros [Hp1 [suffix Hsuffix]]. subst p1.
+      cbn. exists suffix. now rewrite Hsuffix.
+Qed.
+Global Hint Resolve prefix_cons : datatypes.
+Global Hint Rewrite @prefix_cons : list.

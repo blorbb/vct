@@ -6,22 +6,7 @@ From CegarTableaux.Solver Require NoModel.
 From Stdlib.Structures Require Import Orders.
 
 
-Module LitOrd <: OrderedTypeFull.
-  Module T <: TotalTransitiveLeBool'.
-    Definition t := Lit.t.
-    Definition leb := Lit.leb.
-    Definition leb_total := Lit.leb_total.
-    Definition leb_trans := Lit.leb_trans.
-  End T.
-
-  (* TODO: depending on how its extracted, might be more performant
-      to give the full definitions manually instead of being derived
-      from the above. *)
-  Include Orders.TTLB_to_OTF T.
-End LitOrd.
-
-
-Module Cache := Trie.Make (LitOrd).
+Module Cache := Trie.Make (Lit.Ordered).
 
 
 Module Caches.
