@@ -1,6 +1,9 @@
 (library
  (name vct)
- (libraries minisat))
+ (libraries minisat)
+ (inline_tests)
+ (preprocess
+  (pps ppx_inline_test)))
 
 (menhir
  (modules parser))
@@ -12,4 +15,4 @@
 (env
  (dev
   (flags
-   (:standard -w -33))))
+   (:standard -w -33-39))))

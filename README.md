@@ -8,7 +8,7 @@ Rocq proofs in `theories/`.
 OCaml is extracted to `cegarbox/lib`.
 The unverified code for binding to MiniSat can be found in `cegarbox/lib/bindings.ml`.
 
-Requires Rocq 9.2.0, OCaml 5.4.1, and the Rocq libraries `rocq-equations` and `rocq-stdpp`.
+Requires Rocq 9.2.0, OCaml 5.4.1, and the Rocq libraries `rocq-equations`.
 
 Install Rocq and OCaml in any way, or through an `opam` switch:
 
@@ -17,20 +17,22 @@ opam switch create rocq 5.4.1
 opam switch rocq
 eval $(opam env)
 opam repo add rocq-released https://rocq-prover.org/opam/released
-opam install rocq-prover rocq-core=9.2.0 rocq-equations rocq-stdpp
+opam install rocq-prover rocq-core=9.2.0 rocq-equations
 ```
 
-Running the OCaml code requires `dune`, `minisat` and `menhir`.
+Running the OCaml code requires `dune`, `minisat`, `menhir`, and `ppx_inline_test`.
 
 ```sh
-opam install dune minisat menhir
+opam install dune minisat menhir ppx_inline_test
 ```
+
+(The `ppx_inline_test` dependency can be removed by deleting the `let%unit_test` item in `src/lib/bindings.ml`, if you wish.)
 
 To run,
 
 ```sh
 cd src
-dune exec --release vct -- file1 [file2 [...]]
+dune exec --release vct -- [file]
 ```
 
 Where each of the files is a formula in InToHyLo format.

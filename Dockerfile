@@ -1,7 +1,7 @@
 # Builds the binary and puts it at /build/vct
 
 FROM rocq/rocq-prover:9.2.0
-RUN opam update && opam install -y dune menhir minisat rocq-equations
+RUN opam update && opam install -y dune menhir minisat ppx_inline_test rocq-equations
 
 WORKDIR /build
 COPY --chown=rocq:rocq theories ./theories
