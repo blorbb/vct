@@ -188,10 +188,11 @@ with Caches.contains caches A =>
       | [] => Solution.Sat (Caches.add caches A)
       | (l0 :: mc1) with Caches.destruct caches =>
         | (cache0, caches1) with
+          let s1 := (CplSolver.make_with_clauses (first_cpls mc1)) in
           inspect (
             tableau_jumps
               V l0 mc1
-              (fun A' caches1' => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1 caches1')
+              (fun A' caches1' => tableau A' s1 mc1 caches1')
               caches1
           ) =>
           | JumpSolution.Sat caches1' eqn:Hj_eq => Solution.Sat (Cache.add cache0 A :: caches1')
