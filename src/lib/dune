@@ -5,12 +5,17 @@
  (preprocess
   (pps ppx_inline_test)))
 
+; this cannot be qualified as bindings.ml requires some modules in gen/
+; and gen/CplSolver.ml requires bindings.ml.
+
+(include_subdirs unqualified)
+
 (menhir
  (modules parser))
 
 (ocamllex lexer)
 
-; disable unused open warning
+; disable unused open and unused rec warnings in the generated code
 
 (env
  (dev

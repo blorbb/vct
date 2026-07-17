@@ -5,8 +5,8 @@ See the rendered Rocq documentation at https://blorbb.github.io/vct/toc.html.
 ## Usage
 
 Rocq proofs in `theories/`.
-OCaml is extracted to `cegarbox/lib`.
-The unverified code for binding to MiniSat can be found in `cegarbox/lib/bindings.ml`.
+OCaml is extracted to `src/lib/gen`.
+The unverified code for binding to MiniSat can be found in `src/lib/bindings.ml`.
 
 Requires Rocq 9.2.0, OCaml 5.4.1, and the Rocq libraries `rocq-equations`.
 

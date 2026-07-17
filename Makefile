@@ -1,5 +1,5 @@
 EXTRA_DIR:= doc-config
-COQDOCFLAGS:= \
+COQDOCFLAGS := \
   --toc --toc-depth 2 --html --interpolate \
 	-d docs \
   --index indexpage --no-lib-name --parse-comments \
@@ -31,8 +31,6 @@ doc: makefile.rocq
 clean::
 	rm makefile.rocq makefile.rocq.conf
 	rm -f $(BUILD_FILES)
-	find src/lib -maxdepth 1 -type f \
-		! -name 'dune' ! -name 'bindings.ml' ! -name 'bindings.mli' \
-		! -name 'lexer.mll' ! -name 'parser.mly' -delete
+	find src/lib/gen/ -mindepth 1 -delete
 
 .PHONY: _
