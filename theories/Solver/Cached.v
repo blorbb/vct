@@ -169,9 +169,9 @@ Qed.
 
 
 Equations tableau
-  (A : Assumptions.t)
-  (s0 : CplSolver.t)
   (mc0 : Mcnf.t)
+  (s0 : CplSolver.t)
+  (A : Assumptions.t)
   (caches : Caches.t)
   : Solution.t
   by wf (
@@ -179,7 +179,7 @@ Equations tableau
     List.length (CplSolver.every_sat_valuation s0 A)
   ) lexnat2_lt
 :=
-tableau A s0 mc0 caches
+tableau mc0 s0 A caches
 with Caches.contains caches A =>
   | true => Solution.Sat caches
   | false with inspect (CplSolver.solve_with_assumptions s0 A) =>
@@ -188,11 +188,11 @@ with Caches.contains caches A =>
       | [] => Solution.Sat (Caches.add caches A)
       | (l0 :: mc1) with Caches.destruct caches =>
         | (cache0, caches1) with
-          let s1 := (CplSolver.make_with_clauses (first_cpls mc1)) in
+          let s1 := cplsolver_mcnf mc1 in
           inspect (
             tableau_jumps
               V l0 mc1
-              (fun A' caches1' => tableau A' s1 mc1 caches1')
+              (fun A' caches1' => tableau mc1 s1 A' caches1')
               caches1
           ) =>
           | JumpSolution.Sat caches1' eqn:Hj_eq => Solution.Sat (Cache.add cache0 A :: caches1')
@@ -200,7 +200,7 @@ with Caches.contains caches A =>
             let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
             let s0' := CplSolver.add_conflict_set s0 conflict_set in
             let mc0' := add_conflict_set (l0::mc1) conflict_set in
-            tableau A s0' mc0' (cache0::caches1')
+            tableau mc0' s0' A (cache0::caches1')
 .
 Next Obligation.
   (* JUMP call measure decreasing. *)
@@ -217,9 +217,7 @@ Fail Next Obligation.
 
 (** Solve a formula by applying [tableau] with the correct arguments. *)
 Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
-  let cpls := first_cpls mc0 in
-  let s0 := (CplSolver.make_with_clauses cpls) in
-  tableau [] s0 mc0 [].
+  tableau mc0 (cplsolver_mcnf mc0) [] [].
 
 
 (** Solve a [Fml.t] formula by converting first. *)
@@ -232,7 +230,7 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
 
 Definition sat_cache (cache : Cache.t) (mc0 : Mcnf.t) : Prop :=
   forall A, Cache.contains cache A ->
-  NoModel.Solution.is_sat (NoModel.tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0).
+  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A).
 
 
 Inductive sat_caches : Caches.t -> Mcnf.t -> Prop :=
@@ -247,7 +245,7 @@ Global Hint Constructors sat_caches : ct.
 Lemma sat_caches_contains_sat : forall caches mc0 A,
   sat_caches caches mc0 ->
   Caches.contains caches A ->
-  NoModel.Solution.is_sat (NoModel.tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0).
+  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A).
 Proof.
   intros * Hsat_caches Hcontains.
   destruct Hsat_caches.
@@ -258,7 +256,7 @@ Qed.
 
 Lemma sat_cache_add : forall cache mc0 A,
   sat_cache cache mc0 ->
-  NoModel.Solution.is_sat (NoModel.tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0) ->
+  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A) ->
   sat_cache (Cache.add cache A) mc0.
 Proof with try easy; auto with datatypes.
   intros * Hsat_cache Hsat_tab A' Hcontains.
@@ -271,7 +269,7 @@ Qed.
 
 Lemma sat_caches_add : forall caches mc0 A,
   sat_caches caches mc0 ->
-  NoModel.Solution.is_sat (NoModel.tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0) ->
+  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A) ->
   sat_caches (Caches.add caches A) mc0.
 Proof with try easy; auto with datatypes ct.
   intros * Hsat_caches Hsat_tab.
@@ -315,8 +313,8 @@ Proof with try easy; auto with datatypes ct.
     + cbn in *. constructor...
 Qed.
 
-Definition next_tableau mc1 := fun A' caches1' =>
-  tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1 caches1'.
+
+Definition next_tableau mc1 := tableau mc1 (cplsolver_mcnf mc1).
 
 
 Lemma cs_preserve_sat : forall caches l0 mc1 V c jump_core,
@@ -389,14 +387,14 @@ Definition tableau_jumps_correct V l0 mc1 caches1 :=
   sat_caches (JumpSolution.get_caches (tableau_jumps V l0 mc1 (next_tableau mc1) caches1)) mc1.
 
 
-Definition tableau_correct A s0 mc0 caches :=
-  Solution.without_caches (tableau A s0 mc0 caches) = NoModel.tableau A s0 mc0 /\
-  sat_caches (Solution.get_caches (tableau A s0 mc0 caches)) mc0.
+Definition tableau_correct mc0 A caches :=
+  Solution.without_caches (tableau mc0 (cplsolver_mcnf mc0) A caches) = NoModel.tableau mc0 (cplsolver_mcnf mc0) A /\
+  sat_caches (Solution.get_caches (tableau mc0 (cplsolver_mcnf mc0) A caches)) mc0.
 
 
 Lemma tableau_jumps_nomodel_sat_caches : forall V l0 mc1 caches1,
   sat_caches caches1 mc1 ->
-  (forall A caches, sat_caches caches mc1 -> tableau_correct A (CplSolver.make_with_clauses (first_cpls mc1)) mc1 caches) ->
+  (forall A caches, sat_caches caches mc1 -> tableau_correct mc1 A caches) ->
   tableau_jumps_correct V l0 mc1 caches1.
 Proof with try easy; try congruence; auto with datatypes ct.
   intros * Hsat_caches1 Hnt_ind. unfold tableau_jumps_correct.
@@ -444,26 +442,26 @@ Proof with try easy; try congruence; auto with datatypes ct.
 Qed.
 
 
-Lemma tableau_nomodel_sat_caches : forall A s0 mc0 caches,
-  CplSolver.make_with_clauses (first_cpls mc0) = s0 ->
+Lemma tableau_nomodel_sat_caches : forall mc0 A caches,
   sat_caches caches mc0 ->
-  tableau_correct A s0 mc0 caches.
+  tableau_correct mc0 A caches.
 Proof with try easy; try congruence; auto with datatypes ct.
-  intros * Hs0 Hcaches. unfold tableau_correct.
-  funelim (NoModel.tableau A s0 mc0).
+  intros * Hcaches. unfold tableau_correct.
+
+  funelim (NoModel.tableau mc0 (cplsolver_mcnf mc0) A).
   - clear H.
     simp tableau. unfold tableau_unfold_clause_1.
     destruct (Caches.contains caches A) eqn:Hcached. {
       exfalso.
-      pose proof (sat_caches_contains_sat caches mc1 A Hcaches Hcached) as Hsat.
+      pose proof (sat_caches_contains_sat caches mc0 A Hcaches Hcached) as Hsat.
       rewrite NoModel.Solution.is_sat_eq in Hsat.
       rewrite Hsat in Heqcall. discriminate.
     }
 
     unfold tableau_unfold_clause_1_clause_2. cbn. split.
-    + dep_destruct (CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls mc1)) A) as Hs...
+    + dep_destruct (CplSolver.solve_with_assumptions (cplsolver_mcnf mc0) A) as Hs...
       rewrite Hs in Hcsol_eq. now inv_clear Hcsol_eq.
-    + dep_destruct (CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls mc1)) A) as Hs...
+    + dep_destruct (CplSolver.solve_with_assumptions (cplsolver_mcnf mc0) A) as Hs...
 
   - clear H. cbn in *.
     simp tableau. unfold tableau_unfold_clause_1.
@@ -479,13 +477,13 @@ Proof with try easy; try congruence; auto with datatypes ct.
     destruct (Caches.contains caches A) eqn:Hcached...
 
     unfold tableau_unfold_clause_1_clause_2. cbn. split.
-    + dep_destruct (CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls (l0::mc1))) A) as Hs...
+    + dep_destruct (CplSolver.solve_with_assumptions (cplsolver_mcnf (l0::mc1)) A) as Hs...
       rewrite Hs in Hcsol_eq. inv_clear Hcsol_eq.
       cbn.
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2.
       destruct_pair as [cache0 caches1].
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2_clause_1.
-      cbn. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
+      cbn. eta. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
       dep_destruct (tableau_jumps V l0 mc1 (next_tableau mc1) caches1) as Hj...
       exfalso.
       (* Hj_eq and Hj contradict *)
@@ -496,14 +494,14 @@ Proof with try easy; try congruence; auto with datatypes ct.
       }
       rewrite Hj in Hjumps_nomodel. cbn in Hjumps_nomodel. congruence.
 
-    + dep_destruct (CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls (l0::mc1))) A) as Hs...
+    + dep_destruct (CplSolver.solve_with_assumptions (cplsolver_mcnf (l0::mc1)) A) as Hs...
       rewrite Hs in Hcsol_eq. inv_clear Hcsol_eq.
       cbn.
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2.
       destruct_pair as [cache0 caches1].
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2_clause_1.
-      cbn. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
+      cbn. eta. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
 
       unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
@@ -519,9 +517,9 @@ Proof with try easy; try congruence; auto with datatypes ct.
 
   (* conflict set branch *)
   - clear H0 H1.
-    set (cs := (conflict_set_of (l0::mc1) V c jump_core)) in *.
+    set (cs := conflict_set_of (l0::mc1) V c jump_core) in *.
     set (nomodel_call := NoModel.tableau _ _ _) in *.
-    set (s0 := CplSolver.make_with_clauses (first_cpls (l0::mc1))) in *.
+    set (s0 := cplsolver_mcnf (l0::mc1)) in *.
     set (mc0_cs := add_conflict_set (l0::mc1) cs) in *.
     assert (CplSolver.add_conflict_set s0 cs = CplSolver.make_with_clauses (first_cpls mc0_cs)) as Hs0_cs by reflexivity.
 
@@ -542,7 +540,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2.
       destruct_pair as [cache0 caches1].
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
-      cbn. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
+      cbn. eta. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
 
       unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
@@ -563,7 +561,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2.
       destruct_pair as [cache0 caches1].
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
-      cbn -[add_conflict_set]. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
+      cbn -[add_conflict_set]. eta. fold (next_tableau mc1). fold (NoModel.next_tableau mc1) in Hj_eq.
 
       unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
@@ -576,8 +574,10 @@ Proof with try easy; try congruence; auto with datatypes ct.
       cbn in Hjumps_sat_caches.
       fold cs. fold mc0_cs. rename caches0 into caches1'.
 
-      specialize (H (cache0::caches1') Hs0_cs).
+      specialize (H mc0_cs A (cache0::caches1')).
       forward H. { apply cs_preserve_sat... }
+      forward H by reflexivity.
+      forward H by reflexivity.
       destruct H as [Hcs_nomodel Hcs_sat_caches].
       apply remove_cs_preserve_sat in Hcs_sat_caches.
       apply Hcs_sat_caches.
@@ -586,11 +586,11 @@ Qed.
 
 Theorem tableau_sound_complete : forall mc0 A caches,
   sat_caches caches mc0 ->
-  Solution.is_sat (tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0 caches) <->
+  Solution.is_sat (tableau mc0 (cplsolver_mcnf mc0) A caches) <->
   Mcnf.satisfiable (add_assumptions mc0 A).
 Proof.
   intros mc0 A caches Hsat_caches.
-  pose proof (tableau_nomodel_sat_caches A (CplSolver.make_with_clauses (first_cpls mc0)) mc0 caches eq_refl Hsat_caches) as [Htableau_nomodel _].
+  pose proof (tableau_nomodel_sat_caches mc0 A caches Hsat_caches) as [Htableau_nomodel _].
   rewrite Solution.without_caches_sat.
   rewrite Htableau_nomodel.
   apply NoModel.tableau_sound_complete.

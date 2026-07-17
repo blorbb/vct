@@ -72,27 +72,27 @@ Qed.
 
 
 Equations tableau
-  (A : Assumptions.t)
-  (s0 : CplSolver.t)
   (mc0 : Mcnf.t)
+  (s0 : CplSolver.t)
+  (A : Assumptions.t)
   : Solution.t
   by wf (
     List.length mc0,
     List.length (CplSolver.every_sat_valuation s0 A)
   ) lexnat2_lt
 :=
-tableau A s0 mc0
+tableau mc0 s0 A
 with inspect (CplSolver.solve_with_assumptions s0 A) =>
   | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Id A')
   | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
     | [] => Solution.Sat (Tree.make V [])
-    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 [] (fun A' => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)) =>
+    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 [] (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
       | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
         let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
         let mc0' := add_conflict_set (l0::mc1) conflict_set in
-        match tableau A s0' mc0' with
+        match tableau mc0' s0' A with
         | Solution.Sat T0 => Solution.Sat T0
         | Solution.Unsat rs_core rs_deriv =>
           Solution.Unsat rs_core
@@ -116,9 +116,7 @@ Fail Next Obligation.
 
 (** Solve a formula by applying [tableau] with the correct arguments. *)
 Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
-  let cpls := first_cpls mc0 in
-  let s0 := (CplSolver.make_with_clauses cpls) in
-  tableau [] s0 mc0.
+  tableau mc0 (cplsolver_mcnf mc0) [].
 
 
 (** Solve a [Fml.t] formula by converting first. *)
@@ -128,43 +126,36 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
 
 Lemma tableau_spec : forall A s0 mc0,
   Spec.tableau A s0 mc0 = tableau A s0 mc0.
-Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
+Proof with try easy; try congruence; auto.
   intros *.
   funelim (Spec.tableau A s0 mc0).
   - clear H. simp tableau. unfold tableau_unfold_clause_1. cbn.
-    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
-    + rewrite Hs_eq in Hcsol_eq. now inversion_clear Hcsol_eq.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
 
   - clear H. simp tableau. unfold tableau_unfold_clause_1. cbn.
-    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + cbn. rewrite Hs_eq in Hcsol_eq. now inversion_clear Hcsol_eq.
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
 
-  - clear H H0. simp tableau. unfold tableau_unfold_clause_1. cbn.
+  - clear H H0. simp tableau. unfold tableau_unfold_clause_1.
 
-    rewrite tableau_jumps_spec_init in Hj_eq.
-    replace (fun A' : Assumptions.t => Spec.tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)
-      with (fun A' : Assumptions.t => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1) in Hj_eq.
+    rewrite tableau_jumps_spec_init in Hj_eq. eta.
+    replace (Spec.tableau mc1 (cplsolver_mcnf mc1))
+      with (tableau mc1 (cplsolver_mcnf mc1)) in Hj_eq.
     2: { apply functional_extensionality. intro A'. now rewrite Hind. }
-
-    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + rewrite Hs_eq in Hcsol_eq. inversion Hcsol_eq; subst; clear Hcsol_eq.
-      cbn. destruct (tableau_jumps V l0 mc1 []).
-      * now inversion_clear Hj_eq.
-      * discriminate.
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
+    cbn.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
+    rewrite Hs_eq in Hcsol_eq. inv_clear Hcsol_eq.
+    cbn. destruct (tableau_jumps V l0 mc1 [])...
 
   - clear H0 H1.
 
-    rewrite tableau_jumps_spec_init in Hj_eq.
-    replace (fun A' : Assumptions.t => Spec.tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)
-      with (fun A' : Assumptions.t => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1) in Hj_eq.
+    rewrite tableau_jumps_spec_init in Hj_eq. eta.
+    replace (Spec.tableau mc1 (cplsolver_mcnf mc1))
+      with (tableau mc1 (cplsolver_mcnf mc1)) in Hj_eq.
     2: { apply functional_extensionality. intro A'. now rewrite Hind. }
 
     set (spec_call := Spec.tableau _ _ _).
-    simp tableau. cbn. dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + cbn -[add_conflict_set]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
-      rewrite Hj_eq. now rewrite <- H.
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
+    simp tableau. cbn -[add_conflict_set]. eta.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
+    rewrite Hs_eq in Hcsol_eq. inv_clear Hcsol_eq.
+    rewrite Hj_eq. now rewrite <- H.
 Qed.

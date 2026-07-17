@@ -85,27 +85,27 @@ Qed.
 
 
 Equations tableau
-  (A : Assumptions.t)
-  (s0 : CplSolver.t)
   (mc0 : Mcnf.t)
+  (s0 : CplSolver.t)
+  (A : Assumptions.t)
   : Solution.t
   by wf (
     List.length mc0,
     List.length (CplSolver.every_sat_valuation s0 A)
   ) lexnat2_lt
 :=
-tableau A s0 mc0
+tableau mc0 s0 A
 with inspect (CplSolver.solve_with_assumptions s0 A) := {
   | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A'
   | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
     | [] => Solution.Sat
-    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)) := {
+    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) := {
       | JumpSolution.Sat eqn:Hj_eq => Solution.Sat
       | JumpSolution.Unsat c jump_core eqn:Hj_eq =>
         let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
         let mc0' := add_conflict_set (l0::mc1) conflict_set in
-        tableau A s0' mc0'
+        tableau mc0' s0' A
     }
 }.
 Next Obligation.
@@ -124,9 +124,7 @@ Fail Next Obligation.
 
 (** Solve a formula by applying [tableau] with the correct arguments. *)
 Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
-  let cpls := first_cpls mc0 in
-  let s0 := (CplSolver.make_with_clauses cpls) in
-  tableau [] s0 mc0.
+  tableau mc0 (cplsolver_mcnf mc0) [].
 
 
 (** Solve a [Fml.t] formula by converting first. *)
@@ -134,16 +132,15 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
   phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 
 
-Definition next_tableau mc1 := fun A' =>
-  tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1.
+Definition next_tableau mc1 := tableau mc1 (cplsolver_mcnf mc1).
 
 
-Lemma tableau_jumps_spec_ind : forall V l0 mc1 next_tableau next_tableau_spec,
-  (forall A, Solution.from_spec (next_tableau_spec A) = next_tableau A) ->
-  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 next_tableau_spec) = tableau_jumps V l0 mc1 next_tableau.
+Lemma tableau_jumps_spec_ind : forall V l0 mc1,
+  (forall A, Solution.from_spec (Spec.next_tableau mc1 A) = next_tableau mc1 A) ->
+  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)) = tableau_jumps V l0 mc1 (next_tableau mc1).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsol_match.
-  funelim (Spec.tableau_jumps V l0 mc1 next_tableau_spec).
+  funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)).
   - cbn. now simp tableau_jumps.
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
     rewrite Heq.
@@ -160,7 +157,7 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
     rewrite Heq1. unfold tableau_jumps_unfold_clause_2_clause_2.
 
-    specialize (Hind next_tableau1 Hsol_match).
+    specialize (Hind Hsol_match).
 
     set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     specialize (Hsol_match fired_boxes).
@@ -170,7 +167,7 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
     rewrite Heq1. unfold tableau_jumps_unfold_clause_2_clause_2.
 
-    specialize (Hind next_tableau1 Hsol_match).
+    specialize (Hind Hsol_match).
 
     set (fired_boxes := d::boxes |> List.filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     specialize (Hsol_match fired_boxes).
@@ -180,60 +177,47 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 Qed.
 
 
-Lemma tableau_spec : forall A s0 mc0,
-  Solution.from_spec (Spec.tableau A s0 mc0) = tableau A s0 mc0.
-Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
+Lemma tableau_spec : forall mc0 s0 A,
+  Solution.from_spec (Spec.tableau mc0 s0 A) = tableau mc0 s0 A.
+Proof with try easy; try congruence; auto.
   intros *.
-  funelim (Spec.tableau A s0 mc0).
+  funelim (Spec.tableau mc0 s0 A).
   - clear H. simp tableau. unfold tableau_unfold_clause_1. cbn.
-    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
-    + rewrite Hs_eq in Hcsol_eq. now inversion_clear Hcsol_eq.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
 
   - clear H. simp tableau. unfold tableau_unfold_clause_1. cbn.
-    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + now cbn.
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
 
   - clear H H0. simp tableau. unfold tableau_unfold_clause_1. cbn.
 
-    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + cbn -[add_conflict_set].
-      rewrite Hs_eq in Hcsol_eq. inversion Hcsol_eq; subst; clear Hcsol_eq.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
+    rewrite Hs_eq in Hcsol_eq. inv_clear Hcsol_eq.
 
-      (* contradiction between Hj_eq and Hj_unsat *)
-      fold (next_tableau mc1) in *.
-      fold (Spec.next_tableau mc1) in *.
-      pose proof (tableau_jumps_spec_ind V l0 mc1
-        (next_tableau mc1)
-        (Spec.next_tableau mc1)
-        Hind
-      ) as Hj_matches.
+    (* contradiction between Hj_eq and Hj_unsat *)
+    eta.
+    fold (next_tableau mc1) in *.
+    fold (Spec.next_tableau mc1) in *.
+    pose proof (tableau_jumps_spec_ind V l0 mc1 Hind) as Hj_matches.
 
-      destruct (tableau_jumps _ _ _ _) eqn:Hj_unsat...
-      rewrite Hj_eq in Hj_matches. cbn in Hj_matches. discriminate.
-
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
+    destruct (tableau_jumps V l0 mc1 _) eqn:Hj_unsat...
+    rewrite Hj_eq in Hj_matches...
 
   - clear H0 H1.
 
     set (spec_call := Spec.tableau _ _ _) in *.
-    simp tableau. cbn. dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq.
-    + cbn -[add_conflict_set]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
-      fold (next_tableau mc1) in *.
-      fold (Spec.next_tableau mc1) in *.
-      pose proof (tableau_jumps_spec_ind V l0 mc1
-        (next_tableau mc1)
-        (Spec.next_tableau mc1)
-        Hind
-      ) as Hj_matches.
+    simp tableau. cbn.
+    dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
+    cbn -[add_conflict_set]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
+    eta.
+    fold (next_tableau mc1) in *.
+    fold (Spec.next_tableau mc1) in *.
+    pose proof (tableau_jumps_spec_ind V l0 mc1 Hind) as Hj_matches.
 
-      destruct (tableau_jumps _ _ _ _).
-      * rewrite Hj_eq in Hj_matches. cbn in Hj_matches. discriminate.
-      * rewrite Hj_eq in Hj_matches. cbn in Hj_matches.
-        inv_clear Hj_matches.
-        destruct spec_call...
-    + rewrite Hs_eq in Hcsol_eq. discriminate.
+    destruct (tableau_jumps V l0 mc1 _).
+    + rewrite Hj_eq in Hj_matches...
+    + rewrite Hj_eq in Hj_matches.
+      cbn in Hj_matches. inv_clear Hj_matches.
+      destruct spec_call...
 Qed.
 
 
@@ -246,17 +230,17 @@ Proof with try easy.
 Qed.
 
 
-Corollary is_sat_spec : forall A s0 mc0,
-  Solution.is_sat (tableau A s0 mc0) = Spec.Solution.is_sat (Spec.tableau A s0 mc0).
+Corollary is_sat_spec : forall mc0 s0 A,
+  Solution.is_sat (tableau mc0 s0 A) = Spec.Solution.is_sat (Spec.tableau mc0 s0 A).
 Proof.
-  intros A s0 mc0.
-  rewrite <- (tableau_spec A s0 mc0).
-  destruct (Spec.tableau A s0 mc0); easy.
+  intros mc0 s0 A.
+  rewrite <- (tableau_spec mc0 s0 A).
+  destruct (Spec.tableau mc0 s0 A); easy.
 Qed.
 
 
 Theorem tableau_sound_complete : forall mc0 A,
-  Solution.is_sat (tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0) <->
+  Solution.is_sat (tableau mc0 (cplsolver_mcnf mc0) A) <->
   Mcnf.satisfiable (add_assumptions mc0 A).
 Proof.
   intros mc0 A. split.

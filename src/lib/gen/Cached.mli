@@ -121,7 +121,7 @@ val tableau_jumps :
   Caches.t -> JumpSolution.t
 
 val tableau :
-  Assumptions.t -> CplSolver.t -> Mcnf0.t -> Caches.t -> Solution.t
+  Mcnf0.t -> CplSolver.t -> Assumptions.t -> Caches.t -> Solution.t
 
 val solve_mcnf : Mcnf0.t -> Solution.t
 

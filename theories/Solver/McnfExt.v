@@ -58,9 +58,14 @@ Lemma add_conflict_set_neg_assumptions : forall mc0 cs,
   add_conflict_set mc0 cs = add_neg_assumptions mc0 (List.map Lit.Pos cs).
 Proof. intros mc0 cs. cbn. rewrite List.map_map. cbn. reflexivity. Qed.
 
+Definition cplsolver_mcnf (mc0 : Mcnf.t) :=
+  CplSolver.make_with_clauses (first_cpls mc0).
+
+Definition cpl_from_lclauses (l0 : Lclauses.t) :=
+  CplSolver.make_with_clauses (Lclauses.cpls l0).
 
 Definition cpl_solve (mc0 : Mcnf.t) (A : Assumptions.t) :=
-  CplSolver.solve_with_assumptions (CplSolver.make_with_clauses (first_cpls mc0)) A.
+  CplSolver.solve_with_assumptions (cplsolver_mcnf mc0) A.
 
 
 (** * Conflict set lemmas *)

@@ -6,6 +6,8 @@ Open Scope list_scope.
 
 Ltac inv_clear H := inversion H; subst; clear H.
 
+Ltac eta := repeat change (fun x => ?h x) with h in *.
+
 (** Proves the first implication in a hypothesis.
 
     Implementation from https://stackoverflow.com/a/60817708. *)

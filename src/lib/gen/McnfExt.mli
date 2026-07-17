@@ -1,5 +1,6 @@
 open BoxClause
 open CplClause
+open CplSolver
 open Datatypes
 open ImportStd
 open Lclauses
@@ -21,5 +22,7 @@ val with_first_cpls :
   Mcnf0.t -> (CplClause.t list -> CplClause.t list) -> Lclauses.t list
 
 val add_conflict_set : Mcnf0.t -> int list -> Lclauses.t list
+
+val cplsolver_mcnf : Mcnf0.t -> CplSolver.t
 
 val conflict_set_of : Mcnf0.t -> t -> int -> Lit.t list -> int list

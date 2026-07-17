@@ -70,7 +70,7 @@ Fail Next Obligation.
 Lemma jump_c_forced : forall V l0 mc1 next_tableau c d core deriv,
   tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat (c,d) core deriv ->
   Valuation.forces_atm V c.
-Proof with auto.
+Proof.
   intros * Hunsat. funelim (tableau_jumps V l0 mc1 next_tableau); rewrite <- Heqcall in Hunsat.
   - discriminate.
   - eapply H. exact Hunsat.
@@ -81,11 +81,11 @@ Qed.
 
 
 Equations tableau
-  (* Extra assumptions brought by boxes/dias from the previous world *)
-  (A : Assumptions.t)
+  (mc0 : Mcnf.t)
   (* The CPL clauses of the current world and maybe extra conflict sets. *)
   (s0 : CplSolver.t)
-  (mc0 : Mcnf.t)
+  (* Extra assumptions brought by boxes/dias from the previous world *)
+  (A : Assumptions.t)
   : Solution.t
   by wf (
     List.length mc0,
@@ -93,12 +93,12 @@ Equations tableau
     List.length (CplSolver.every_sat_valuation s0 A)
   ) lexnat2_lt
 :=
-tableau A s0 mc0
+tableau mc0 s0 A
 with inspect (CplSolver.solve_with_assumptions s0 A) =>
   | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Id A')
   | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
     | [] => Solution.Sat (Tree.make V [])
-    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1)) =>
+    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
       (* Every child was sat -> done! *)
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
       | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
@@ -111,7 +111,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
           This is needed for the closed tableau types to work out.
           The cpls of l0 aren't used anyways. The SAT solver state stays incremental. *)
         let mc0' := add_conflict_set (l0::mc1) conflict_set in
-        match tableau A s0' mc0' with (* recursion: RESTART *)
+        match tableau mc0' s0' A with (* recursion: RESTART *)
         | Solution.Sat T0 => Solution.Sat T0
         | Solution.Unsat rs_core rs_deriv =>
           Solution.Unsat rs_core
@@ -130,15 +130,12 @@ Fail Next Obligation.
 
 
 (** The tableau function passed in to [tableau_jumps]. *)
-Definition next_tableau mc1 := fun A' =>
-  tableau A' (CplSolver.make_with_clauses (first_cpls mc1)) mc1.
+Definition next_tableau mc1 := tableau mc1 (cplsolver_mcnf mc1).
 
 
 (** Solve a formula by applying [tableau] with the correct arguments. *)
 Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
-  let cpls := first_cpls mc0 in
-  let s0 := (CplSolver.make_with_clauses cpls) in
-  tableau [] s0 mc0.
+  tableau mc0 (cplsolver_mcnf mc0) [].
 
 
 (** Solve a [Fml.t] formula by converting first. *)

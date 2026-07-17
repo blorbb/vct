@@ -121,12 +121,12 @@ let tableau_jumps a a0 a1 a2 b =
   in fix_F (a,(a0,(a1,(a2,b))))
 
 (** val tableau :
-    Assumptions.t -> CplSolver.t -> Mcnf0.t -> Caches.t -> Solution.t **)
+    Mcnf0.t -> CplSolver.t -> Assumptions.t -> Caches.t -> Solution.t **)
 
 let tableau a a0 a1 b =
   let rec fix_F x =
-    let a2 = let pr1,_ = x in pr1 in
     let s0 = let pr1,_ = let _,pr2 = x in pr2 in pr1 in
+    let a2 = let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1 in
     let caches = let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr2 in
     let tableau0 = fun a3 a4 a5 b0 ->
       let y = a3,(a4,(a5,b0)) in (fun _ -> fix_F y)
@@ -135,29 +135,28 @@ let tableau a a0 a1 b =
     then Solution.Sat caches
     else (match inspect (solve_with_assumptions s0 a2) with
           | Sat v ->
-            (match let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1 with
+            (match let pr1,_ = x in pr1 with
              | [] -> Solution.Sat (Caches.add caches a2)
              | t0 :: l ->
                let (t1, t2) = Caches.destruct caches in
-               (match let s1 = make_with_clauses (first_cpls l) in
+               (match let s1 = cplsolver_mcnf l in
                       inspect
                         (tableau_jumps v t0 l (fun a' caches1' ->
-                          tableau0 a' s1 l caches1' __) t2) with
+                          tableau0 l s1 a' caches1' __) t2) with
                 | JumpSolution.Sat caches0 ->
                   Solution.Sat ((Cache.add t1 a2) :: caches0)
                 | JumpSolution.Unsat (c, core, caches0) ->
                   let conflict_set = conflict_set_of (t0 :: l) v c core in
                   let s0' = CplSolver.add_conflict_set s0 conflict_set in
                   let mc0' = add_conflict_set (t0 :: l) conflict_set in
-                  tableau0 a2 s0' mc0' (t1 :: caches0) __))
+                  tableau0 mc0' s0' a2 (t1 :: caches0) __))
           | Unsat core -> Solution.Unsat (core, caches))
   in fix_F (a,(a0,(a1,b)))
 
 (** val solve_mcnf : Mcnf0.t -> Solution.t **)
 
 let solve_mcnf mc0 =
-  let cpls0 = first_cpls mc0 in
-  let s0 = make_with_clauses cpls0 in tableau [] s0 mc0 []
+  tableau mc0 (cplsolver_mcnf mc0) [] []
 
 (** val solve_fml : Fml.t -> Solution.t **)
 

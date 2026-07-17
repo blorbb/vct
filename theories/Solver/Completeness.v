@@ -29,22 +29,20 @@ Proof.
 Qed.
 
 
-Lemma tableau_jumps_completeness : forall s0 A V l0 mc1 T1s,
+Lemma tableau_jumps_completeness : forall A V l0 mc1 T1s,
   Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Sat T1s ->
   (forall A' T0,
     Spec.Solution.Sat T0 = Spec.next_tableau mc1 A' ->
     Mcnf.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
-  CplSolver.make_with_clauses (Lclauses.cpls l0) = s0 ->
-  CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
+  CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
   Mcnf.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
-  intros * Hsat IHnt Hs0 Hcpl_sat.
+  intros * Hsat IHnt Hcpl_sat.
 
   funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)); rewrite <- Heqcall in Hsat; clear Heqcall.
-  - inversion Hsat. subst T1s. clear Hsat.
-    cbn [Lclauses.cpls] in Hcpl_sat. eapply singleton_tree_force... exact Hcpl_sat.
+  - inv_clear Hsat. eapply singleton_tree_force... exact Hcpl_sat.
   (* Model forces [cpls,boxes,dias'::mc1]. [(c,d)::dias'] is also forced as c is unfired. *)
-  - specialize (H (CplSolver.make_with_clauses cpls) A T1s Hsat IHnt eq_refl Hcpl_sat).
+  - specialize (H A T1s Hsat IHnt Hcpl_sat).
     cbn in H |- *. repeat split...
     apply List.Forall_cons... cbn.
     intros Hforce_c. rewrite Heq in Hforce_c. discriminate.
@@ -54,10 +52,9 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
     cbn -[Mcnf.force].
 
     cbn [Lclauses.cpls] in Hcpl_sat.
-    specialize (Hind (CplSolver.make_with_clauses cpls) A T1s').
+    specialize (Hind A T1s').
     forward Hind by exact Heq.
     forward Hind by exact IHnt.
-    forward Hind by reflexivity.
     forward Hind by exact Hcpl_sat.
 
     (* Hind and IHnt are useful both simplified and unsimplified. *)
@@ -107,14 +104,13 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 Qed.
 
 
-Theorem tableau_completeness_force : forall A s0 mc0 T,
-  Spec.tableau A s0 mc0 = Spec.Solution.Sat T ->
-  CplSolver.make_with_clauses (first_cpls mc0) = s0 ->
+Theorem tableau_completeness_force : forall mc0 A T,
+  Spec.tableau mc0 (cplsolver_mcnf mc0) A = Spec.Solution.Sat T ->
   Mcnf.force Tree.as_kripke T (add_assumptions mc0 A).
 Proof with try easy; auto with datatypes ct.
-  intros A s0 mc0 T Hsat Hs0.
+  intros mc0 A T Hsat.
 
-  funelim (Spec.tableau A s0 mc0); rewrite <- Heqcall in Hsat.
+  funelim (Spec.tableau mc0 (cplsolver_mcnf mc0) A); rewrite <- Heqcall in Hsat.
   - discriminate.
   - clear H. inversion_clear Hsat. cbn. intuition.
     rewrite List.Forall_forall. intros clause Hclause_in.
@@ -127,11 +123,11 @@ Proof with try easy; auto with datatypes ct.
   - clear H H0. inversion_clear Hsat.
     eapply tableau_jumps_completeness...
   - clear H0 H1.
-    destruct (Spec.tableau _ _ _)... inv_clear Hsat.
+    destruct (Spec.tableau _ _ _) eqn:Htab_cs... inv_clear Hsat.
     (* H assumes that T forces an over constrained formula. *)
-    specialize (H T eq_refl).
+    specialize (H _ _ T Htab_cs eq_refl (eq_sym Htab_cs)).
     cbn in H |- *. intuition.
-    eapply incl_Forall. 2: { exact H0. }
+    eapply incl_Forall. 2: { exact H. }
     apply List.incl_app...
 Qed.
 
@@ -163,7 +159,7 @@ Qed.
 
 
 Corollary tableau_completeness_sat : forall mc0 A,
-  Spec.Solution.is_sat (Spec.tableau A (CplSolver.make_with_clauses (first_cpls mc0)) mc0) ->
+  Spec.Solution.is_sat (Spec.tableau mc0 (cplsolver_mcnf mc0) A) ->
   Mcnf.satisfiable (add_assumptions mc0 A).
 Proof with try easy.
   intros mc0 A Hsat.

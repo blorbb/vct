@@ -77,9 +77,3 @@ Proof with auto with typeclass_instances datatypes ct; try lia.
       subst s0_sats s0'_sats. apply NoDup_PermutationA_bis...
       apply NoDupA_length_incl...
 Qed.
-
-
-
-Module NoModel.
-End NoModel.
-

@@ -1,5 +1,6 @@
 open BoxClause
 open CplClause
+open CplSolver
 open Datatypes
 open ImportStd
 open Lclauses
@@ -43,6 +44,11 @@ let with_first_cpls mc0 f =
 
 let add_conflict_set mc0 cs =
   with_first_cpls mc0 (fun x -> (map (fun x0 -> Neg x0) cs) :: x)
+
+(** val cplsolver_mcnf : Mcnf0.t -> CplSolver.t **)
+
+let cplsolver_mcnf mc0 =
+  make_with_clauses (first_cpls mc0)
 
 (** val conflict_set_of : Mcnf0.t -> t -> int -> Lit.t list -> int list **)
 

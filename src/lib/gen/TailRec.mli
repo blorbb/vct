@@ -51,7 +51,7 @@ val tableau_jumps :
   t -> Lclauses.t -> Mcnf0.t -> Tree.t list -> (Assumptions.t -> Solution.t)
   -> JumpSolution.t
 
-val tableau : Assumptions.t -> CplSolver.t -> Mcnf0.t -> Solution.t
+val tableau : Mcnf0.t -> CplSolver.t -> Assumptions.t -> Solution.t
 
 val solve_mcnf : Mcnf0.t -> Solution.t
 
