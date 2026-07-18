@@ -11,7 +11,7 @@ From CegarTableaux Require Import ImportStd.
     Returns a pair of the MCNF formula, and the next free surrogate.
 
     Corresponds to [mcnf(n -> phi, k)] in the paper. *)
-Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
+Fixpoint from_n_nnf (n : Atom.t) (phi : Nnf.t) (k : Atom.t) : (Mcnf.t * Atom.t) :=
   match phi with
   (* n -> l  =>  ~n \/ l *)
   | Nnf.Lit l =>
@@ -35,8 +35,8 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
     )
   (* n -> A \/ B  =>  n -> nA \/ nB ; nA -> A ; nB -> B *)
   | Nnf.Or A B =>
-    let (nA, k) := (k, S k) in
-    let (nB, k) := (k, S k) in
+    let (nA, k) := (k, Atom.succ k) in
+    let (nB, k) := (k, Atom.succ k) in
     let (A_mcnf, k) := from_n_nnf nA A k in
     let (B_mcnf, k) := from_n_nnf nB B k in
     (
@@ -52,7 +52,7 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
       )
   (* n -> []A  =>  n -> []nA ; [](nA -> A) *)
   | Nnf.Box A =>
-    let (nA, k) := (k, S k) in
+    let (nA, k) := (k, Atom.succ k) in
     let (A_mcnf, k) := from_n_nnf nA A k in
     (
       Lclauses.make [] [(n, Lit.Pos nA)] [] :: A_mcnf,
@@ -66,7 +66,7 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
       )
   (* n -> <>A  =>  n -> <>nA ; [](nA -> A) *)
   | Nnf.Dia A =>
-    let (nA, k) := (k, S k) in
+    let (nA, k) := (k, Atom.succ k) in
     let (A_mcnf, k) := from_n_nnf nA A k in
     (
       Lclauses.make [] [] [(n, Lit.Pos nA)] :: A_mcnf,
@@ -76,14 +76,14 @@ Fixpoint from_n_nnf (n : nat) (phi : Nnf.t) (k : nat) : (Mcnf.t * nat) :=
 
 
 (** Converts [phi] with a name and surrogate to [n /\ mcnf(n -> phi, k)]. *)
-Definition from_nnf_with_sur (n : nat) (phi : Nnf.t) (k : nat) : Mcnf.t :=
+Definition from_nnf_with_sur (n : Atom.t) (phi : Nnf.t) (k : Atom.t) : Mcnf.t :=
   Mcnf.zip_merge [Lclauses.make_cpls [[Lit.Pos n]]] (fst (from_n_nnf n phi k)).
 
 
 (** Converts an NNF formula to MCNF. *)
 Definition from_nnf (phi : Nnf.t) : Mcnf.t :=
-  let n := S (Nnf.max_atm phi) in
-  from_nnf_with_sur n phi (S n).
+  let n := Atom.succ (Nnf.max_atm phi) in
+  from_nnf_with_sur n phi (Atom.succ n).
 
 
 (** * Conversion correctness *)
@@ -91,9 +91,9 @@ Definition from_nnf (phi : Nnf.t) : Mcnf.t :=
 
 
 Lemma sur_input_le_return :
-  forall (n : nat) (phi : Nnf.t) (k : nat),
+  forall (n : Atom.t) (phi : Nnf.t) (k : Atom.t),
     k <= snd (from_n_nnf n phi k).
-Proof with auto.
+Proof with auto; try lia.
   intros n phi k.
   revert n k.
   induction phi as
@@ -109,14 +109,14 @@ Proof with auto.
   - repeat destruct_pair. cbn.
     Nnf.destruct_lit2 A B.
     + reflexivity.
-    + cbn. transitivity (S (S k))...
+    + cbn. transitivity (Atom.succ (Atom.succ k))...
       transitivity k0; subst k0 k1...
   - destruct_pair. Nnf.destruct_lit A.
     + cbn...
-    + cbn. transitivity (S k)... subst k0...
+    + cbn. transitivity (Atom.succ k)... subst k0...
   - destruct_pair. Nnf.destruct_lit A.
     + cbn...
-    + cbn. transitivity (S k)... subst k0...
+    + cbn. transitivity (Atom.succ k)... subst k0...
 Qed.
 
 
@@ -165,9 +165,9 @@ Local Ltac finish := solve [ cbn; (try ifauto); auto; (try autolia); (try tauto)
 Theorem conv_atm_range :
   forall
     (phi : Nnf.t)
-    (n k : nat)
+    (n k : Atom.t)
     (Hmnp_lt : Nnf.max_atm phi < n < k)
-    (p : nat),
+    (p : Atom.t),
   Mcnf.atm_in p (fst (from_n_nnf n phi k)) ->
   Nnf.atm_in p phi
     \/ p = n
@@ -224,12 +224,12 @@ Proof with finish.
       repeat (cbn; autorewrite with list prop). lia.
     }
 
-    destruct_pair (from_n_nnf k A (S (S k))) as [A_mcnf kA].
-    destruct_pair (from_n_nnf (S k) B kA) as [B_mcnf kB].
+    destruct_pair (from_n_nnf k A (Atom.succ (Atom.succ k))) as [A_mcnf kA].
+    destruct_pair (from_n_nnf (Atom.succ k) B kA) as [B_mcnf kB].
     intro Hp_mcnf. cbn [fst] in Hp_mcnf.
 
-    specialize (IHA k (S (S k))).
-    specialize (IHB (S k) kA).
+    specialize (IHA k (Atom.succ (Atom.succ k))).
+    specialize (IHB (Atom.succ k) kA).
 
     cbn in Hmnp_lt.
     forward IHA by lia.
@@ -252,11 +252,11 @@ Proof with finish.
   (* box *)
   - cbn -[Mcnf.zip_merge Mcnf.atm_in].
     Nnf.destruct_lit A. { repeat (autorewrite with list prop; cbn). lia. }
-    destruct_pair (from_n_nnf k A (S k)) as [A_mcnf kA].
+    destruct_pair (from_n_nnf k A (Atom.succ k)) as [A_mcnf kA].
     intro Hp_mcnf. cbn [fst] in Hp_mcnf.
 
     cbn in Hmnp_lt.
-    specialize (IHA k (S k)).
+    specialize (IHA k (Atom.succ k)).
     forward IHA by lia.
 
     fold A_mcnf kA in IHA.
@@ -270,11 +270,11 @@ Proof with finish.
   (* dia: identical to box case *)
   - cbn -[Mcnf.zip_merge Mcnf.atm_in].
     Nnf.destruct_lit A. { repeat (autorewrite with list prop; cbn). lia. }
-    destruct_pair (from_n_nnf k A (S k)) as [A_mcnf kA].
+    destruct_pair (from_n_nnf k A (Atom.succ k)) as [A_mcnf kA].
     intro Hp_mcnf. cbn [fst] in Hp_mcnf.
 
     cbn in Hmnp_lt.
-    specialize (IHA k (S k)).
+    specialize (IHA k (Atom.succ k)).
     forward IHA by lia.
 
     fold A_mcnf kA in IHA.
@@ -289,14 +289,14 @@ Qed.
 
 (** Construction of a model that forces the converted formula. *)
 Section EquisatModel.
-  Definition with_global_val {W} {R} (M : @Kripke.t W R) (p : nat) (val : W -> Prop) :=
+  Definition with_global_val {W} {R} (M : @Kripke.t W R) (p : Atom.t) (val : W -> Prop) :=
     Kripke.make W R (fun w p' => if p =? p' then val w else Kripke.valuation M w p').
 
 
   Definition set_kripke_at_n_iff_force
     {W} {R}
     (** the model to change at n *)
-    (Mmcnf : @Kripke.t W R) (n : nat)
+    (Mmcnf : @Kripke.t W R) (n : Atom.t)
     (** at n, set valuation to Nnf.force Mnnf w phi *)
     (Mnnf : @Kripke.t W R) (phi : Nnf.t)
     :=
@@ -305,7 +305,7 @@ Section EquisatModel.
 
   (** Transforms [M] so that [M] forces [n -> phi] iff [M'] forces [n -> phi']
       Requires that [Nnf.max_atm phi < n < k]. *)
-  Fixpoint named_model {W} {R} (M : @Kripke.t W R) (n : nat) (phi : Nnf.t) (k : nat) : @Kripke.t W R :=
+  Fixpoint named_model {W} {R} (M : @Kripke.t W R) (n : Atom.t) (phi : Nnf.t) (k : Atom.t) : @Kripke.t W R :=
     match phi with
     (* n -> l  =>  ~n \/ l *)
     | Nnf.Lit l =>
@@ -324,8 +324,8 @@ Section EquisatModel.
 
     (* n -> A \/ B  =>  n -> nA \/ nB ; nA -> A ; nB -> B *)
     | Nnf.Or A B =>
-      let (nA, k) := (k, S k) in
-      let (nB, k) := (k, S k) in
+      let (nA, k) := (k, Atom.succ k) in
+      let (nB, k) := (k, Atom.succ k) in
       let M' := named_model M nA A k in
       let k := snd (from_n_nnf nA A k) in
       let M' := named_model M' nB B k in
@@ -335,7 +335,7 @@ Section EquisatModel.
         set_kripke_at_n_iff_force M n M phi
     (* n -> []A  =>  n -> []nA ; [](nA -> A) *)
     | Nnf.Box A =>
-      let (nA, k) := (k, S k) in
+      let (nA, k) := (k, Atom.succ k) in
       let M' := named_model M nA A k in
         set_kripke_at_n_iff_force M' n M phi
 
@@ -343,7 +343,7 @@ Section EquisatModel.
         set_kripke_at_n_iff_force M n M phi
     (* n -> <>A  =>  n -> <>nA ; [](nA -> A) *)
     | Nnf.Dia A =>
-      let (nA, k) := (k, S k) in
+      let (nA, k) := (k, Atom.succ k) in
       let M' := named_model M nA A k in
         set_kripke_at_n_iff_force M' n M phi
     end.
@@ -353,7 +353,7 @@ End EquisatModel.
 (** Lemmas about the atoms that the named model changes. *)
 Section EquisatModelRange.
   Lemma named_model_changes_sur_only :
-    forall {W} {R} (M : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k p : nat) (Hmnp_lt : Nnf.max_atm phi < n < k),
+    forall {W} {R} (M : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k p : Atom.t) (Hmnp_lt : Nnf.max_atm phi < n < k),
       let k' := snd (from_n_nnf n phi k) in
       ~ (p = n \/ k <= p < k') ->
       Kripke.valuation M w p <-> Kripke.valuation (named_model M n phi k) w p.
@@ -407,10 +407,10 @@ Section EquisatModelRange.
     - subst k'. cbn in Hx_range |- *.
       Nnf.destruct_lit2 A B. { cbn. now ifauto. }
 
-      set (MA := named_model M k A (S (S k))).
-      set (kA := snd (from_n_nnf k A (S (S k)))).
-      set (MB := named_model MA (S k) B kA).
-      set (kB := snd (from_n_nnf (S k) B kA)).
+      set (MA := named_model M k A (Atom.succ (Atom.succ k))).
+      set (kA := snd (from_n_nnf k A (Atom.succ (Atom.succ k)))).
+      set (MB := named_model MA (Atom.succ k) B kA).
+      set (kB := snd (from_n_nnf (Atom.succ k) B kA)).
 
       repeat inline_pair in Hx_range.
       fold kA kB in Hx_range. cbn in Hx_range.
@@ -436,7 +436,7 @@ Section EquisatModelRange.
       cbn. ifauto.
 
       inline_pair in Hx_range.
-      set (kA := snd (from_n_nnf k A (S k))) in *.
+      set (kA := snd (from_n_nnf k A (Atom.succ k))) in *.
       cbn in Hx_range.
       apply IHA... fold kA. autolia.
 
@@ -446,14 +446,14 @@ Section EquisatModelRange.
       cbn. ifauto.
 
       inline_pair in Hx_range.
-      set (kA := snd (from_n_nnf k A (S k))) in *.
+      set (kA := snd (from_n_nnf k A (Atom.succ k))) in *.
       cbn in Hx_range.
       apply IHA... fold kA. autolia.
   Qed.
 
 
   Lemma named_model_vals_name_iff_force :
-    forall {W} {R} (M : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k : nat),
+    forall {W} {R} (M : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k : Atom.t),
       Kripke.valuation (named_model M n phi k) w n <-> Nnf.force M w phi.
   Proof.
     intros W R M w phi. revert w.
@@ -475,7 +475,7 @@ Section EquisatModelRange.
 
   (* TODO: clean up this proof *)
   Lemma named_model_overrides_all_sur :
-    forall {W} {R} (M M' : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k p : nat) (Hmnp_lt : Nnf.max_atm phi < n < k),
+    forall {W} {R} (M M' : @Kripke.t W R) (w : W) (phi : Nnf.t) (n k p : Atom.t) (Hmnp_lt : Nnf.max_atm phi < n < k),
       let k' := snd (from_n_nnf n phi k) in
       k <= p < k' ->
       Nnf.agree phi M M' ->
@@ -543,13 +543,13 @@ Section EquisatModelRange.
     - subst k'. cbn in Hx_range |- *.
       Nnf.destruct_lit2 A B. { cbn in Hx_range. lia. }
 
-      set (MA := named_model M k A (S (S k))).
-      set (q := snd (from_n_nnf k A (S (S k)))).
-      set (MB := named_model MA (S k) B q).
-      set (r := snd (from_n_nnf (S k) B q)).
+      set (MA := named_model M k A (Atom.succ (Atom.succ k))).
+      set (q := snd (from_n_nnf k A (Atom.succ (Atom.succ k)))).
+      set (MB := named_model MA (Atom.succ k) B q).
+      set (r := snd (from_n_nnf (Atom.succ k) B q)).
 
-      set (M'A := named_model M' k A (S (S k))).
-      set (M'B := named_model M'A (S k) B q).
+      set (M'A := named_model M' k A (Atom.succ (Atom.succ k))).
+      set (M'B := named_model M'A (Atom.succ k) B q).
 
       repeat inline_pair in Hx_range.
       fold q r in Hx_range. cbn in Hx_range.
@@ -557,7 +557,7 @@ Section EquisatModelRange.
       simpl in Hmnp_lt.
 
       simpl. ifauto. fold MA M'A q MB M'B.
-      assert (p = k \/ p = S k \/ (S (S k)) <= p < q \/ q <= p < r) as [Hxp | [HxSp | [Hpxq | Hqxs]]] by lia.
+      assert (p = k \/ p = Atom.succ k \/ (Atom.succ (Atom.succ k)) <= p < q \/ q <= p < r) as [Hxp | [HxSp | [Hpxq | Hqxs]]] by lia.
       (* p = k *)
       + unfold MB, M'B.
         rewrite <- (named_model_changes_sur_only M'A)...
@@ -568,7 +568,7 @@ Section EquisatModelRange.
         apply Nnf.meaningful_valuations.
         apply (Nnf.agree_l A B). assumption.
 
-      (* p = S k *)
+      (* p = Atom.succ k *)
       + unfold MB, M'B.
         rewrite HxSp.
         repeat rewrite named_model_vals_name_iff_force.
@@ -581,7 +581,7 @@ Section EquisatModelRange.
         rewrite <- (named_model_changes_sur_only M)...
         apply (Nnf.agree_r A B)...
 
-      (* S (S k) <= p < q *)
+      (* Atom.succ (Atom.succ k) <= p < q *)
       + assert (Kripke.valuation MA w p <-> Kripke.valuation MB w p) as Hval_MA_MB.
         { unfold MB. apply named_model_changes_sur_only... }
         assert (Kripke.valuation M'A w p <-> Kripke.valuation M'B w p) as Hval_M'A_M'B.
@@ -603,10 +603,10 @@ Section EquisatModelRange.
     - subst k'. cbn in *.
       Nnf.destruct_lit A. { cbn in *. lia. }
       inline_pair in Hx_range. cbn in *.
-      set (q := snd (from_n_nnf k A (S k))) in *.
+      set (q := snd (from_n_nnf k A (Atom.succ k))) in *.
       ifauto.
 
-      assert (p = k \/ S k <= p < q) as [Hxp | HSpxs] by lia.
+      assert (p = k \/ Atom.succ k <= p < q) as [Hxp | HSpxs] by lia.
       + rewrite Hxp.
         repeat rewrite named_model_vals_name_iff_force.
         apply Nnf.meaningful_valuations. assumption.
@@ -615,10 +615,10 @@ Section EquisatModelRange.
     - subst k'. cbn in *.
       Nnf.destruct_lit A. { cbn in *. lia. }
       inline_pair in Hx_range. cbn in *.
-      set (q := snd (from_n_nnf k A (S k))) in *.
+      set (q := snd (from_n_nnf k A (Atom.succ k))) in *.
       ifauto.
 
-      assert (p = k \/ S k <= p < q) as [Hxp | HSpxs] by lia.
+      assert (p = k \/ Atom.succ k <= p < q) as [Hxp | HSpxs] by lia.
       + rewrite Hxp.
         repeat rewrite named_model_vals_name_iff_force.
         apply Nnf.meaningful_valuations. assumption.
@@ -714,7 +714,7 @@ Section NnfToMcnf.
       eapply (Mcnf.meaningful_valuations). 2: { exact IHA. }
 
       intros w p Hp_in.
-      destruct (eq_dec n p) as [Hnp | Hn_ne_p]...
+      destruct (Atom.eq_dec n p) as [Hnp | Hn_ne_p]...
       cbn. ifauto.
       (* MB to MA *)
       subst MB. rewrite <- named_model_changes_sur_only...
@@ -727,7 +727,7 @@ Section NnfToMcnf.
       eapply Mcnf.meaningful_valuations. 2: { exact IHB. }
 
       intros w p Hp_in.
-      destruct (eq_dec n p) as [Hnp | Hn_ne_p]...
+      destruct (Atom.eq_dec n p) as [Hnp | Hn_ne_p]...
       cbn. ifauto.
       apply conv_atm_range in Hp_in...
       destruct Hp_in.
@@ -768,19 +768,19 @@ Section NnfToMcnf.
     destruct_pair as [B_mcnf kB].
     cbn -[Mcnf.zip_merge] in *.
 
-    set (MA := named_model M k A (S (S k))).
-    set (MB := named_model MA (S k) B kA).
+    set (MA := named_model M k A (Atom.succ (Atom.succ k))).
+    set (MB := named_model MA (Atom.succ k) B kA).
     set (M' := set_kripke_at_n_iff_force MB n M (Nnf.Or A B)).
 
-    specialize (IHA w0 k (S (S k))). forward IHA by lia.
+    specialize (IHA w0 k (Atom.succ (Atom.succ k))). forward IHA by lia.
     fold MA A_mcnf in IHA. cbn in IHA.
-    specialize (IHB w0 (S k) kA). forward IHB by autolia.
-    set (MBIH := named_model M (S k) B kA).
+    specialize (IHB w0 (Atom.succ k) kA). forward IHB by autolia.
+    set (MBIH := named_model M (Atom.succ k) B kA).
     fold MBIH B_mcnf in IHB. cbn in IHB.
 
     repeat rewrite Mcnf.force_zip_merge_and.
     split; [|split].
-    (* forces ~n or k or S k *)
+    (* forces ~n or k or Atom.succ k *)
     - cbn. autorewrite with list prop.
       destruct (classic (Nnf.force M w0 (Nnf.Or A B))) as [[HM_force_A | HM_force_B] | HM_nforce_AB].
       (* M |= A *)
@@ -790,10 +790,10 @@ Section NnfToMcnf.
         unfold MA. apply named_model_vals_name_iff_force...
       (* M |= B *)
       + unfold M', set_kripke_at_n_iff_force.
-        exists (Lit.Pos (S k)).
-        (* simpl goes too far with S k, makes it hard to resolve. *)
+        exists (Lit.Pos (Atom.succ k)).
+        (* simpl goes too far with Atom.succ k, makes it hard to resolve. *)
         (* remember to avoid simplifying too far. *)
-        remember (S k) as nB. split... cbn. ifauto.
+        remember (Atom.succ k) as nB. split... cbn. ifauto.
 
         (* forces B <-> nB valued *)
         unfold MB. apply named_model_vals_name_iff_force...
@@ -834,7 +834,7 @@ Section NnfToMcnf.
 
       intros w p Hp_in.
       apply conv_atm_range in Hp_in... fold kB in Hp_in.
-      remember (S k) as sk. (* ifauto tries to simplify without this and can't do as much *)
+      remember (Atom.succ k) as sk. (* ifauto tries to simplify without this and can't do as much *)
 
       destruct Hp_in as [Hp_A | [Hp_sk | HkA_p_kB]].
 
@@ -902,7 +902,7 @@ Section NnfToMcnf.
     (* forces every adjacent *)
     - intros w1 HR_w1.
       unfold IH in IHA.
-      specialize (IHA w1 k (S k)).
+      specialize (IHA w1 k (Atom.succ k)).
       forward IHA by lia.
       specialize (IHA (fun w => Nnf.force M w A)).
       forward IHA by tauto.
@@ -959,7 +959,7 @@ Section NnfToMcnf.
     (* forces every adjacent *)
     - intros w1 HR_w1.
       unfold IH in IHA.
-      specialize (IHA w1 k (S k)).
+      specialize (IHA w1 k (Atom.succ k)).
       forward IHA by lia.
       specialize (IHA (fun w => Nnf.force M w A)).
       forward IHA by tauto.
@@ -997,7 +997,7 @@ Section NnfToMcnf.
 
 
   Theorem nnf_to_mcnf_forces :
-    forall (w0 : W) (phi : Nnf.t) (n p : nat),
+    forall (w0 : W) (phi : Nnf.t) (n p : Atom.t),
     Nnf.max_atm phi < n < p ->
     Nnf.force M w0 phi ->
     Mcnf.force
@@ -1037,8 +1037,8 @@ Proof with simpl; try lia; auto.
   destruct Hphi_sat as [W [R [M [w0 HM_force_phi]]]].
 
   unfold Mcnf.satisfiable.
-  set (n := S (Nnf.max_atm phi)).
-  exists W, R, (named_model M n phi (S n)), w0.
+  set (n := Atom.succ (Nnf.max_atm phi)).
+  exists W, R, (named_model M n phi (Atom.succ n)), w0.
   apply nnf_to_mcnf_forces...
 Qed.
 
@@ -1046,7 +1046,7 @@ Qed.
 (** Proof of backward implication. *)
 
 Theorem mcnf_to_nnf_forces :
-  forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Nnf.t) (n k : nat) (Hmnk_lt : Nnf.max_atm phi < n < k),
+  forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : Nnf.t) (n k : Atom.t) (Hmnk_lt : Nnf.max_atm phi < n < k),
   Mcnf.force M w0 (from_nnf_with_sur n phi k) -> Nnf.force M w0 phi.
 Proof with try finish.
   intros W R M w0 phi.
@@ -1123,19 +1123,19 @@ Proof with try finish.
     (* must force n, contradiction *)
     + subst l...
     + subst l. left.
-      apply (IHA w0 k (S (S k)))...
+      apply (IHA w0 k (Atom.succ (Atom.succ k)))...
       unfold from_nnf_with_sur. fold A_mcnf.
       rewrite Mcnf.force_zip_merge_and.
       split...
       cbn. autorewrite with list prop in *.
       exists (Lit.Pos k)...
     + subst l. right.
-      apply (IHB w0 (S k) kA)...
+      apply (IHB w0 (Atom.succ k) kA)...
       unfold from_nnf_with_sur. fold B_mcnf.
       rewrite Mcnf.force_zip_merge_and.
       split...
       cbn. autorewrite with list prop in *.
-      exists (Lit.Pos (S k))...
+      exists (Lit.Pos (Atom.succ k))...
 
   (* box *)
   - cbn in Hmnk_lt.
@@ -1160,7 +1160,7 @@ Proof with try finish.
     cbn in Hforce_n_k. forward Hforce_n_k by assumption.
 
     cbn. intros w1 HR_w1.
-    apply (IHphi w1 k (S k))...
+    apply (IHphi w1 k (Atom.succ k))...
     unfold from_nnf_with_sur. rewrite Mcnf.force_zip_merge_and.
     split...
     cbn. autorewrite with list prop. cbn.
@@ -1190,7 +1190,7 @@ Proof with try finish.
     destruct Hforce_n_k as [w1 [HR_w1 Hforce_k]].
 
     cbn. exists w1. split...
-    apply (IHphi w1 k (S k))...
+    apply (IHphi w1 k (Atom.succ k))...
     unfold from_nnf_with_sur. rewrite Mcnf.force_zip_merge_and.
     split...
     cbn. autorewrite with list prop. cbn.
@@ -1209,9 +1209,9 @@ Proof with simpl; try autolia; auto.
   unfold Nnf.satisfiable.
   exists W, R, M, w0.
 
-  set (n := S (Nnf.max_atm phi)).
+  set (n := Atom.succ (Nnf.max_atm phi)).
 
-  apply mcnf_to_nnf_forces with (n:=n) (k:=S n)...
+  apply mcnf_to_nnf_forces with (n:=n) (k:=Atom.succ n)...
 Qed.
 
 

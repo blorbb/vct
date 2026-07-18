@@ -68,7 +68,7 @@ Definition solved_clauses (s : t) (A : Assumptions.t) : Cnf.t :=
 
 
 (** Set of atoms that are in the solver or assumptions. *)
-Definition atms_of (s : t) (A : Assumptions.t) : list nat :=
+Definition atms_of (s : t) (A : Assumptions.t) : list Atom.t :=
   Cnf.atms_of (solved_clauses s A).
 
 
@@ -82,7 +82,7 @@ Definition every_sat_valuation (s : t) (A : Assumptions.t) : list Valuation.t :=
   List.filter (fun val => Cnf.cpl_forceb val (solved_clauses s A)) (every_valuation s A).
 
 
-Definition atm_in (p : nat) (s : t) (A : Assumptions.t) : Prop :=
+Definition atm_in (p : Atom.t) (s : t) (A : Assumptions.t) : Prop :=
   Cnf.atm_in p (solved_clauses s A).
 
 Arguments atm_in p s A /.
@@ -302,7 +302,7 @@ Proof with auto with typeclass_instances; try easy.
   rewrite List.forallb_forall in HV_force_l.
   specialize (HV_force_l p).
   forward HV_force_l by now apply Hcs_incl.
-  rewrite Nat.eqb_refl in HV_force_l.
+  rewrite Atom.eqb_refl in HV_force_l.
   now apply Bool.no_fixpoint_negb in HV_force_l.
 Qed.
 

@@ -7,7 +7,7 @@ From CegarTableaux.Solver Require Spec Soundness Completeness.
 Module JumpSolution.
   Inductive t :=
     | Sat
-    | Unsat (c : nat) (core : Assumptions.t).
+    | Unsat (c : Atom.t) (core : Assumptions.t).
 
 
   Definition from_spec (s : Spec.JumpSolution.t) : t :=

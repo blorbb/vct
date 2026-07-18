@@ -3,8 +3,8 @@ From CegarTableaux Require Import ImportStd.
 
 (** A positive or negative literal. *)
 Inductive t : Set :=
-  | Pos (p : nat)
-  | Neg (p : nat).
+  | Pos (p : Atom.t)
+  | Neg (p : Atom.t).
 
 
 Definition negate (l : t) : t :=
@@ -14,14 +14,14 @@ Definition negate (l : t) : t :=
   end.
 
 
-Definition atm (l : t) : nat :=
+Definition atm (l : t) : Atom.t :=
   match l with
   | Pos n => n
   | Neg n => n
   end.
 
 
-Definition get_pos (l : t) : option nat :=
+Definition get_pos (l : t) : option Atom.t :=
   match l with
   | Pos n => Some n
   | Neg n => None
@@ -41,10 +41,10 @@ Definition eqb (a b : t) : bool :=
 Lemma eqb_eq (a b : t) : eqb a b <-> a = b.
 Proof.
   destruct a, b; cbn.
-  - =rewrite Nat.eqb_eq. split; congruence.
+  - rewrite Atom.eqb_eq. split; congruence.
   - split; discriminate.
   - split; discriminate.
-  - =rewrite Nat.eqb_eq. split; congruence.
+  - rewrite Atom.eqb_eq. split; congruence.
 Qed. Global Hint Rewrite eqb_eq : ct.
 
 
@@ -60,9 +60,9 @@ Qed.
 (** This also has computational content that needs to be extracted.
 
     It generates the 'obvious' implementation, matching on the variants
-    and checking equality of the [nat]s. *)
+    and checking equality of the [Atom]s. *)
 Lemma eq_dec (a b : t) : {a = b} + {a <> b}.
-Proof. decide equality; apply Nat.eq_dec. Defined.
+Proof. decide equality; apply Atom.eq_dec. Defined.
 
 
 Lemma negate_eq_atm (l : t) : atm (negate l) = atm l.
@@ -111,11 +111,28 @@ Global Instance eq_atm_equivalence : Equivalence eq_atm := {
 (** Pos < Neg to match inductive definition order. *)
 Definition compare (x y : t) : comparison :=
   match x, y with
-  | Pos p, Pos q => Nat.compare p q
-  | Neg p, Neg q => Nat.compare p q
+  | Pos p, Pos q => Atom.compare p q
+  | Neg p, Neg q => Atom.compare p q
   | Pos p, Neg q => Lt
   | Neg p, Pos q => Gt
   end.
+
+
+Definition lt (x y : t) := compare x y = Lt.
+Arguments lt x y /.
+
+
+Lemma compare_spec : forall (x y : t),
+  CompareSpec (x = y) (lt x y) (lt y x) (compare x y).
+Proof with try congruence.
+  intros [p|p] [q|q]; cbn.
+  - destruct (Atom.compare_spec p q); constructor...
+    rewrite Atom.compare_lt_iff...
+  - now constructor.
+  - now constructor.
+  - destruct (Atom.compare_spec p q); constructor...
+    rewrite Atom.compare_lt_iff...
+Qed.
 
 Definition leb (x y : t) : bool :=
   match x, y with
@@ -130,10 +147,10 @@ Lemma leb_total : forall (x y : t), leb x y \/ leb y x.
 Proof.
   intros x y.
   induction x; destruct y; cbn.
-  - apply nat_leb_total.
+  - apply Atom.leb_total.
   - =tauto.
   - =tauto.
-  - apply nat_leb_total.
+  - apply Atom.leb_total.
 Qed.
 
 
@@ -141,8 +158,8 @@ Global Instance leb_trans : Transitive leb.
 Proof.
   intros x y z Hxy Hyz.
   destruct x; destruct y; destruct z; try easy.
-  - cbn in *. =rewrite Nat.leb_le in *. transitivity p0; easy.
-  - cbn in *. =rewrite Nat.leb_le in *. transitivity p0; easy.
+  - cbn in *. rewrite Atom.leb_le in *. transitivity p0; easy.
+  - cbn in *. rewrite Atom.leb_le in *. transitivity p0; easy.
 Qed.
 
 
@@ -157,8 +174,8 @@ Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (l : t) : Prop :=
 
 Definition cpl_forceb (val : Valuation.t) (l : t) : bool :=
   match l with
-  | Pos p => List.existsb (Nat.eqb p) val
-  | Neg p => negb (List.existsb (Nat.eqb p) val)
+  | Pos p => List.existsb (Atom.eqb p) val
+  | Neg p => negb (List.existsb (Atom.eqb p) val)
   end.
 
 
@@ -172,14 +189,14 @@ Proof.
 Qed.
 
 
-Definition atm_in (p : nat) (phi : t) : Prop :=
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
   p = atm phi.
 
 Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+  forall (w0 : W) (p : Atom.t), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
@@ -233,24 +250,14 @@ Module Ordered <: Orders.UsualOrderedTypeFull.
 
   Definition compare := compare.
 
-  Lemma compare_spec : forall (x y : t),
-    CompareSpec (x = y) (lt x y) (lt y x) (compare x y).
-  Proof with try congruence.
-    intros [p|p] [q|q]; cbn.
-    - destruct (Nat.compare_spec p q); constructor...
-      rewrite Nat.compare_lt_iff...
-    - now constructor.
-    - now constructor.
-    - destruct (Nat.compare_spec p q); constructor...
-      rewrite Nat.compare_lt_iff...
-  Qed.
+  Definition compare_spec := compare_spec.
 
   Lemma lt_strorder : StrictOrder lt.
   Proof with try easy.
     split.
-    - intros [p|p] Hlt; cbn in Hlt; now rewrite Nat.compare_refl in Hlt.
+    - intros [p|p] Hlt; cbn in Hlt; now rewrite Atom.compare_refl in Hlt.
     - intros [p|p] [q|q] [r|r]...
-      all: cbn; repeat rewrite Nat.compare_lt_iff; apply Nat.lt_trans.
+      all: cbn; repeat rewrite Atom.compare_lt_iff; apply Atom.lt_trans.
   Qed.
 
   Lemma lt_compat : Proper (Logic.eq ==> Logic.eq ==> iff) lt.

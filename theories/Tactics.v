@@ -3,6 +3,9 @@
 From Stdlib Require Import PeanoNat Arith Lia.
 Import List.ListNotations.
 Open Scope list_scope.
+From CegarTableaux Require Atom.
+Import Atom.Notations.
+Open Scope atom_scope.
 
 Ltac inv_clear H := inversion H; subst; clear H.
 
@@ -32,18 +35,18 @@ Ltac assert_cond b :=
         lazymatch G with
         | ?X =? ?Y =>
           lazymatch b with
-          | true  => apply Nat.eqb_eq
-          | false => apply Nat.eqb_neq
+          | true  => apply Atom.eqb_eq
+          | false => apply Atom.eqb_neq
           end
         | ?X <=? ?Y =>
           lazymatch b with
-          | true  => apply Nat.leb_le
-          | false => apply Nat.leb_gt
+          | true  => apply Atom.leb_le
+          | false => apply Atom.leb_gt
           end
         | ?X <? ?Y =>
           lazymatch b with
-          | true  => apply Nat.ltb_lt
-          | false => apply Nat.ltb_ge
+          | true  => apply Atom.ltb_lt
+          | false => apply Atom.ltb_ge
           end
         | _ => fail "cannot find a reflection lemma for" G
         end

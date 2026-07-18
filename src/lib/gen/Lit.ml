@@ -1,5 +1,5 @@
+open Atom
 open Datatypes
-open PeanoNat
 
 module Coq__1 = struct
  type t =
@@ -25,33 +25,33 @@ let atm = function
 let eqb a b =
   match a with
   | Pos p -> (match b with
-              | Pos q -> (=) p q
+              | Pos q -> eqb p q
               | Neg _ -> false)
   | Neg p -> (match b with
               | Pos _ -> false
-              | Neg q -> (=) p q)
+              | Neg q -> eqb p q)
 
 (** val eq_dec : t -> t -> bool **)
 
 let eq_dec a b =
   match a with
   | Pos p -> (match b with
-              | Pos p0 -> (=) p p0
+              | Pos p0 -> eq_dec p p0
               | Neg _ -> false)
   | Neg p -> (match b with
               | Pos _ -> false
-              | Neg p0 -> (=) p p0)
+              | Neg p0 -> eq_dec p p0)
 
 (** val compare : t -> t -> comparison **)
 
 let compare x y =
   match x with
   | Pos p -> (match y with
-              | Pos q -> Nat.compare p q
+              | Pos q -> compare p q
               | Neg _ -> Lt)
   | Neg p -> (match y with
               | Pos _ -> Gt
-              | Neg q -> Nat.compare p q)
+              | Neg q -> compare p q)
 
 module Ordered =
  struct

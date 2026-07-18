@@ -379,41 +379,13 @@ Proof.
 Qed.
 
 
-Definition list_max_nat (l : list nat) : nat :=
-  List.fold_left Nat.max l 0.
-Arguments list_max_nat : simpl never.
-
-
-Lemma nat_le_list_max_ind : forall l n acc,
-  List.In n l \/ n <= acc ->
-  n <= List.fold_left Nat.max l acc.
-Proof with try easy.
-  intros l. induction l as [|hd tl IH]; intros n acc Hn.
-  - destruct Hn...
-  - apply IH. destruct Hn as [[Hn_hd | Hn_tl] | Hn_acc].
-    + right. subst. apply Nat.le_max_r.
-    + left. exact Hn_tl.
-    + right. transitivity acc... apply Nat.le_max_l.
-Qed.
-
-Corollary nat_le_list_max : forall l n,
-  List.In n l -> n <= list_max_nat l.
+Lemma negb_exb_forallb : forall {A} (f : A -> bool) (l : list A),
+  negb (List.existsb f l) = List.forallb (fun a => negb (f a)) l.
 Proof.
-  intros * Hn. apply nat_le_list_max_ind. now left.
-Qed.
-
-
-Lemma nat_le_mapped_list_max :
-  forall {A} (n : nat) (max_f : A -> nat) (a : A) (l : list A),
-  List.In a l ->
-  n <= max_f a ->
-  n <= list_max_nat (List.map max_f l).
-Proof.
-  intros * Ha_in Hn_le_a.
-  transitivity (max_f a); try easy.
-  apply nat_le_list_max.
-  rewrite List.in_map_iff.
-  exists a. easy.
+  intros A f l.
+  induction l.
+  - cbn. reflexivity.
+  - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
 Qed.
 
 

@@ -83,15 +83,15 @@ let tableau_jumps a a0 a1 b =
     (match dias0 with
      | [] -> JumpSolution.Sat []
      | t0 :: l ->
-       let (n, t1) = t0 in
-       if forces_atm v n
+       let (t1, t2) = t0 in
+       if forces_atm v t1
        then (match let fired_boxes =
                      map snd
                        (filter (fun pat ->
                          let (a2, _) = pat in forces_atm v a2) boxes0)
                    in
-                   next_tableau (t1 :: fired_boxes) with
-             | Solution.Sat t2 ->
+                   next_tableau (t2 :: fired_boxes) with
+             | Solution.Sat t3 ->
                (match let y = v,({ cpls = cpls0; boxes = boxes0; dias =
                         l },((let pr1,_ =
                                 let _,pr2 = let _,pr2 = x in pr2 in pr2
@@ -100,11 +100,11 @@ let tableau_jumps a a0 a1 b =
                       in
                       fix_F y with
                 | JumpSolution.Sat t1s ->
-                  JumpSolution.Sat (app t1s (t2 :: []))
+                  JumpSolution.Sat (app t1s (t3 :: []))
                 | JumpSolution.Unsat (failed_dia, core, deriv) ->
                   JumpSolution.Unsat (failed_dia, core, deriv))
              | Solution.Unsat (core, deriv) ->
-               JumpSolution.Unsat ((n, t1), core, deriv))
+               JumpSolution.Unsat ((t1, t2), core, deriv))
        else let y = v,({ cpls = cpls0; boxes = boxes0; dias =
               l },((let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1),next_tableau))
             in
@@ -128,14 +128,14 @@ let tableau a a0 b =
                      tableau0 l (cplsolver_mcnf l) a' __)) with
            | JumpSolution.Sat t1s -> Solution.Sat (Coq_make (v, t1s))
            | JumpSolution.Unsat (failed_dia, core, deriv) ->
-             let (n, t1) = failed_dia in
-             let conflict_set = conflict_set_of (t0 :: l) v n core in
+             let (t1, t2) = failed_dia in
+             let conflict_set = conflict_set_of (t0 :: l) v t1 core in
              let s0' = CplSolver.add_conflict_set s0 conflict_set in
              let mc0' = add_conflict_set (t0 :: l) conflict_set in
              (match tableau0 mc0' s0' a1 __ with
-              | Solution.Sat t2 -> Solution.Sat t2
+              | Solution.Sat t3 -> Solution.Sat t3
               | Solution.Unsat (rs_core, rs_deriv) ->
-                Solution.Unsat (rs_core, (JumpRestart (v, (n, t1), deriv,
+                Solution.Unsat (rs_core, (JumpRestart (v, (t1, t2), deriv,
                   rs_deriv))))))
      | Unsat core -> Solution.Unsat (core, (Id core)))
   in fix_F (a,(a0,b))

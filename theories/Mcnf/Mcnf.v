@@ -26,7 +26,7 @@ Definition unsatisfiable (phi : t) : Prop :=
   ~ satisfiable phi.
 
 
-Definition atm_in (p : nat) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
+Definition atm_in (p : Atom.t) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
 
 Arguments atm_in p phi /.
 
@@ -36,7 +36,7 @@ Proof. intros. cbn. rewrite Exists_cons. reflexivity. Qed.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+  forall (w0 : W) (p : Atom.t), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma agree_cons : forall {W} {R} {M M' : @Kripke.t W R} l0 mc1,
@@ -70,18 +70,18 @@ Proof with try easy; auto with datatypes.
 Qed.
 
 
-Definition max_atm (phi : t) : nat :=
-  list_max_nat (List.map Lclauses.max_atm phi).
+Definition max_atm (phi : t) : Atom.t :=
+  Atom.list_max (List.map Lclauses.max_atm phi).
 
 
-Lemma atm_le_max : forall (phi : t) (p : nat),
+Lemma atm_le_max : forall (phi : t) (p : Atom.t),
   atm_in p phi -> p <= (max_atm phi).
 Proof with try easy.
   intros phi p Hatm.
   unfold atm_in in Hatm. rewrite List.Exists_exists in Hatm.
   destruct Hatm as [lclause [Hlclause_in Hp_lclauses]].
   apply Lclauses.atm_le_max in Hp_lclauses.
-  apply nat_le_mapped_list_max with (a := lclause)...
+  apply Atom.le_mapped_list_max with (a := lclause)...
 Qed.
 
 
@@ -117,7 +117,7 @@ Qed.
 
 
 Lemma in_zip_merge_or :
-  forall (A B : t) (p : nat),
+  forall (A B : t) (p : Atom.t),
   atm_in p (zip_merge A B) <-> atm_in p A \/ atm_in p B.
 Proof.
   intros A B p. revert B.

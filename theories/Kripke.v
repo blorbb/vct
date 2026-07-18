@@ -24,9 +24,9 @@ From CegarTableaux Require Import ImportStd.
     We could change this (and [force]) to a [bool] and possibly get rid of
     classical logic entirely if we add some constraints on [W]. *)
 Record t {W : Type} {R : relation W} : Type := {
-  valuation : W -> nat -> Prop;
+  valuation : W -> Atom.t -> Prop;
 }.
 
 (** [make W R val] constructs a Kripke model. *)
-Definition make W R (valuation : W -> nat -> Prop) : @t W R :=
+Definition make W R (valuation : W -> Atom.t -> Prop) : @t W R :=
   {| valuation := valuation  |}.

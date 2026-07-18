@@ -4,7 +4,7 @@ From CegarTableaux Require Import ImportStd.
 (** An MCNF dia-clause [a -> <>b].
 
     The antecedent is always a positive literal. *)
-Definition t : Type := nat * Lit.t.
+Definition t : Type := Atom.t * Lit.t.
 
 
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
@@ -13,14 +13,14 @@ Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
 Arguments force {W R} M w0 phi /.
 
 
-Definition atm_in (p : nat) (phi : t) : Prop :=
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
   (p = fst phi) \/ (p = Lit.atm (snd phi)).
 
 Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+  forall (w0 : W) (p : Atom.t), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
@@ -60,10 +60,10 @@ Proof with simpl; auto.
 Qed.
 
 
-Definition max_atm (phi : t) : nat :=
-  Nat.max (fst phi) (Lit.atm (snd phi)).
+Definition max_atm (phi : t) : Atom.t :=
+  Atom.max (fst phi) (Lit.atm (snd phi)).
 
 
-Lemma atm_le_max : forall (phi : t) (p : nat),
+Lemma atm_le_max : forall (phi : t) (p : Atom.t),
   atm_in p phi -> p <= (max_atm phi).
 Proof. exact BoxClause.atm_le_max. Qed.

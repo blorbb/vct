@@ -10,7 +10,7 @@ Module ClauseOrd1 <: Orders.TotalLeBool'.
   Definition t := BoxClause.t.
   Definition leb (x y : t) := fst x <=? fst y.
   Lemma leb_total : forall n m, leb n m \/ leb m n.
-  Proof. intros n m. apply nat_leb_total. Qed.
+  Proof. intros n m. apply Atom.leb_total. Qed.
 End ClauseOrd1.
 
 Module ClauseOrd2 <: Orders.TotalLeBool'.
@@ -38,27 +38,27 @@ Fixpoint group_by {A} (R : A -> A -> bool) (l: list A) : list (list A) :=
   end.
 
 
-Definition rhs_opt (group : list BoxClause.t) (sur : nat) : (BoxClause.t * list CplClause.t * nat) :=
+Definition rhs_opt (group : list BoxClause.t) (sur : Atom.t) : (BoxClause.t * list CplClause.t * Atom.t) :=
   match group with
-  | [] => ((0,Lit.Pos 0), [], sur) (* [group] should be non-empty so this is an impossible case *)
+  | [] => ((Atom.one, Lit.Pos Atom.one), [], sur) (* [group] should be non-empty so this is an impossible case *)
   | [cl] => (cl, [], sur) (* single clause, don't change *)
-  | (_,b)::_ => ((sur, b), List.map (fun '(a, _) => [Lit.Neg a; Lit.Pos sur]) group, S sur)
+  | (_,b)::_ => ((sur, b), List.map (fun '(a, _) => [Lit.Neg a; Lit.Pos sur]) group, Atom.succ sur)
   end.
 
 
-Definition lhs_opt (group : list BoxClause.t) (sur : nat) : (BoxClause.t * list CplClause.t * nat) :=
+Definition lhs_opt (group : list BoxClause.t) (sur : Atom.t) : (BoxClause.t * list CplClause.t * Atom.t) :=
   match group with
-  | [] => ((0,Lit.Pos 0), [], sur) (* [group] should be non-empty so this is an impossible case *)
+  | [] => ((Atom.one, Lit.Pos Atom.one), [], sur) (* [group] should be non-empty so this is an impossible case *)
   | [cl] => (cl, [], sur) (* single clause, don't change *)
-  | (a,_)::_ => ((a, Lit.Pos sur), List.map (fun '(_, b) => [Lit.Neg sur; b]) group, S sur)
+  | (a,_)::_ => ((a, Lit.Pos sur), List.map (fun '(_, b) => [Lit.Neg sur; b]) group, Atom.succ sur)
   end.
 
 
 Definition opt_on_groups
-  (opt : list BoxClause.t -> nat -> (BoxClause.t * list CplClause.t * nat))
+  (opt : list BoxClause.t -> Atom.t -> (BoxClause.t * list CplClause.t * Atom.t))
   (groups : list (list BoxClause.t))
-  (sur : nat)
-  : (list BoxClause.t * list CplClause.t * nat) :=
+  (sur : Atom.t)
+  : (list BoxClause.t * list CplClause.t * Atom.t) :=
   List.fold_left (fun '(new_clauses, cpls, sur) group =>
     let '(new_clause, new_cpls, sur1) := opt group sur in
     (new_clause::new_clauses, new_cpls ++ cpls, sur1))
@@ -68,19 +68,19 @@ Definition opt_on_groups
 (** Multiple [a* -> []/<>b] can be replaced with [a* -> sur; sur -> []/<>b].
 
     [BoxClause.t] and [DiaClause.t] are the same type, so this function can be used with both. *)
-Definition simplify_eq_rhs (clauses : list BoxClause.t) (sur : nat) : (list BoxClause.t * list CplClause.t * nat) :=
+Definition simplify_eq_rhs (clauses : list BoxClause.t) (sur : Atom.t) : (list BoxClause.t * list CplClause.t * Atom.t) :=
   let sorted := ClauseSort2.sort clauses in
   let grouped := group_by (fun a b => Lit.eqb (snd a) (snd b)) sorted in
   opt_on_groups rhs_opt grouped sur.
 
-Definition simplify_eq_lhs (clauses : list BoxClause.t) (sur : nat) : (list BoxClause.t * list CplClause.t * nat) :=
+Definition simplify_eq_lhs (clauses : list BoxClause.t) (sur : Atom.t) : (list BoxClause.t * list CplClause.t * Atom.t) :=
   let sorted := ClauseSort1.sort clauses in
   let grouped := group_by (fun a b => fst a =? fst b) sorted in
   opt_on_groups lhs_opt grouped sur.
 
 (** Replace [a* -> []/<>b] with [a* -> sur; sur -> []/<>b] and
     [a -> []b*] with [a -> []sur; []( sur -> b* )]. *)
-Fixpoint simplify_sur (mc0 : Mcnf.t) (sur : nat) :=
+Fixpoint simplify_sur (mc0 : Mcnf.t) (sur : Atom.t) :=
   match mc0 with
   | [] => []
   | (Lclauses.make cpls boxes dias) :: mc1 =>
@@ -92,4 +92,4 @@ Fixpoint simplify_sur (mc0 : Mcnf.t) (sur : nat) :=
         :: Mcnf.zip_merge [Lclauses.make_cpls cpls_mc1] mc1'
   end.
 
-Definition simplify (mc0 : Mcnf.t) := simplify_sur mc0 (1 + Mcnf.max_atm mc0).
+Definition simplify (mc0 : Mcnf.t) := simplify_sur mc0 (Atom.succ (Mcnf.max_atm mc0)).

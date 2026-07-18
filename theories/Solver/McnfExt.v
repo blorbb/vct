@@ -93,7 +93,7 @@ Proof.
   - subst x.
     unfold Valuation.forces_atm in Hforce_ante.
     apply List.existsb_exists in Hforce_ante as [l [Hl_in_val Heq_ante]].
-    apply Nat.eqb_eq in Heq_ante. subst l. assumption.
+    apply Atom.eqb_eq in Heq_ante. subst l. assumption.
   - setoid_rewrite List.in_map_iff in Hin.
     destruct Hin as [pair [Hfst_x Hpair_in]].
 
@@ -105,7 +105,7 @@ Proof.
 
     unfold Valuation.forces_atm in Hin.
     apply List.existsb_exists in Hin as [l [Hl_in_val Heq_ante]].
-    apply Nat.eqb_eq in Heq_ante. subst l x. assumption.
+    apply Atom.eqb_eq in Heq_ante. subst l x. assumption.
 Qed.
 
 

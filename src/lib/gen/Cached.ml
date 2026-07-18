@@ -86,14 +86,14 @@ let tableau_jumps a a0 a1 a2 b =
           in
           pr2)
      | t0 :: l ->
-       let (n, t1) = t0 in
-       if forces_atm v n
+       let (t1, t2) = t0 in
+       if forces_atm v t1
        then (match let fired_boxes =
                      map snd
                        (filter (fun pat ->
                          let (a3, _) = pat in forces_atm v a3) boxes0)
                    in
-                   next_tableau (t1 :: fired_boxes)
+                   next_tableau (t2 :: fired_boxes)
                      (let _,pr2 =
                         let _,pr2 = let _,pr2 = let _,pr2 = x in pr2 in pr2 in
                         pr2
@@ -106,7 +106,7 @@ let tableau_jumps a a0 a1 a2 b =
                in
                fix_F y
              | Solution.Unsat (core, caches) ->
-               JumpSolution.Unsat (n, core, caches))
+               JumpSolution.Unsat (t1, core, caches))
        else let y = v,({ cpls = cpls0; boxes = boxes0; dias =
               l },((let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1),(next_tableau,
               (let _,pr2 =

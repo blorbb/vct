@@ -33,7 +33,7 @@ Proof with try easy; auto.
 Qed.
 
 
-Definition atm_in (p : nat) (phi : t) : Prop :=
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
   List.Exists (CplClause.atm_in p) phi.
 
 Arguments atm_in p phi /.
@@ -60,7 +60,7 @@ Proof.
   intros V phi Hforceb.
   set (W := unit).
   set (R := fun (_ _ : W) => False).
-  set (val := fun (w : W) (p : nat) => Valuation.forces_atm V p).
+  set (val := fun (w : W) (p : Atom.t) => Valuation.forces_atm V p).
   set (M := Kripke.make W R val).
   exists W, R, M, tt.
   rewrite force_cpl_forceb.
@@ -73,11 +73,11 @@ Qed.
 (** The set of atoms that exist in the formula.
 
     Duplicates are removed. *)
-Definition atms_of (phi : t) : list nat :=
-  List.nodup (Nat.eq_dec) (List.flat_map (fun cpl => List.map Lit.atm cpl) phi).
+Definition atms_of (phi : t) : list Atom.t :=
+  List.nodup (Atom.eq_dec) (List.flat_map (fun cpl => List.map Lit.atm cpl) phi).
 
 
-Lemma in_atms_of : forall (phi : t) (p : nat), atm_in p phi <-> List.In p (atms_of phi).
+Lemma in_atms_of : forall (phi : t) (p : Atom.t), atm_in p phi <-> List.In p (atms_of phi).
 Proof.
   intros phi p.
   destruct phi as [| head tail].

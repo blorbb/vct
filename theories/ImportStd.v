@@ -19,6 +19,10 @@ Tactic Notation "=" tactic(H) := unfold is_true in *; H.
 Create HintDb ct.
 Create Rewrite HintDb ct.
 
+From CegarTableaux Require Atom.
+Export Atom.Notations.
+Open Scope atom_scope.
+
 From CegarTableaux Require Export Tactics ListExt.
 
 Hint Rewrite
@@ -55,21 +59,3 @@ Hint Rewrite or_false_l or_false_r and_true_l and_true_r imp_false_r imp_true_r 
 
 (** Function pipeline operator *)
 Notation "x |> f" := (f x) (at level 51, left associativity, only parsing).
-
-
-Lemma negb_exb_forallb : forall {A} (f : A -> bool) (l : list A),
-  negb (List.existsb f l) = List.forallb (fun a => negb (f a)) l.
-Proof.
-  intros A f l.
-  induction l.
-  - cbn. reflexivity.
-  - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
-Qed.
-
-
-Lemma nat_leb_total : forall n m, (n <=? m) \/ (m <=? n).
-Proof.
-  intros n m. destruct (Nat.leb_spec n m).
-  - now left.
-  - right. =rewrite Nat.leb_le. now apply Nat.lt_le_incl.
-Qed.

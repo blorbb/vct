@@ -224,16 +224,16 @@ End Correctness.
 
 (** Definitions and theorems relating to the structure of an NNF formula. *)
 Section Range.
-  Fixpoint max_atm (phi : t) : nat :=
+  Fixpoint max_atm (phi : t) : Atom.t :=
     match phi with
     | Lit l => Lit.atm l
-    | And A B => Nat.max (max_atm A) (max_atm B)
-    | Or  A B => Nat.max (max_atm A) (max_atm B)
+    | And A B => Atom.max (max_atm A) (max_atm B)
+    | Or  A B => Atom.max (max_atm A) (max_atm B)
     | Box A   => max_atm A
     | Dia A   => max_atm A
     end.
 
-  Fixpoint atm_in (p : nat) (phi : t) : Prop :=
+  Fixpoint atm_in (p : Atom.t) (phi : t) : Prop :=
     match phi with
     | Lit l => p = Lit.atm l
     | And A B => atm_in p A \/ atm_in p B
@@ -250,7 +250,7 @@ Section Range.
   Qed.
 
 
-  Theorem atm_le_max : forall (phi : t) (p : nat),
+  Theorem atm_le_max : forall (phi : t) (p : Atom.t),
     atm_in p phi -> p <= (max_atm phi).
   Proof.
     intros phi p Hx_in_nnf.
@@ -275,7 +275,7 @@ Section Range.
 
 
   Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-    forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+    forall (w0 : W) (p : Atom.t), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
   (** Makes some proofs in mcnf a bit easier.
 

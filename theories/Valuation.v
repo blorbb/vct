@@ -2,7 +2,7 @@ From CegarTableaux Require Import ImportStd.
 
 
 (** Valuation represented as a list of forced atoms. *)
-Definition t := list nat.
+Definition t := list Atom.t.
 
 
 (** Every atom must appear at most once. *)
@@ -13,7 +13,7 @@ Lemma clash_free_nil : clash_free [].
 Proof. unfold clash_free. apply List.NoDup_nil. Qed.
 
 
-Definition forces_atm (V : t) (p : nat) : bool := List.existsb (Nat.eqb p) V.
+Definition forces_atm (V : t) (p : Atom.t) : bool := List.existsb (Atom.eqb p) V.
 
 
 (** Set-equality of valuations *)
@@ -36,7 +36,7 @@ Proof with auto.
   - assumption.
 Qed.
 
-Lemma eq_in : forall (p : nat) (V V' : t), eq V V' -> List.In p V <-> List.In p V'.
+Lemma eq_in : forall (p : Atom.t) (V V' : t), eq V V' -> List.In p V <-> List.In p V'.
 Proof with auto.
   intros p V V' Heq.
   unfold eq in Heq.
@@ -48,7 +48,7 @@ Qed.
 
 (** Generate every valuation from a set of atoms. *)
 Section AllValuations.
-  Fixpoint every_valuation_of_atms (atms : list nat) : list t :=
+  Fixpoint every_valuation_of_atms (atms : list Atom.t) : list t :=
     match atms with
     | [] => [[]]
     | atm :: atms' =>
@@ -63,7 +63,7 @@ Section AllValuations.
 
   (* TODO: rename this lemma. *)
   (** Every valuation is a subset of the input atms. *)
-  Lemma every_valuation_exact_atms : forall (atms : list nat),
+  Lemma every_valuation_exact_atms : forall (atms : list Atom.t),
     List.Forall (fun V => List.incl V atms) (every_valuation_of_atms atms).
   Proof with try easy; auto with datatypes.
     setoid_rewrite List.Forall_forall.
@@ -83,7 +83,7 @@ Section AllValuations.
   Qed.
 
 
-  Lemma every_valuation_clash_free : forall (atms : list nat),
+  Lemma every_valuation_clash_free : forall (atms : list Atom.t),
     List.NoDup atms ->
     List.Forall clash_free (every_valuation_of_atms atms).
   Proof with try easy; auto with datatypes ct.
@@ -108,7 +108,7 @@ Section AllValuations.
   Qed.
 
 
-  Lemma atms_in_ev_atms : forall (atms : list nat),
+  Lemma atms_in_ev_atms : forall (atms : list Atom.t),
     List.In atms (every_valuation_of_atms atms).
   Proof with auto.
     intro atms. induction atms as [| h t IH].
@@ -128,7 +128,7 @@ Section AllValuations.
     intros atms. induction atms as [|h t IH]; intros V Hcf Hincl.
     { apply List.incl_l_nil in Hincl. subst. cbn. now apply InA_singleton. }
     unfold val_in_vals in *.
-    destruct (in_dec Nat.eq_dec h V) as [Hin | Hnin].
+    destruct (in_dec Atom.eq_dec h V) as [Hin | Hnin].
 
     (* h in V *)
     - apply in_split in Hin. destruct Hin as [l1 [l2 Hval]].
@@ -158,7 +158,7 @@ Section AllValuations.
   Qed.
 
 
-  Lemma every_valuation_perm : forall (atms atms' : list nat),
+  Lemma every_valuation_perm : forall (atms atms' : list Atom.t),
     Permutation atms atms' ->
     PermutationA eq (every_valuation_of_atms atms) (every_valuation_of_atms atms').
   Proof with try easy; auto with *.
@@ -190,7 +190,7 @@ Section AllValuations.
   Qed.
 
 
-  Lemma bind_new_atm_unique : forall (vals : list t) (p : nat),
+  Lemma bind_new_atm_unique : forall (vals : list t) (p : Atom.t),
     NoDupA eq vals ->
     (* p is not in vals *)
     (forall v, List.In v vals -> ~ List.In p v) ->
@@ -232,7 +232,7 @@ Section AllValuations.
   Qed.
 
 
-  Lemma every_valuation_unique : forall (atms : list nat),
+  Lemma every_valuation_unique : forall (atms : list Atom.t),
     List.NoDup atms ->
     NoDupA eq (every_valuation_of_atms atms).
   Proof with try easy; auto with typeclass_instances.

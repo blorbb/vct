@@ -46,8 +46,8 @@ Lemma decreasing_sat_vals : forall s0 A mc0 V c jump_core,
   Valuation.forces_atm V c ->
   let cs := conflict_set_of mc0 V c jump_core in
   let s0' := CplSolver.add_conflict_set s0 cs in
-  List.length (CplSolver.every_sat_valuation s0' A) <
-  List.length (CplSolver.every_sat_valuation s0 A).
+  (List.length (CplSolver.every_sat_valuation s0' A) <
+  List.length (CplSolver.every_sat_valuation s0 A))%nat.
 Proof with auto with typeclass_instances datatypes ct; try lia.
   intros * HV_sat Hforce_c cs s0'.
   set (s0'_sats := CplSolver.every_sat_valuation s0' A) in *.

@@ -52,7 +52,7 @@ End Caches.
 Module JumpSolution.
   Inductive t :=
     | Sat (caches : Caches.t)
-    | Unsat (c : nat) (core : Assumptions.t) (caches : Caches.t).
+    | Unsat (c : Atom.t) (core : Assumptions.t) (caches : Caches.t).
 
 
   Definition get_caches (s : t) : Caches.t :=

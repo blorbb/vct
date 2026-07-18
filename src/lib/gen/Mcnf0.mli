@@ -1,3 +1,4 @@
+open Atom
 open Datatypes
 open Lclauses
 open Lit

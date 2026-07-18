@@ -1,3 +1,4 @@
+open Atom
 open Datatypes
 open Lclauses
 open Lit
@@ -21,8 +22,8 @@ let rec from_n_nnf n phi k =
         | Lit bl ->
           (((make_cpls (((Neg n) :: (al :: (bl :: []))) :: [])) :: []), k)
         | _ ->
-          let k0 = Stdlib.Int.succ k in
-          let k1 = Stdlib.Int.succ k0 in
+          let k0 = succ k in
+          let k1 = succ k0 in
           let (a_mcnf, k2) = from_n_nnf k a k1 in
           let (b_mcnf, k3) = from_n_nnf k0 b k2 in
           ((zip_merge
@@ -30,8 +31,8 @@ let rec from_n_nnf n phi k =
              (zip_merge a_mcnf b_mcnf)),
           k3))
      | _ ->
-       let k0 = Stdlib.Int.succ k in
-       let k1 = Stdlib.Int.succ k0 in
+       let k0 = succ k in
+       let k1 = succ k0 in
        let (a_mcnf, k2) = from_n_nnf k a k1 in
        let (b_mcnf, k3) = from_n_nnf k0 b k2 in
        ((zip_merge
@@ -42,7 +43,7 @@ let rec from_n_nnf n phi k =
     (match a with
      | Lit l -> (({ cpls = []; boxes = ((n, l) :: []); dias = [] } :: []), k)
      | _ ->
-       let k0 = Stdlib.Int.succ k in
+       let k0 = succ k in
        let (a_mcnf, k1) = from_n_nnf k a k0 in
        (({ cpls = []; boxes = ((n, (Pos k)) :: []); dias = [] } :: a_mcnf),
        k1))
@@ -50,7 +51,7 @@ let rec from_n_nnf n phi k =
     (match a with
      | Lit l -> (({ cpls = []; boxes = []; dias = ((n, l) :: []) } :: []), k)
      | _ ->
-       let k0 = Stdlib.Int.succ k in
+       let k0 = succ k in
        let (a_mcnf, k1) = from_n_nnf k a k0 in
        (({ cpls = []; boxes = []; dias = ((n, (Pos k)) :: []) } :: a_mcnf),
        k1))
@@ -64,5 +65,4 @@ let from_nnf_with_sur n phi k =
 (** val from_nnf : Nnf.t -> Mcnf.t **)
 
 let from_nnf phi =
-  let n = Stdlib.Int.succ (max_atm phi) in
-  from_nnf_with_sur n phi (Stdlib.Int.succ n)
+  let n = succ (max_atm phi) in from_nnf_with_sur n phi (succ n)

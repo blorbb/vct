@@ -50,21 +50,21 @@ let tableau_jumps a a0 a1 b =
     (match dias0 with
      | [] -> JumpSolution.Sat
      | t0 :: l ->
-       let (n, t1) = t0 in
-       if forces_atm v n
+       let (t1, t2) = t0 in
+       if forces_atm v t1
        then (match let fired_boxes =
                      map snd
                        (filter (fun pat ->
                          let (a2, _) = pat in forces_atm v a2) boxes0)
                    in
-                   next_tableau (t1 :: fired_boxes) with
+                   next_tableau (t2 :: fired_boxes) with
              | Solution.Sat ->
                let y = v,({ cpls = cpls0; boxes = boxes0; dias =
                  l },((let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in
                        pr1),next_tableau))
                in
                fix_F y
-             | Solution.Unsat core -> JumpSolution.Unsat (n, core))
+             | Solution.Unsat core -> JumpSolution.Unsat (t1, core))
        else let y = v,({ cpls = cpls0; boxes = boxes0; dias =
               l },((let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1),next_tableau))
             in

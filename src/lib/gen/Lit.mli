@@ -1,5 +1,5 @@
+open Atom
 open Datatypes
-open PeanoNat
 
 module Coq__1 : sig
  type t =

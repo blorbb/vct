@@ -225,7 +225,7 @@ Proof with try easy; auto.
   - apply (force_first_cpls mc0 cpls boxes dias)...
 Qed.
 
-Corollary mcnf_resolution_cs : forall mc0 (cs : list nat),
+Corollary mcnf_resolution_cs : forall mc0 (cs : list Atom.t),
   Mcnf.unsatisfiable (add_conflict_set mc0 cs) ->
   Mcnf.unsatisfiable (add_assumptions mc0 (List.map Lit.Pos cs)) ->
   Mcnf.unsatisfiable mc0.

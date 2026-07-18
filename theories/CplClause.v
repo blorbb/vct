@@ -31,14 +31,14 @@ Proof with try easy; auto.
 Qed.
 
 
-Definition atm_in (p : nat) (phi : t) : Prop :=
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
   List.In p (List.map Lit.atm phi).
 
 Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+  forall (w0 : W) (p : Atom.t), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
@@ -70,14 +70,14 @@ Qed.
 
 
 
-Definition max_atm (phi : t) : nat :=
-  List.map Lit.atm phi |> list_max_nat.
+Definition max_atm (phi : t) : Atom.t :=
+  List.map Lit.atm phi |> Atom.list_max.
 
 
-Lemma atm_le_max : forall (phi : t) (p : nat),
+Lemma atm_le_max : forall (phi : t) (p : Atom.t),
   atm_in p phi -> p <= (max_atm phi).
 Proof with try easy.
-  intros phi p Hatm. now apply nat_le_list_max.
+  intros phi p Hatm. now apply Atom.le_list_max.
 Qed.
 
 

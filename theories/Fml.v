@@ -3,7 +3,7 @@ From CegarTableaux Require Kripke Lit.
 
 (** An arbitrary modal formula [Fml.t]. *)
 Inductive t : Type :=
-  | Var  (p : nat)
+  | Var  (p : Atom.t)
   | Neg  (A : t)
   | And  (A B : t)
   | Or   (A B : t)

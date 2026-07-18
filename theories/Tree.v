@@ -20,7 +20,7 @@ Definition cons_child tree child :=
 
 (* The tree defines a Kripke model. *)
 
-Definition valuation (tree : t) (atm : nat) : Prop :=
+Definition valuation (tree : t) (atm : Atom.t) : Prop :=
   match tree with
   | make V _ => Valuation.forces_atm V atm
   end.

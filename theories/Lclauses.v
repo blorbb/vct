@@ -26,7 +26,7 @@ Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
 Arguments force {W R} M w0 phi /.
 
 
-Definition atm_in (p : nat) (phi : t) : Prop :=
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
   List.Exists (CplClause.atm_in p) (cpls phi) \/
   List.Exists (BoxClause.atm_in p) (boxes phi) \/
   List.Exists (DiaClause.atm_in p) (dias phi).
@@ -35,7 +35,7 @@ Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
-  forall (w0 : W) (p : nat), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
+  forall (w0 : W) (p : Atom.t), atm_in p phi -> (Kripke.valuation M w0 p <-> Kripke.valuation M' w0 p).
 
 
 Lemma meaningful_valuations :
@@ -117,35 +117,35 @@ Proof with try solve [simpl; auto; tauto].
 Qed.
 
 
-Definition max_atm (phi : t) : nat :=
-  Nat.max (Lclauses.cpls phi |> List.map CplClause.max_atm |> list_max_nat)
-  (Nat.max
-    (Lclauses.boxes phi |> List.map BoxClause.max_atm |> list_max_nat)
-    (Lclauses.dias phi |> List.map DiaClause.max_atm |> list_max_nat)).
+Definition max_atm (phi : t) : Atom.t :=
+  Atom.max (Lclauses.cpls phi |> List.map CplClause.max_atm |> Atom.list_max)
+  (Atom.max
+    (Lclauses.boxes phi |> List.map BoxClause.max_atm |> Atom.list_max)
+    (Lclauses.dias phi |> List.map DiaClause.max_atm |> Atom.list_max)).
 
 
-Lemma atm_le_max : forall (phi : t) (p : nat),
+Lemma atm_le_max : forall (phi : t) (p : Atom.t),
   atm_in p phi -> p <= (max_atm phi).
 Proof with try easy.
   intros phi p Hatm. destruct phi as [cpls boxes dias].
-  cbn in *. unfold max_atm. repeat rewrite Nat.max_le_iff.
+  cbn in *. unfold max_atm. repeat rewrite Atom.max_le_iff.
 
   destruct Hatm as [Hp_cpls | [Hp_boxes | Hp_dias]].
   - left.
     rewrite List.Exists_exists in Hp_cpls.
     destruct Hp_cpls as [cl [Hcl_cpls Hp_cl]].
-    apply nat_le_list_max in Hp_cl.
-    apply nat_le_mapped_list_max with (a := cl)...
+    apply Atom.le_list_max in Hp_cl.
+    apply Atom.le_mapped_list_max with (a := cl)...
   - right. left.
     rewrite List.Exists_exists in Hp_boxes.
     destruct Hp_boxes as [box [Hbox_boxes Hp_box]].
     apply BoxClause.atm_le_max in Hp_box.
-    apply nat_le_mapped_list_max with (a := box)...
+    apply Atom.le_mapped_list_max with (a := box)...
   - right. right.
     rewrite List.Exists_exists in Hp_dias.
     destruct Hp_dias as [dia [Hdia_dias Hp_dia]].
     apply DiaClause.atm_le_max in Hp_dia.
-    apply nat_le_mapped_list_max with (a := dia)...
+    apply Atom.le_mapped_list_max with (a := dia)...
 Qed.
 
 
@@ -166,7 +166,7 @@ Proof.
 Qed.
 
 
-Lemma in_merge_or : forall (A B : t) (p : nat),
+Lemma in_merge_or : forall (A B : t) (p : Atom.t),
   atm_in p (merge A B) <-> atm_in p A \/ atm_in p B.
 Proof.
   intros *.
