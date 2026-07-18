@@ -63,7 +63,7 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 Qed.
 
 Corollary tableau_jumps_spec_init : forall V l0 mc1 next_tableau,
-  Spec.tableau_jumps V l0 mc1 next_tableau =  tableau_jumps V l0 mc1 [] next_tableau.
+  Spec.tableau_jumps V l0 mc1 next_tableau = tableau_jumps V l0 mc1 [] next_tableau.
 Proof.
   intros *. rewrite tableau_jumps_spec.
   destruct (Spec.tableau_jumps _ _ _ _); try easy.

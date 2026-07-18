@@ -11,6 +11,7 @@ open Logic
 open Mcnf0
 open McnfExt
 open Nnf
+open NoModel
 open Trie
 open Valuation
 
@@ -48,6 +49,34 @@ module JumpSolution =
   type t =
   | Sat of Caches.t
   | Unsat of int * Assumptions.t * Caches.t
+
+  (** val t_rect :
+      (Caches.t -> 'a1) -> (int -> Assumptions.t -> Caches.t -> 'a1) -> t ->
+      'a1 **)
+
+  let t_rect sat unsat = function
+  | Sat caches -> sat caches
+  | Unsat (c, core, caches) -> unsat c core caches
+
+  (** val t_rec :
+      (Caches.t -> 'a1) -> (int -> Assumptions.t -> Caches.t -> 'a1) -> t ->
+      'a1 **)
+
+  let t_rec sat unsat = function
+  | Sat caches -> sat caches
+  | Unsat (c, core, caches) -> unsat c core caches
+
+  (** val get_caches : t -> Caches.t **)
+
+  let get_caches = function
+  | Sat caches -> caches
+  | Unsat (_, _, caches) -> caches
+
+  (** val without_caches : t -> JumpSolution.t **)
+
+  let without_caches = function
+  | Sat _ -> JumpSolution.Sat
+  | Unsat (c, core, _) -> JumpSolution.Unsat (c, core)
  end
 
 module Solution =
@@ -56,11 +85,37 @@ module Solution =
   | Sat of Caches.t
   | Unsat of Assumptions.t * Caches.t
 
+  (** val t_rect :
+      (Caches.t -> 'a1) -> (Assumptions.t -> Caches.t -> 'a1) -> t -> 'a1 **)
+
+  let t_rect sat unsat = function
+  | Sat caches -> sat caches
+  | Unsat (core, caches) -> unsat core caches
+
+  (** val t_rec :
+      (Caches.t -> 'a1) -> (Assumptions.t -> Caches.t -> 'a1) -> t -> 'a1 **)
+
+  let t_rec sat unsat = function
+  | Sat caches -> sat caches
+  | Unsat (core, caches) -> unsat core caches
+
   (** val is_sat : t -> bool **)
 
   let is_sat = function
   | Sat _ -> true
   | Unsat (_, _) -> false
+
+  (** val get_caches : t -> Caches.t **)
+
+  let get_caches = function
+  | Sat caches -> caches
+  | Unsat (_, caches) -> caches
+
+  (** val without_caches : t -> Solution.t **)
+
+  let without_caches = function
+  | Sat _ -> Solution.Sat
+  | Unsat (core, _) -> Solution.Unsat core
  end
 
 (** val tableau_jumps :

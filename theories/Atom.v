@@ -1,6 +1,6 @@
 From Stdlib Require Import BinNums ZArith ZifyClasses RelationClasses Morphisms Orders Lia.
 
-(** Same as the one in [ImportStd], but we can't import it 
+(** Same as the one in [ImportStd], but we can't import it
     here as we want to export this module in [ImportStd]. *)
 Local Coercion is_true : bool >-> Sortclass.
 

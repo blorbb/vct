@@ -5,8 +5,8 @@ let parse_file path =
 ;;
 
 let check fml =
-  let result = Vct.Cached.solve_fml fml in
-  match Vct.Cached.Solution.is_sat result with
+  let result = Vct.FiredBoxes.solve_fml fml in
+  match Vct.FiredBoxes.Solution.is_sat result with
   | true -> print_endline "SAT"
   | false -> print_endline "UNSAT"
 ;;

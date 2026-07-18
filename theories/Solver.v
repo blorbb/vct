@@ -1,4 +1,4 @@
-From CegarTableaux.Solver Require Spec TailRec NoModel Cached Derivation Soundness Completeness.
+From CegarTableaux.Solver Require Spec TailRec NoModel Cached FiredBoxes Derivation Soundness Completeness.
 From CegarTableaux.Solver Require Import McnfExt.
 From CegarTableaux Require Import ImportStd.
 
@@ -6,7 +6,7 @@ Include Soundness.
 Include Completeness.
 
 
-Theorem solve_fml_sound_complete : forall phi,
+Theorem spec_solve_fml_sound_complete : forall phi,
   Spec.Solution.is_sat (Spec.solve_fml phi) <-> Fml.satisfiable phi.
 Proof with try easy; auto.
   intros mc0. split.
@@ -20,14 +20,14 @@ Theorem tailrec_solve_fml_sound_complete : forall phi,
 Proof.
   unfold TailRec.solve_fml, TailRec.solve_mcnf.
   setoid_rewrite <- TailRec.tableau_spec.
-  apply solve_fml_sound_complete.
+  apply spec_solve_fml_sound_complete.
 Qed.
 
 
 Theorem nomodel_solve_fml_sound_complete : forall phi,
   NoModel.Solution.is_sat (NoModel.solve_fml phi) <-> Fml.satisfiable phi.
 Proof.
-  setoid_rewrite NoModel.is_sat_spec. exact solve_fml_sound_complete.
+  setoid_rewrite NoModel.is_sat_spec. exact spec_solve_fml_sound_complete.
 Qed.
 
 
@@ -42,8 +42,17 @@ Proof.
 Qed.
 
 
+Theorem fired_boxes_solve_fml_sound_complete : forall phi,
+  FiredBoxes.Solution.is_sat (FiredBoxes.solve_fml phi) <-> Fml.satisfiable phi.
+Proof.
+  intros phi.
+  unfold FiredBoxes.solve_fml, FiredBoxes.solve_mcnf.
+  rewrite <- FiredBoxes.tableau_cached.
+  apply cached_solve_fml_sound_complete.
+Qed.
 
-(** Running [Print Assumptions solve_fml_sound_complete.]
+
+(** Running [Print Assumptions fired_boxes_solve_fml_sound_complete.]
     prints the following (slightly reformatted):
 
     [[

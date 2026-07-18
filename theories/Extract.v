@@ -44,5 +44,13 @@ Extract Constant Atom.compare =>
 
 
 Separate Extraction
-  Solver.Spec.solve_fml Solver.TailRec.solve_fml Solver.NoModel.solve_fml Solver.Cached.solve_fml
-  Solver.Spec.Solution.is_sat Solver.NoModel.Solution.is_sat Solver.Cached.Solution.is_sat.
+  Solver.Spec.solve_fml
+  Solver.Spec.Solution.is_sat
+  Solver.TailRec.solve_fml
+  Solver.TailRec.Solution.is_sat
+  Solver.NoModel.solve_fml
+  Solver.NoModel.Solution.is_sat
+  Solver.Cached.solve_fml
+  Solver.Cached.Solution.is_sat
+  Solver.FiredBoxes.solve_fml
+  Solver.FiredBoxes.Solution.is_sat.

@@ -1,4 +1,5 @@
 open Assumptions
+open Cached
 open CplSolution
 open CplSolver
 open Datatypes
@@ -12,7 +13,6 @@ open Mcnf0
 open McnfExt
 open Nnf
 open NoModel
-open Trie
 open Valuation
 
 module Cache :
@@ -56,7 +56,7 @@ module Cache :
     val eqb : Lit.t -> Lit.t -> bool
    end
 
-  type forest =
+  type forest = Cache.forest =
   | Nil
   | Cons of Lit.t * forest * forest
 
@@ -66,7 +66,7 @@ module Cache :
   val forest_rec :
     'a1 -> (Lit.t -> forest -> 'a1 -> forest -> 'a1 -> 'a1) -> forest -> 'a1
 
-  type t =
+  type t = Cache.t =
   | Empty
   | Root of forest
 
@@ -91,54 +91,60 @@ module Cache :
 
 module Caches :
  sig
-  type t = Cache.t list
+  type t = Cached.Cache.t list
 
   val contains : t -> Assumptions.t -> bool
 
-  val destruct : t -> Cache.t * t
+  val destruct : t -> Cached.Cache.t * t
 
   val add : t -> Assumptions.t -> t
  end
 
 module JumpSolution :
  sig
-  type t =
-  | Sat of Caches.t
-  | Unsat of int * Assumptions.t * Caches.t
+  type t = Cached.JumpSolution.t =
+  | Sat of Cached.Caches.t
+  | Unsat of int * Assumptions.t * Cached.Caches.t
 
   val t_rect :
-    (Caches.t -> 'a1) -> (int -> Assumptions.t -> Caches.t -> 'a1) -> t -> 'a1
+    (Cached.Caches.t -> 'a1) -> (int -> Assumptions.t -> Cached.Caches.t ->
+    'a1) -> t -> 'a1
 
   val t_rec :
-    (Caches.t -> 'a1) -> (int -> Assumptions.t -> Caches.t -> 'a1) -> t -> 'a1
+    (Cached.Caches.t -> 'a1) -> (int -> Assumptions.t -> Cached.Caches.t ->
+    'a1) -> t -> 'a1
 
-  val get_caches : t -> Caches.t
+  val get_caches : t -> Cached.Caches.t
 
   val without_caches : t -> JumpSolution.t
  end
 
 module Solution :
  sig
-  type t =
-  | Sat of Caches.t
-  | Unsat of Assumptions.t * Caches.t
+  type t = Cached.Solution.t =
+  | Sat of Cached.Caches.t
+  | Unsat of Assumptions.t * Cached.Caches.t
 
   val t_rect :
-    (Caches.t -> 'a1) -> (Assumptions.t -> Caches.t -> 'a1) -> t -> 'a1
+    (Cached.Caches.t -> 'a1) -> (Assumptions.t -> Cached.Caches.t -> 'a1) ->
+    t -> 'a1
 
   val t_rec :
-    (Caches.t -> 'a1) -> (Assumptions.t -> Caches.t -> 'a1) -> t -> 'a1
+    (Cached.Caches.t -> 'a1) -> (Assumptions.t -> Cached.Caches.t -> 'a1) ->
+    t -> 'a1
 
   val is_sat : t -> bool
 
-  val get_caches : t -> Caches.t
+  val get_caches : t -> Cached.Caches.t
 
   val without_caches : t -> Solution.t
  end
 
+val get_fired_boxes : t -> Lclauses.t -> Lit.t list
+
 val tableau_jumps :
   t -> Lclauses.t -> Mcnf0.t -> (Assumptions.t -> Caches.t -> Solution.t) ->
-  Caches.t -> JumpSolution.t
+  Lit.t list -> Caches.t -> JumpSolution.t
 
 val tableau :
   Mcnf0.t -> CplSolver.t -> Assumptions.t -> Caches.t -> Solution.t
