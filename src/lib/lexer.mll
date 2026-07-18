@@ -11,9 +11,9 @@
 			          pos_bol = pos.pos_cnum}
 }
 
-let chiffre = ['0'-'9']
-let ident = chiffre+
-let proposition = 'p' ident
+let digit = ['0'-'9']
+let nzdigit = ['1'-'9']
+let ident = nzdigit digit*
 
 rule next_token = parse
 | ' ' | '\t' { next_token lexbuf }
@@ -39,7 +39,7 @@ rule next_token = parse
 | "begin" { BEGIN }
 | "end" { END }
 | eof { EOF }
-| proposition as p { Prop (int_of_string (String.sub p 1 (String.length p - 1))) }
+| "p" (ident as p) { Prop (int_of_string p) }
 | _ as s { raise (SyntaxError ("illegal character: " ^ (String.make 1 s))) }
 
 and comment = parse

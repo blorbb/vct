@@ -22,11 +22,11 @@ SAT:
 FORMULA: []false
 
 MCNF:
-[{ cpls = [[+1]]; boxes = [(1, +2)]; dias = [] };
-  { cpls = [[-2; +0]; [-2; -0]]; boxes = []; dias = [] }]
+[{ cpls = [[+2]]; boxes = [(2, +3)]; dias = [] };
+  { cpls = [[-3; +1]; [-3; -1]]; boxes = []; dias = [] }]
 
 SAT:
-{ v = [1]; c = [] }
+{ v = [2]; c = [] }
 
 
 FORMULA: []p1 & <>~p1

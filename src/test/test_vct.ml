@@ -91,3 +91,12 @@ let () =
   print_solution "<>p1 & <>~p1";
   print_solution "~(<>(p1 | p2) <-> (<>p1 | <>p2))"
 ;;
+
+(* Should fail to parse p0 *)
+let () =
+  try
+    let _ = parse_str "p0" in
+    failwith "should have failed to parse p0"
+  with
+  | Vct.Lexer.SyntaxError _ -> ()
+;;
