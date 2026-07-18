@@ -1,5 +1,5 @@
 From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import McnfExt.
+From CegarTableaux.Solver Require Import McnfExt SearchBasics.
 From CegarTableaux.Solver Require Derivation Spec.
 From CegarTableaux Require Cnf.
 
@@ -20,11 +20,11 @@ Proof.
 Qed.
 
 Lemma jump_failed_dia : forall V l0 mc1 failed_dia core deriv,
-  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
+  Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   List.In failed_dia (Lclauses.dias l0).
 Proof.
   intros *. intro Hunsat.
-  funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1));
+  funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1));
     cbn in *; rewrite <- Heqcall in Hunsat.
   - discriminate.
   - right. eapply H. exact Hunsat.
@@ -34,11 +34,11 @@ Proof.
 Qed.
 
 Lemma jump_deriv_core : forall V l0 mc1 failed_dia core deriv,
-  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
+  Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   Derivation.get_core deriv = core.
 Proof.
   intros *. intros Hunsat.
-  funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1));
+  funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1));
     cbn in *; rewrite <- Heqcall in Hunsat.
   - discriminate.
   - eapply H. exact Hunsat.
@@ -51,19 +51,19 @@ Qed.
 (** * [Derivation.conds] proofs *)
 
 Lemma tableau_jumps_deriv_ind : forall V l0 mc1 failed_dia core deriv,
-  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
+  Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   (forall A' core deriv,
-    Spec.next_tableau mc1 A' = Spec.Solution.Unsat core deriv ->
+    Spec.tableau $mc1 A' = Spec.Solution.Unsat core deriv ->
     Derivation.conds mc1 A' deriv) ->
   Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof.
   intros * Hunsat IHnt.
-  funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)); rewrite <- Heqcall in Hunsat.
+  funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)); rewrite <- Heqcall in Hunsat.
   - discriminate.
   - eapply H.
     + exact Hunsat.
     + exact IHnt.
-  - inv_clear Hunsat. cbn. unfold "|>" in Heq.
+  - inv_clear Hunsat. cbn.
     eapply IHnt. exact Heq.
   - discriminate.
   - inv_clear Hunsat. eapply Hind.
@@ -97,7 +97,7 @@ Qed.
 
 
 Corollary tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
-  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
+  Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof with try easy.
   intros * Hunsat.
@@ -500,7 +500,7 @@ Corollary solve_fml_sound_contrapos : forall phi,
   Fml.satisfiable phi ->
   Spec.Solution.is_sat (Spec.solve_fml phi).
 Proof with try easy.
-  intros phi. unfold Spec.solve_fml, "|>".
+  intros phi. unfold Spec.solve_fml.
   rewrite Nnf.equisat_fml, Mcnf.equisat_nnf.
   apply solve_mcnf_sound_contrapos.
 Qed.

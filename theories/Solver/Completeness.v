@@ -1,5 +1,5 @@
 From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import McnfExt.
+From CegarTableaux.Solver Require Import McnfExt SearchBasics.
 From CegarTableaux.Solver Require Derivation Spec.
 
 (** Completeness of the [Spec] implementation. *)
@@ -30,16 +30,16 @@ Qed.
 
 
 Lemma tableau_jumps_completeness : forall A V l0 mc1 T1s,
-  Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1) = Spec.JumpSolution.Sat T1s ->
+  Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Sat T1s ->
   (forall A' T0,
-    Spec.Solution.Sat T0 = Spec.next_tableau mc1 A' ->
+    Spec.Solution.Sat T0 = Spec.tableau $mc1 A' ->
     Mcnf.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
   CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
   Mcnf.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsat IHnt Hcpl_sat.
 
-  funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)); rewrite <- Heqcall in Hsat; clear Heqcall.
+  funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)); rewrite <- Heqcall in Hsat; clear Heqcall.
   - inv_clear Hsat. eapply singleton_tree_force... exact Hcpl_sat.
   (* Model forces [cpls,boxes,dias'::mc1]. [(c,d)::dias'] is also forced as c is unfired. *)
   - specialize (H A T1s Hsat IHnt Hcpl_sat).

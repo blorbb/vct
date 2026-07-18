@@ -128,7 +128,7 @@ Lemma atm_le_max : forall (phi : t) (p : nat),
   atm_in p phi -> p <= (max_atm phi).
 Proof with try easy.
   intros phi p Hatm. destruct phi as [cpls boxes dias].
-  cbn -[list_max_nat] in *. repeat rewrite Nat.max_le_iff.
+  cbn in *. unfold max_atm. repeat rewrite Nat.max_le_iff.
 
   destruct Hatm as [Hp_cpls | [Hp_boxes | Hp_dias]].
   - left.

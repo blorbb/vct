@@ -2,7 +2,6 @@ open BoxClause
 open CplClause
 open CplSolver
 open Datatypes
-open ImportStd
 open Lclauses
 open List
 open ListDef
@@ -53,10 +52,7 @@ let cplsolver_mcnf mc0 =
 (** val conflict_set_of : Mcnf0.t -> t -> int -> Lit.t list -> int list **)
 
 let conflict_set_of mc0 v dia_antecedent core =
-  apply
-    (apply
-      (apply
-        (apply (first_boxes mc0) (filter (fun box -> forces_atm v (fst box))))
-        (filter (fun box -> existsb (eqb (snd box)) core)))
-      (map fst))
-    (fun x -> dia_antecedent :: x)
+  dia_antecedent :: (map fst
+                      (filter (fun box -> existsb (eqb (snd box)) core)
+                        (filter (fun box -> forces_atm v (fst box))
+                          (first_boxes mc0))))

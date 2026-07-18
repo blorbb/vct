@@ -2,7 +2,6 @@ open BoxClause
 open CplClause
 open CplSolver
 open Datatypes
-open ImportStd
 open Lclauses
 open List
 open ListDef

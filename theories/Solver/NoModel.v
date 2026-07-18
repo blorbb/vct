@@ -132,15 +132,12 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
   phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 
 
-Definition next_tableau mc1 := tableau mc1 (cplsolver_mcnf mc1).
-
-
 Lemma tableau_jumps_spec_ind : forall V l0 mc1,
-  (forall A, Solution.from_spec (Spec.next_tableau mc1 A) = next_tableau mc1 A) ->
-  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)) = tableau_jumps V l0 mc1 (next_tableau mc1).
+  (forall A, Solution.from_spec (Spec.tableau $mc1 A) = tableau $mc1 A) ->
+  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)) = tableau_jumps V l0 mc1 (tableau $mc1).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsol_match.
-  funelim (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)).
+  funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)).
   - cbn. now simp tableau_jumps.
   - simp tableau_jumps. unfold tableau_jumps_unfold_clause_2.
     rewrite Heq.
@@ -195,8 +192,6 @@ Proof with try easy; try congruence; auto.
 
     (* contradiction between Hj_eq and Hj_unsat *)
     eta.
-    fold (next_tableau mc1) in *.
-    fold (Spec.next_tableau mc1) in *.
     pose proof (tableau_jumps_spec_ind V l0 mc1 Hind) as Hj_matches.
 
     destruct (tableau_jumps V l0 mc1 _) eqn:Hj_unsat...
@@ -209,8 +204,6 @@ Proof with try easy; try congruence; auto.
     dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
     cbn -[add_conflict_set]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
     eta.
-    fold (next_tableau mc1) in *.
-    fold (Spec.next_tableau mc1) in *.
     pose proof (tableau_jumps_spec_ind V l0 mc1 Hind) as Hj_matches.
 
     destruct (tableau_jumps V l0 mc1 _).
@@ -222,7 +215,7 @@ Qed.
 
 
 Lemma tableau_jumps_spec : forall V l0 mc1,
-  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 (Spec.next_tableau mc1)) = tableau_jumps V l0 mc1 (next_tableau mc1).
+  JumpSolution.from_spec (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)) = tableau_jumps V l0 mc1 (tableau $mc1).
 Proof with try easy.
   intros *.
   apply tableau_jumps_spec_ind.

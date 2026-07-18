@@ -54,9 +54,7 @@ Hint Rewrite or_false_l or_false_r and_true_l and_true_r imp_false_r imp_true_r 
 
 
 (** Function pipeline operator *)
-Definition apply {A B} (x : A) (f : A -> B) := f x.
-Arguments apply {A B} x f /.
-Infix "|>" := apply (at level 51, left associativity).
+Notation "x |> f" := (f x) (at level 51, left associativity, only parsing).
 
 
 Lemma negb_exb_forallb : forall {A} (f : A -> bool) (l : list A),

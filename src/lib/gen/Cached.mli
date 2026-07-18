@@ -3,7 +3,6 @@ open CplSolution
 open CplSolver
 open Datatypes
 open Fml
-open ImportStd
 open Lclauses
 open List
 open ListDef

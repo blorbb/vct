@@ -68,7 +68,7 @@ Proof with auto with typeclass_instances datatypes ct; try lia.
     apply CplSolver.refined_solver_diff_val with s0 A V cs s0'.
     + symmetry. exact HV_sat.
     + apply conflict_set_incl_val with s0 A...
-    + subst cs. unfold conflict_set_of, "|>".
+    + subst cs. unfold conflict_set_of.
       discriminate.
     + subst s0'. unfold CplSolver.add_conflict_set. rewrite CplSolver.add_clause_cons.
       now left.
@@ -77,3 +77,9 @@ Proof with auto with typeclass_instances datatypes ct; try lia.
       subst s0_sats s0'_sats. apply NoDup_PermutationA_bis...
       apply NoDupA_length_incl...
 Qed.
+
+
+(** For proofs, we don't want to write [tableau mc0 (cplsolver_mcnf mc0)] every time.
+
+    This notation can be seen as expanding [$mc0] to [mc0 (cplsolver_mcnf mc0)]. *)
+Notation "fn $ var" := (fn var (cplsolver_mcnf var)) (at level 10, left associativity).

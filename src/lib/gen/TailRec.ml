@@ -5,7 +5,6 @@ open Datatypes
 open Derivation
 open DiaClause
 open Fml
-open ImportStd
 open Lclauses
 open List
 open ListDef
@@ -49,10 +48,9 @@ let tableau_jumps a a0 a1 a2 b =
        let (n, t1) = t0 in
        if forces_atm v n
        then let fired_boxes =
-              apply
-                (apply boxes0
-                  (filter (fun pat -> let (a3, _) = pat in forces_atm v a3)))
-                (map snd)
+              map snd
+                (filter (fun pat -> let (a3, _) = pat in forces_atm v a3)
+                  boxes0)
             in
             (match next_tableau (t1 :: fired_boxes) with
              | Solution.Sat t2 ->
@@ -117,4 +115,4 @@ let solve_mcnf mc0 =
 (** val solve_fml : Fml.t -> Solution.t **)
 
 let solve_fml phi =
-  apply (apply (apply phi from_fml) from_nnf) solve_mcnf
+  solve_mcnf (from_nnf (from_fml phi))

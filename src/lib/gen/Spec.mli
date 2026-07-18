@@ -5,7 +5,6 @@ open Datatypes
 open Derivation
 open DiaClause
 open Fml
-open ImportStd
 open Lclauses
 open List
 open ListDef

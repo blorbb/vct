@@ -381,6 +381,8 @@ Qed.
 
 Definition list_max_nat (l : list nat) : nat :=
   List.fold_left Nat.max l 0.
+Arguments list_max_nat : simpl never.
+
 
 Lemma nat_le_list_max_ind : forall l n acc,
   List.In n l \/ n <= acc ->

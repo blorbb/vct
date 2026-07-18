@@ -88,7 +88,7 @@ Lemma conflict_set_incl_val : forall mc0 V dia_antecedent core s A,
   List.incl conflict_set V.
 Proof.
   intros mc0 V dia_antecedent core s A Hval Hforce_ante conflict_set.
-  unfold conflict_set, conflict_set_of, "|>". intros x Hx_in_cs.
+  unfold conflict_set, conflict_set_of. intros x Hx_in_cs.
   cbn in Hx_in_cs. destruct Hx_in_cs as [Hante | Hin].
   - subst x.
     unfold Valuation.forces_atm in Hforce_ante.

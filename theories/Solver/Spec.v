@@ -129,10 +129,6 @@ Qed.
 Fail Next Obligation.
 
 
-(** The tableau function passed in to [tableau_jumps]. *)
-Definition next_tableau mc1 := tableau mc1 (cplsolver_mcnf mc1).
-
-
 (** Solve a formula by applying [tableau] with the correct arguments. *)
 Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
   tableau mc0 (cplsolver_mcnf mc0) [].
