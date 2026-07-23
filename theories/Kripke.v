@@ -30,3 +30,25 @@ Record t {W : Type} {R : relation W} : Type := {
 (** [make W R val] constructs a Kripke model. *)
 Definition make W R (valuation : W -> Atom.t -> Prop) : @t W R :=
   {| valuation := valuation  |}.
+
+
+Module Kt.
+  Record t {W : Type} {R : relation W} : Type := {
+    to_k : @Kripke.t W R;
+    refl : Reflexive R;
+  }.
+End Kt.
+
+Module K4.
+  Record t {W : Type} {R : relation W} : Type := {
+    to_k : @Kripke.t W R;
+    trans : Transitive R;
+  }.
+End K4.
+
+Module Kt4.
+  Record t {W : Type} {R : relation W} : Type := {
+    model_kt4 : @Kripke.t W R;
+    preord_kt4 : PreOrder R;
+  }.
+End Kt4.

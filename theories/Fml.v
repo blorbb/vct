@@ -29,3 +29,10 @@ Definition satisfiable (phi : t) : Prop :=
 
 Definition unsatisfiable (phi : t) : Prop :=
   ~ satisfiable phi.
+
+
+Definition satisfiable_kt (phi : t) : Prop :=
+  exists W R (M : @Kripke.Kt.t W R) (w0 : W), force (Kripke.Kt.to_k M) w0 phi.
+
+Definition unsatisfiable_kt (phi : t) : Prop :=
+  ~ satisfiable_kt phi.

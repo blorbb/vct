@@ -25,6 +25,12 @@ Definition satisfiable (phi : t) : Prop :=
 Definition unsatisfiable (phi : t) : Prop :=
   ~ satisfiable phi.
 
+Definition satisfiable_kt (phi : t) : Prop :=
+  exists W R `(Reflexive W R) (M : @Kripke.t W R) (w0 : W), force M w0 phi.
+
+Definition unsatisfiable_kt (phi : t) : Prop :=
+  ~ satisfiable_kt phi.
+
 
 Definition atm_in (p : Atom.t) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
 
@@ -128,4 +134,170 @@ Proof.
   - cbn [zip_merge] in *.
     repeat rewrite atm_in_cons. rewrite Lclauses.in_merge_or.
     rewrite IH. tauto.
+Qed.
+
+
+
+Fixpoint add_kt (mc0 : t) : t :=
+  match mc0 with
+  | [] => []
+  | Lclauses.make cpls0 boxes0 dias0 :: mc1 =>
+    let mc1_kt := add_kt mc1 in
+    (* a -> b for each a -> []b in the current context *)
+    let unboxed := List.map (fun '(a, b) => [Lit.Neg a; b]) boxes0 in
+    (* Add all clauses from the next modal context *)
+    match mc1_kt with
+    | [] =>
+      Lclauses.make (unboxed ++ cpls0) boxes0 dias0 :: mc1_kt
+    | Lclauses.make cpls1 boxes1 dias1 :: mc2 =>
+      Lclauses.make (unboxed ++ cpls0 ++ cpls1) (boxes0 ++ boxes1) (dias0 ++ dias1) :: mc1_kt
+    end
+  end.
+
+
+Lemma kt_force_unboxed : forall {W R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) (boxes0 : list BoxClause.t),
+  List.Forall (BoxClause.force M w0) boxes0 ->
+  Cnf.force M w0 (List.map (fun '(a, b) => [Lit.Neg a; b]) boxes0).
+Proof.
+  intros * Hrefl * Hf_boxes.
+  cbn. rewrite List.Forall_forall in *.
+  intros cl Hcl_in.
+  rewrite List.in_map_iff in Hcl_in.
+  destruct Hcl_in as [[a b] [Hab Hab_in]].
+  subst cl.
+
+  specialize (Hf_boxes (a,b) Hab_in). cbn in *.
+  destruct (classic (Kripke.valuation M w0 a)) as [Hf_a | Hnf_b].
+  - specialize (Hf_boxes Hf_a w0). forward Hf_boxes by reflexivity.
+    exists b. tauto.
+  - exists (Lit.Neg a). tauto.
+Qed.
+
+(* Lemma kt_force_w0 : forall {W R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) *)
+
+Lemma add_kt_refl : forall {W} {R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
+  Mcnf.force M w0 (add_kt mc0) <-> Mcnf.force M w0 mc0.
+Proof with try easy; auto.
+  intros * Hrefl *. revert w0. induction mc0 as [|l0 mc1 IH]; intros w0.
+  { tauto. }
+
+  destruct l0 as [cpls0 boxes0 dias0]. cbn.
+  split.
+  (* add -> unadded easy as add_kt only adds extra clauses *)
+  - destruct (add_kt mc1) as [|[cpls1 boxes1 dias1] mc2].
+    + cbn. intros [[Hf_cpls0 [Hf_boxes0 Hf_dias0]] _].
+      apply List.Forall_app in Hf_cpls0.
+      cbn in IH. setoid_rewrite <- IH.
+      tauto.
+    + cbn. intros [[Hf_cpls0 [Hf_boxes0 Hf_dias0]] Hf_w1].
+      repeat rewrite List.Forall_app in *.
+      setoid_rewrite <- IH. tauto.
+  - intros [[Hf_cpls0 [Hf_boxes0 Hf_dias0]] Hf_mc1].
+    destruct (add_kt mc1) as [|[cpls1 boxes1 dias1] mc2].
+    + cbn. autorewrite with list prop. intuition.
+      now apply kt_force_unboxed.
+    + cbn.
+      (* w1 forces mc1 by IH *)
+      setoid_rewrite IH. split; [| exact Hf_mc1].
+
+      (* w0 forces mc1 by refl *)
+      specialize (Hf_mc1 w0). forward Hf_mc1 by reflexivity.
+      rewrite <- IH in Hf_mc1.
+      destruct Hf_mc1 as [[Hf_cpls1 [Hf_boxes1 Hf_dias1]] Hf_mc2].
+      cbn in *.
+
+      autorewrite with list.
+      intuition.
+      now apply kt_force_unboxed.
+Qed.
+
+Lemma add_kt_sound : forall phi,
+  satisfiable_kt phi -> satisfiable (add_kt phi).
+Proof.
+  intros phi Hsatkt_phi. unfold satisfiable, satisfiable_kt in *.
+  deex. exists W,R,M,w0. now rewrite add_kt_refl.
+Qed.
+
+Definition refl_closure {W} (R : relation W) : relation W :=
+  fun w0 w1 => R w0 w1 \/ w0 = w1.
+
+Global Instance refl_closure_refl : forall {W} (R : relation W), Reflexive (refl_closure R).
+Proof. intros W R w. unfold refl_closure. now right. Qed.
+
+Lemma force_refl_closure : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
+  force M w0 (add_kt mc0) ->
+  force (Kripke.make W (refl_closure R) (Kripke.valuation M)) w0 mc0.
+Proof with try easy.
+  intros *. revert w0.
+  set (R' := refl_closure R).
+  set (M' := Kripke.make W R' (Kripke.valuation M)).
+  induction mc0 as [|l0 mc1 IH]...
+
+  intros w0 Hfadd_mc0. destruct l0 as [cpls0 boxes0 dias0].
+  cbn in Hfadd_mc0.
+  destruct (add_kt mc1) as [|l1 mc2].
+  {
+    cbn in *. autorewrite with list prop in Hfadd_mc0.
+    destruct Hfadd_mc0 as [[Hf_unboxed0 Hf_cpls0] [Hf_boxes0 Hf_dias0]].
+    rewrite List.Forall_map in Hf_unboxed0.
+    repeat rewrite List.Forall_forall in *.
+
+    repeat split.
+    - rewrite <- List.Forall_forall in *. apply Cnf.force_local with (M1 := M) (M2 := M')...
+    - intros (a, b) Hab_in Hval_a w1 HR'_w1. cbn.
+      specialize (Hf_unboxed0 (a,b) Hab_in).
+      destruct Hf_unboxed0 as [l [[Hl_a | [Hl_b | F]] Hf_l]]...
+      + subst l. cbn in Hf_l, Hval_a. contradiction.
+      + subst l. apply Lit.force_local with (M1 := M)...
+        unfold refl_closure in HR'_w1. destruct HR'_w1 as [HR_w1 | Hw0w1].
+        * apply (Hf_boxes0 (a,b))...
+        * now subst w1.
+    - intros (c,d) Hcd_in Hval_c.
+      specialize (Hf_dias0 (c,d) Hcd_in Hval_c).
+      deex. exists w1. unfold R', refl_closure. tauto.
+    - intros w1 HR'_w1. apply IH...
+  }
+  {
+    destruct l1 as [cpls1 boxes1 dias1].
+    cbn in *. autorewrite with list prop in Hfadd_mc0.
+    destruct Hfadd_mc0 as [[[Hf_unboxed0 [Hf_c0 Hf_c1]] [[Hf_b0 Hf_b1] [Hf_d0 Hf_d1]]] Hf_w1].
+    rewrite List.Forall_map in Hf_unboxed0.
+    repeat rewrite List.Forall_forall in *.
+
+    repeat split.
+    - rewrite <- List.Forall_forall in *. apply Cnf.force_local with (M1 := M) (M2 := M')...
+    - intros (a, b) Hab_in Hval_a w1 HR'_w1. cbn.
+      specialize (Hf_unboxed0 (a,b) Hab_in).
+      destruct Hf_unboxed0 as [l [[Hl_a | [Hl_b | F]] Hf_l]]...
+      + subst l. cbn in Hf_l, Hval_a. contradiction.
+      + subst l. apply Lit.force_local with (M1 := M)...
+        unfold refl_closure in HR'_w1. destruct HR'_w1 as [HR_w1 | Hw0w1].
+        * apply (Hf_b0 (a,b))...
+        * now subst w1.
+    - intros (c,d) Hcd_in Hval_c.
+      specialize (Hf_d0 (c,d) Hcd_in Hval_c).
+      deex. exists w1. unfold R', refl_closure. tauto.
+    - intros w1 HR'_w1.
+      destruct HR'_w1 as [HR_w1 | Hw0w1].
+      + apply IH. apply Hf_w1...
+      + subst w1. apply IH.
+        repeat rewrite List.Forall_forall.
+        repeat split...
+        apply Hf_w1.
+        (* STUCK! *)
+  }
+Qed.
+
+Lemma add_kt_complete : forall phi,
+  satisfiable (add_kt phi) -> satisfiable_kt phi.
+Proof.
+  intros phi Hsatadd_phi.
+Qed.
+
+Theorem add_kt_sound_complete : forall phi,
+  satisfiable_kt phi <-> satisfiable (add_kt phi).
+Proof.
+  intros phi. split.
+  - apply add_kt_sound.
+  - apply add_kt_complete.
 Qed.

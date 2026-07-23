@@ -183,3 +183,13 @@ Proof.
     rewrite In_singleton in Hclause'. subst.
     apply Hforce.
 Qed.
+
+
+Lemma force_local : forall {W} {R1 R2} (M1 : @Kripke.t W R1) (M2 : @Kripke.t W R2) (w0 : W) (phi : t),
+  Kripke.valuation M1 = Kripke.valuation M2 ->
+  force M1 w0 phi <-> force M2 w0 phi.
+Proof.
+  intros * HV. cbn.
+  repeat rewrite List.Forall_forall.
+  setoid_rewrite CplClause.force_local; easy.
+Qed.

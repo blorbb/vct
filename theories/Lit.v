@@ -223,6 +223,16 @@ Proof.
 Qed.
 
 
+Lemma force_local : forall {W} {R1 R2} (M1 : @Kripke.t W R1) (M2 : @Kripke.t W R2) (w0 : W) (phi : t),
+  Kripke.valuation M1 = Kripke.valuation M2 ->
+  force M1 w0 phi <-> force M2 w0 phi.
+Proof.
+  intros * HV. destruct phi.
+  - cbn. now rewrite HV.
+  - cbn. now rewrite HV.
+Qed.
+
+
 (* Requires classical logic. *)
 Lemma not_force_negate : forall {W} {R} (M : @Kripke.t W R) (w0 : W) l,
   ~ Lit.force M w0 l <-> Lit.force M w0 (Lit.negate l).
