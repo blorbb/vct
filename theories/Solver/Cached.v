@@ -230,7 +230,7 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
 
 Definition sat_cache (cache : Cache.t) (mc0 : Mcnf.t) : Prop :=
   forall A, Cache.contains cache A ->
-  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A).
+  Mcnf.satisfiable (add_assumptions mc0 A).
 
 
 Inductive sat_caches : Caches.t -> Mcnf.t -> Prop :=
@@ -245,7 +245,7 @@ Global Hint Constructors sat_caches : ct.
 Lemma sat_caches_contains_sat : forall caches mc0 A,
   sat_caches caches mc0 ->
   Caches.contains caches A ->
-  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A).
+  Mcnf.satisfiable (add_assumptions mc0 A).
 Proof.
   intros * Hsat_caches Hcontains.
   destruct Hsat_caches.
@@ -256,20 +256,19 @@ Qed.
 
 Lemma sat_cache_add : forall cache mc0 A,
   sat_cache cache mc0 ->
-  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A) ->
+  Mcnf.satisfiable (add_assumptions mc0 A) ->
   sat_cache (Cache.add cache A) mc0.
 Proof with try easy; auto with datatypes.
   intros * Hsat_cache Hsat_tab A' Hcontains.
   apply Cache.add_contains_iff in Hcontains as [Hcontains | Hprefix].
   - apply Hsat_cache...
-  - rewrite NoModel.tableau_sound_complete in *.
-    apply incl_sat with (A' := A)...
+  - apply incl_sat with (A' := A)...
 Qed.
 
 
 Lemma sat_caches_add : forall caches mc0 A,
   sat_caches caches mc0 ->
-  NoModel.Solution.is_sat (NoModel.tableau mc0 (cplsolver_mcnf mc0) A) ->
+  Mcnf.satisfiable (add_assumptions mc0 A) ->
   sat_caches (Caches.add caches A) mc0.
 Proof with try easy; auto with datatypes ct.
   intros * Hsat_caches Hsat_tab.
@@ -288,7 +287,6 @@ Lemma sat_caches_add_empty_mc0 : forall caches A V,
 Proof with try easy.
   intros * Hsat_caches Hsat.
   apply sat_caches_add...
-  apply NoModel.tableau_sound_complete.
 
   apply CplSolver.solution_completeness in Hsat as Hcnf_force.
   unfold CplSolver.solved_clauses in Hcnf_force.
@@ -339,7 +337,6 @@ Proof with try easy; auto with datatypes ct.
 
   intros A Hcontains_A.
   specialize (Hsat_cache0 A Hcontains_A).
-  rewrite NoModel.tableau_sound_complete in *.
 
   set (mc0 := l0::mc1) in *.
   set (mc0A := add_assumptions mc0 A) in *.
@@ -373,7 +370,6 @@ Proof with try easy; auto with ct.
   apply sat_caches_cons...
   intros A Hcontains_A.
   specialize (H A Hcontains_A).
-  rewrite NoModel.tableau_sound_complete in *.
   unfold Mcnf.satisfiable in H. deex. exists W,R,M,w0.
   cbn in *. autorewrite with list in *. tauto.
 Qed.
@@ -449,6 +445,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
     destruct (Caches.contains caches A) eqn:Hcached. {
       exfalso.
       pose proof (sat_caches_contains_sat caches mc0 A Hcaches Hcached) as Hsat.
+      rewrite <- NoModel.tableau_sound_complete in Hsat.
       rewrite NoModel.Solution.is_sat_eq in Hsat.
       rewrite Hsat in Heqcall. discriminate.
     }
@@ -506,6 +503,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       * rename caches0 into caches1'. rewrite Hj in Hjumps_sat_caches. cbn in *.
         apply sat_caches_cons...
         apply sat_cache_add...
+        rewrite <- NoModel.tableau_sound_complete.
         rewrite NoModel.Solution.is_sat_eq. exact (eq_sym Heqcall).
       * rewrite Hj in Hjumps_nomodel. rewrite Hj_eq in Hjumps_nomodel.
         cbn in Hjumps_nomodel. discriminate.
@@ -524,7 +522,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
     + cbn.
       unfold nomodel_call.
       symmetry. rewrite <- NoModel.Solution.is_sat_eq.
-      rewrite Hs0_cs.
+      rewrite Hs0_cs. rewrite NoModel.tableau_sound_complete.
       apply sat_caches_contains_sat with (caches := caches)...
       apply cs_preserve_sat...
 
