@@ -266,3 +266,14 @@ Global Program Instance Op_atom_max : BinOp max :=
   { TBOp := Z.max; TBOpInj := _ }.
 Next Obligation. unfold to_Z. cbn. lia. Qed.
 Add Zify BinOp Op_atom_max.
+
+
+(* Do not simplify elsewhere. *)
+Arguments lt : simpl never.
+Arguments ltb : simpl never.
+Arguments le : simpl never.
+Arguments leb : simpl never.
+Arguments eqb : simpl never.
+Arguments succ : simpl never.
+Arguments max : simpl never.
+Arguments compare : simpl never.

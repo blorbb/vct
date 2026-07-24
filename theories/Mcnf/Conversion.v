@@ -5,6 +5,7 @@
 From CegarTableaux Require Lit Nnf Kripke Lclauses Mcnf.Mcnf.
 From CegarTableaux Require Import ImportStd.
 
+Local Arguments Lclauses.force {W} {R} M w0 phi /.
 
 (** Converts [n -> phi] to MCNF, with a given surrogate value [k].
 
@@ -120,7 +121,7 @@ Proof with auto; try lia.
 Qed.
 
 
-(** An extra tactic [autolia] that is equivalent to [lia] but applies some
+(** An extra tactic [add_ineqs] as a pre-hook to apply some
     known inequalities from the above theorems. *)
 Local Ltac add_ineq_from_sym_in_nnf :=
   match goal with
@@ -151,15 +152,13 @@ Local Ltac add_ineq_from_n_impl :=
 
 Local Ltac add_ineqs := repeat ((add_ineq_from_sym_in_nnf; []) || (add_ineq_from_n_impl; [])).
 
-Local Ltac autolia :=
-  add_ineqs;
-  lia.
+Local Ltac zify_pre_hook ::= cbn in *; add_ineqs.
 
 (** Solve the current goal with a variety of autosolvers which are likely
     to solve goals relating to the current context.
 
     This fails if the goal cannot be completely solved. *)
-Local Ltac finish := solve [ cbn; (try ifauto); auto; (try autolia); (try tauto); (try easy)].
+Local Ltac finish := solve [ cbn; (try ifauto); auto; (try lia); (try tauto); (try easy)].
 
 
 Theorem conv_atm_range :
@@ -185,8 +184,7 @@ Proof with finish.
     ]; intros n k Hmnp_lt.
   (* literal: p in phi or p = n *)
   - intro Hp_mcnf.
-    repeat (autorewrite with list in Hp_mcnf; cbn in Hp_mcnf).
-    repeat rewrite or_false_l in Hp_mcnf.
+    cbn in Hp_mcnf. autorewrite with list ct prop in Hp_mcnf.
     destruct Hp_mcnf as [Hnp | Hlp].
     (* n = p *)
     + rewrite Hnp...
@@ -205,7 +203,7 @@ Proof with finish.
     cbn in Hmnp_lt.
 
     forward IHA by lia.
-    forward IHB by autolia.
+    forward IHB by lia.
 
     fold A_mcnf kA in IHA.
     fold B_mcnf kB in IHB.
@@ -221,19 +219,19 @@ Proof with finish.
   (* or *)
   - cbn -[Mcnf.zip_merge Mcnf.atm_in].
     Nnf.destruct_lit2 A B. {
-      repeat (cbn; autorewrite with list prop). lia.
+      cbn. autorewrite with list ct prop. lia.
     }
 
     destruct_pair (from_n_nnf k A (Atom.succ (Atom.succ k))) as [A_mcnf kA].
     destruct_pair (from_n_nnf (Atom.succ k) B kA) as [B_mcnf kB].
-    intro Hp_mcnf. cbn [fst] in Hp_mcnf.
+    intro Hp_mcnf. cbn [fst snd] in *.
 
     specialize (IHA k (Atom.succ (Atom.succ k))).
     specialize (IHB (Atom.succ k) kA).
 
     cbn in Hmnp_lt.
     forward IHA by lia.
-    forward IHB by autolia.
+    forward IHB by lia.
 
     fold A_mcnf kA in IHA.
     fold B_mcnf kB in IHB.
@@ -241,19 +239,17 @@ Proof with finish.
     repeat rewrite Mcnf.in_zip_merge_or in Hp_mcnf.
 
     destruct Hp_mcnf as [Hp_cpls | [Hp_A | Hp_B]].
-    + repeat (autorewrite with list in Hp_cpls; cbn in Hp_cpls).
-      repeat rewrite or_false_l in Hp_cpls. cbn [snd].
-      autolia.
+    + autorewrite with list ct prop in Hp_cpls. lia.
     + forward IHA by assumption.
       destruct IHA...
     + forward IHB by assumption.
       destruct IHB...
 
   (* box *)
-  - cbn -[Mcnf.zip_merge Mcnf.atm_in].
-    Nnf.destruct_lit A. { repeat (autorewrite with list prop; cbn). lia. }
+  - cbn.
+    Nnf.destruct_lit A. { cbn. autorewrite with list ct prop. lia. }
     destruct_pair (from_n_nnf k A (Atom.succ k)) as [A_mcnf kA].
-    intro Hp_mcnf. cbn [fst] in Hp_mcnf.
+    intro Hp_mcnf. cbn [fst] in Hp_mcnf. autorewrite with list ct prop in Hp_mcnf.
 
     cbn in Hmnp_lt.
     specialize (IHA k (Atom.succ k)).
@@ -261,17 +257,17 @@ Proof with finish.
 
     fold A_mcnf kA in IHA.
 
-    rewrite Mcnf.atm_in_cons in Hp_mcnf. destruct Hp_mcnf as [Hp_box | Hp_A].
-    + cbn in Hp_box. autorewrite with list prop in Hp_box.
-      cbn in Hp_box. cbn. autolia.
+    destruct Hp_mcnf as [Hp_box | Hp_A].
+    + lia.
     + forward IHA by assumption.
       destruct IHA...
 
   (* dia: identical to box case *)
-  - cbn -[Mcnf.zip_merge Mcnf.atm_in].
-    Nnf.destruct_lit A. { repeat (autorewrite with list prop; cbn). lia. }
+  - cbn.
+    Nnf.destruct_lit A. { cbn. autorewrite with list ct prop. cbn. lia. }
     destruct_pair (from_n_nnf k A (Atom.succ k)) as [A_mcnf kA].
-    intro Hp_mcnf. cbn [fst] in Hp_mcnf.
+    intro Hp_mcnf. cbn [fst snd] in *.
+    autorewrite with list prop ct in Hp_mcnf.
 
     cbn in Hmnp_lt.
     specialize (IHA k (Atom.succ k)).
@@ -279,9 +275,8 @@ Proof with finish.
 
     fold A_mcnf kA in IHA.
 
-    rewrite Mcnf.atm_in_cons in Hp_mcnf. destruct Hp_mcnf as [Hp_box | Hp_A].
-    + cbn in Hp_box. autorewrite with list prop in Hp_box.
-      cbn in Hp_box. cbn. autolia.
+    destruct Hp_mcnf as [Hp_dia | Hp_A].
+    + lia.
     + forward IHA by assumption.
       destruct IHA...
 Qed.
@@ -357,7 +352,7 @@ Section EquisatModelRange.
       let k' := snd (from_n_nnf n phi k) in
       ~ (p = n \/ k <= p < k') ->
       Kripke.valuation M w p <-> Kripke.valuation (named_model M n phi k) w p.
-  Proof with simpl; auto; try autolia.
+  Proof with simpl; auto; try lia.
     intros W R M w phi.
     revert M w.
     induction phi as
@@ -393,12 +388,12 @@ Section EquisatModelRange.
       assert (Kripke.valuation M w p <-> Kripke.valuation MA w p) as Hval_M_MA.
       {
         unfold MA. apply IHA...
-        fold kA. autolia.
+        fold kA. lia.
       }
       assert (Kripke.valuation MA w p <-> Kripke.valuation MB w p) as Hval_MA_MB.
       {
         unfold MB. apply IHB...
-        fold kB. autolia.
+        fold kB. lia.
       }
 
       simpl. ifauto. fold MA kA MB. tauto.
@@ -420,12 +415,12 @@ Section EquisatModelRange.
       assert (Kripke.valuation M w p <-> Kripke.valuation MA w p) as Hval_M_MA.
       {
         unfold MA. apply IHA...
-        fold kA. autolia.
+        fold kA. lia.
       }
       assert (Kripke.valuation MA w p <-> Kripke.valuation MB w p) as Hval_MA_MB.
       {
         unfold MB. apply IHB...
-        fold kB. autolia.
+        fold kB. lia.
       }
 
       simpl. ifauto. fold MA kA MB. tauto.
@@ -438,7 +433,7 @@ Section EquisatModelRange.
       inline_pair in Hx_range.
       set (kA := snd (from_n_nnf k A (Atom.succ k))) in *.
       cbn in Hx_range.
-      apply IHA... fold kA. autolia.
+      apply IHA... fold kA. lia.
 
     (* dia *)
     - cbn in *. subst k'.
@@ -448,7 +443,7 @@ Section EquisatModelRange.
       inline_pair in Hx_range.
       set (kA := snd (from_n_nnf k A (Atom.succ k))) in *.
       cbn in Hx_range.
-      apply IHA... fold kA. autolia.
+      apply IHA... fold kA. lia.
   Qed.
 
 
@@ -481,7 +476,7 @@ Section EquisatModelRange.
       Nnf.agree phi M M' ->
       Kripke.valuation (named_model M n phi k) w p <->
       Kripke.valuation (named_model M' n phi k) w p.
-  Proof with simpl; auto; try autolia.
+  Proof with simpl; auto; try lia.
     intros W R M M' w phi.
     revert M M' w.
 
@@ -674,14 +669,14 @@ Section NnfToMcnf.
   Lemma lit_sat : forall (l : Lit.t), IH (Nnf.Lit l).
   Proof with try finish.
     intros l w0 n k Hmnk_lt.
-    cbn. split... autorewrite with list prop.
-    cbn.
+    cbn. split...
+    autorewrite with list ct prop.
+    cbn. ifauto.
     pose proof (classic (Nnf.force M w0 (Nnf.Lit l))) as [HM_force_l | HM_nforce_l].
     (* forces l *)
-    + exists l. cbn in *. split...
-      destruct l as [x|x]; cbn in *; ifauto.
+    + right. destruct l as [p|p]; cbn in *; ifauto.
     (* does not force l *)
-    + exists (Lit.Neg n). cbn in *. split...
+    + left. intro Hnval. specialize (H w0 Hnval). contradiction.
   Qed.
 
 
@@ -700,7 +695,7 @@ Section NnfToMcnf.
 
     specialize (IHA w0 n k). forward IHA by lia.
     fold MA A_mcnf in IHA. cbn in IHA.
-    specialize (IHB w0 n kA). forward IHB by autolia.
+    specialize (IHB w0 n kA). forward IHB by lia.
     set (MBIH := named_model M n B kA) in IHB.
     fold B_mcnf in IHB. cbn in IHB.
 
@@ -750,19 +745,20 @@ Section NnfToMcnf.
     intros A B IHA IHB w0 n k Hmnk_lt M' n_val Hn_val.
     subst M'. cbn -[Mcnf.zip_merge].
     Nnf.destruct_lit2 A B. {
-      cbn in Hmnk_lt, Hn_val |- *. autorewrite with list prop. cbn.
+      cbn in Hmnk_lt, Hn_val |- *.
+      autorewrite with list ct prop. cbn. ifauto.
       destruct (classic (n_val w0)) as [Hnval_w0 | Hnnval_w0].
       - specialize (Hn_val w0 Hnval_w0).
         destruct Hn_val as [Hforce_lA | Hforce_lB].
-        + exists lA. split...
+        + right. left.
           eapply Lit.meaningful_valuations. 2: exact Hforce_lA.
           intros w p Hp_lA. cbn in Hp_lA.
           cbn. now ifauto.
-        + exists lB. split...
+        + right. right.
           eapply Lit.meaningful_valuations. 2: exact Hforce_lB.
           intros w p Hp_lB. cbn in Hp_lB.
           cbn. now ifauto.
-      - exists (Lit.Neg n). split...
+      - now left.
     }
     destruct_pair as [A_mcnf kA].
     destruct_pair as [B_mcnf kB].
@@ -774,26 +770,23 @@ Section NnfToMcnf.
 
     specialize (IHA w0 k (Atom.succ (Atom.succ k))). forward IHA by lia.
     fold MA A_mcnf in IHA. cbn in IHA.
-    specialize (IHB w0 (Atom.succ k) kA). forward IHB by autolia.
+    specialize (IHB w0 (Atom.succ k) kA). forward IHB by lia.
     set (MBIH := named_model M (Atom.succ k) B kA).
     fold MBIH B_mcnf in IHB. cbn in IHB.
 
     repeat rewrite Mcnf.force_zip_merge_and.
     split; [|split].
     (* forces ~n or k or Atom.succ k *)
-    - cbn. autorewrite with list prop.
+    - cbn. autorewrite with list ct prop.
       destruct (classic (Nnf.force M w0 (Nnf.Or A B))) as [[HM_force_A | HM_force_B] | HM_nforce_AB].
       (* M |= A *)
       + unfold M', set_kripke_at_n_iff_force.
-        exists (Lit.Pos k). split... cbn. ifauto.
+        right. left. cbn. ifauto.
         unfold MB. rewrite <- named_model_changes_sur_only...
         unfold MA. apply named_model_vals_name_iff_force...
       (* M |= B *)
       + unfold M', set_kripke_at_n_iff_force.
-        exists (Lit.Pos (Atom.succ k)).
-        (* simpl goes too far with Atom.succ k, makes it hard to resolve. *)
-        (* remember to avoid simplifying too far. *)
-        remember (Atom.succ k) as nB. split... cbn. ifauto.
+        right. right. cbn. ifauto.
 
         (* forces B <-> nB valued *)
         unfold MB. apply named_model_vals_name_iff_force...
@@ -807,7 +800,7 @@ Section NnfToMcnf.
       (* M |/= A /\ B *)
       (* then M' values ~n *)
       + unfold M', set_kripke_at_n_iff_force.
-        exists (Lit.Neg n). split... cbn. ifauto.
+        left. cbn. ifauto.
         intro Hn_val_t. apply Hn_val in Hn_val_t. contradiction.
 
     (* forces A_mcnf *)
@@ -874,25 +867,25 @@ Section NnfToMcnf.
     cbn.
 
     Nnf.destruct_lit A. {
-      cbn in Hmnk_lt |- *. autorewrite with list prop. cbn. ifauto.
+      cbn in Hmnk_lt |- *. split...
+      autorewrite with list ct prop. cbn. ifauto.
 
       intros Hnval_w0 w1 HR_w1.
       unfold IH in IHA.
       specialize (IHA w1 n k Hmnk_lt (fun w => Lit.force M w l)).
       forward IHA by tauto.
-      cbn in IHA. autorewrite with list prop in IHA. cbn in IHA.
+      cbn in IHA. autorewrite with list ct prop in IHA. cbn in IHA. ifauto in IHA.
 
-      destruct IHA as [l' [[Hl'_nn | [Hl'_l | F]] Hforce_l']]...
-      - exfalso. subst l'. cbn in Hforce_l'. apply Hforce_l'.
-        ifauto. apply (Hn_val w0)...
-      - subst l'.
-        eapply Lit.meaningful_valuations. 2: { exact Hforce_l'. }
+      destruct IHA as [Hnf_l | Hf_l].
+      - exfalso. apply Hnf_l.
+        apply (Hn_val w0)...
+      - eapply Lit.meaningful_valuations. 2: { exact Hf_l. }
         intros w p Hp_l. cbn in Hp_l. subst p. cbn. ifauto...
     }
 
     destruct_pair as [A_mcnf kA].
 
-    cbn in *. autorewrite with list prop.
+    cbn in *. autorewrite with list ct prop.
     split.
     (* forces box clause *)
     - cbn. ifauto. intros Hnval_w0 w1 HR_w1. ifauto.
@@ -924,7 +917,8 @@ Section NnfToMcnf.
     cbn.
 
     Nnf.destruct_lit A. {
-      cbn in Hmnk_lt |- *. autorewrite with list prop. cbn. ifauto.
+      cbn in Hmnk_lt |- *. split...
+      autorewrite with list ct prop. cbn. ifauto.
 
       intro Hn_val_w0.
       specialize (Hn_val w0 Hn_val_w0).
@@ -934,19 +928,17 @@ Section NnfToMcnf.
       unfold IH in IHA.
       specialize (IHA w1 n k Hmnk_lt (fun w => Lit.force M w l)).
       forward IHA by tauto.
-      cbn in IHA. autorewrite with list prop in IHA. cbn in IHA.
+      cbn in IHA. autorewrite with list ct prop in IHA. cbn in IHA. ifauto in IHA.
 
-      destruct IHA as [l' [[Hl'_nn | [Hl'_l | F]] Hforce_l']]...
-      - exfalso. subst l'. cbn in Hforce_l'. apply Hforce_l'.
-        ifauto.
-      - subst l'.
-        eapply Lit.meaningful_valuations. 2: { exact Hforce_l'. }
+      destruct IHA as [Hnf_l | Hf_l].
+      - exfalso. apply Hnf_l. ifauto.
+      - eapply Lit.meaningful_valuations. 2: { exact Hf_l. }
         intros w p Hp_l. cbn in Hp_l. subst p. cbn. ifauto...
     }
 
     destruct_pair as [A_mcnf kA].
 
-    cbn in *. autorewrite with list prop.
+    cbn in *. autorewrite with list ct prop.
     split.
     (* forces dia clause *)
     - cbn. ifauto. intro Hn_val_w0.
@@ -1010,8 +1002,7 @@ Section NnfToMcnf.
     rewrite Mcnf.force_zip_merge_and.
     split.
     (* force n *)
-    - cbn. autorewrite with list prop.
-      exists (Lit.Pos n). split...
+    - cbn. autorewrite with list ct prop.
       apply named_model_vals_name_iff_force...
     (* force the rest *)
     - pose proof (M'_force_n_impl_phi phi w0 n k Hmnk_lt) as IH.
@@ -1060,16 +1051,12 @@ Proof with try finish.
     | phi IHphi
     ]; intros w0 n k Hmnk_lt Hforce_mcnf.
 
-  - cbn in Hforce_mcnf |- *. autorewrite with list prop in Hforce_mcnf.
+  - cbn in Hforce_mcnf |- *.
+    unfold from_nnf_with_sur in Hforce_mcnf.
+    repeat (autorewrite with list ct prop in Hforce_mcnf; cbn in Hforce_mcnf).
     destruct Hforce_mcnf as [HM_val_n HM_force_nn_l].
 
-    destruct HM_val_n as [p [[Hpn | F] Hforce_n]]... subst p.
-    cbn in Hforce_n.
-
-    cbn in HM_force_nn_l.
-    destruct HM_force_nn_l as [l' [[Hl'_nn | [Hll' | F]] Hforce_l']]...
-    + subst l'. contradiction.
-    + subst l'. assumption.
+    destruct HM_force_nn_l as [Hf_nn | Hf_l]...
 
   (* and *)
   - cbn in Hmnk_lt.
@@ -1098,44 +1085,31 @@ Proof with try finish.
     cbn [from_n_nnf] in Hforce_mcnf.
 
     Nnf.destruct_lit2 A B. {
-      cbn in Hforce_mcnf |- *.
-      autorewrite with list prop in Hforce_mcnf.
-      cbn in Hforce_mcnf.
-      destruct Hforce_mcnf as [
-        [l1 [[Hl1_n | F] Hforce_l1]]
-        [l2 [[Hl2_nn | [Hl2_lA | [Hl2_lB | F2]]] Hforce_l2]]]...
-      - subst l1 l2. cbn in Hforce_l1, Hforce_l2. contradiction.
-      - subst l1 l2. now left.
-      - subst l1 l2. now right.
+      repeat (autorewrite with list ct prop in Hforce_mcnf; cbn in Hforce_mcnf).
+      destruct Hforce_mcnf as [Hf_n [Hf_nn | [Hf_lA | Hf_lB]]]...
     }
 
     destruct_pair in Hforce_mcnf as [A_mcnf kA].
     destruct_pair in Hforce_mcnf as [B_mcnf kB].
     cbn [fst] in Hforce_mcnf.
+    cbn.
 
-    repeat rewrite Mcnf.force_zip_merge_and in Hforce_mcnf.
-    cbn in Hforce_mcnf. autorewrite with list prop in *.
+    repeat (autorewrite with list ct prop in Hforce_mcnf; cbn in Hforce_mcnf).
     destruct Hforce_mcnf as [Hforce_n [Hforce_n_k_Sk [Hforce_A Hforce_B]]].
 
-    destruct Hforce_n as [l [[Hnl | F] Hforce_n]]... subst l.
-    destruct Hforce_n_k_Sk as [l [Hl_in Hforce_l]].
-    destruct Hl_in as [Hl_nn | [Hl_k | [Hl_Sk | F]]]...
+    destruct Hforce_n_k_Sk as [Hf_nn | [Hf_k | Hf_Sk]].
     (* must force n, contradiction *)
-    + subst l...
-    + subst l. left.
+    + contradiction.
+    + left.
       apply (IHA w0 k (Atom.succ (Atom.succ k)))...
       unfold from_nnf_with_sur. fold A_mcnf.
-      rewrite Mcnf.force_zip_merge_and.
+      repeat (autorewrite with list ct prop; cbn).
       split...
-      cbn. autorewrite with list prop in *.
-      exists (Lit.Pos k)...
-    + subst l. right.
+    + right.
       apply (IHB w0 (Atom.succ k) kA)...
       unfold from_nnf_with_sur. fold B_mcnf.
-      rewrite Mcnf.force_zip_merge_and.
+      repeat (autorewrite with list ct prop; cbn).
       split...
-      cbn. autorewrite with list prop in *.
-      exists (Lit.Pos (Atom.succ k))...
 
   (* box *)
   - cbn in Hmnk_lt.
@@ -1143,28 +1117,24 @@ Proof with try finish.
     cbn [from_n_nnf] in Hforce_mcnf.
 
     Nnf.destruct_lit phi. {
-      repeat (cbn in Hforce_mcnf; autorewrite with list prop in Hforce_mcnf).
-      cbn.
-      destruct Hforce_mcnf as [[l' [[Hnl | F] Hforce_l]] Hforce_nl]...
-      subst l'. cbn in Hforce_l. apply Hforce_nl...
+      repeat (cbn in Hforce_mcnf; autorewrite with list ct prop in Hforce_mcnf).
+      cbn. now apply Hforce_mcnf.
     }
 
     destruct_pair in Hforce_mcnf as [A_mcnf kA].
     cbn [fst] in Hforce_mcnf.
 
-    rewrite Mcnf.force_zip_merge_and in Hforce_mcnf.
-    cbn in Hforce_mcnf. autorewrite with list prop in *.
+    repeat (cbn in Hforce_mcnf; autorewrite with list ct prop in Hforce_mcnf).
     destruct Hforce_mcnf as [Hforce_n [Hforce_n_k Hforce_w1]].
 
-    destruct Hforce_n as [l [[Hnl | F] Hforce_n]]... subst l.
-    cbn in Hforce_n_k. forward Hforce_n_k by assumption.
+    forward Hforce_n_k by assumption.
 
     cbn. intros w1 HR_w1.
     apply (IHphi w1 k (Atom.succ k))...
     unfold from_nnf_with_sur. rewrite Mcnf.force_zip_merge_and.
     split...
-    cbn. autorewrite with list prop. cbn.
-    exists (Lit.Pos k)...
+    cbn. autorewrite with list ct prop. cbn.
+    now apply Hforce_n_k.
 
   (* dia *)
   - cbn in Hmnk_lt.
@@ -1172,35 +1142,30 @@ Proof with try finish.
     cbn [from_n_nnf] in Hforce_mcnf.
 
     Nnf.destruct_lit phi. {
-      repeat (cbn in Hforce_mcnf; autorewrite with list prop in Hforce_mcnf).
-      cbn.
-      destruct Hforce_mcnf as [[l' [[Hnl | F] Hforce_l]] Hforce_nl]...
-      subst l'. cbn in Hforce_l. apply Hforce_nl...
+      repeat (cbn in Hforce_mcnf; autorewrite with list ct prop in Hforce_mcnf).
+      cbn. now apply Hforce_mcnf.
     }
 
     destruct_pair in Hforce_mcnf as [A_mcnf kA].
     cbn [fst] in Hforce_mcnf.
 
-    rewrite Mcnf.force_zip_merge_and in Hforce_mcnf.
-    cbn in Hforce_mcnf. autorewrite with list prop in *.
+    repeat (cbn in Hforce_mcnf; autorewrite with list ct prop in Hforce_mcnf).
     destruct Hforce_mcnf as [Hforce_n [Hforce_n_k Hforce_w1]].
 
-    destruct Hforce_n as [l [[Hnl | F] Hforce_n]]... subst l.
-    cbn in Hforce_n_k. forward Hforce_n_k by assumption.
+    forward Hforce_n_k by assumption.
     destruct Hforce_n_k as [w1 [HR_w1 Hforce_k]].
 
     cbn. exists w1. split...
     apply (IHphi w1 k (Atom.succ k))...
     unfold from_nnf_with_sur. rewrite Mcnf.force_zip_merge_and.
     split...
-    cbn. autorewrite with list prop. cbn.
-    exists (Lit.Pos k)...
+    cbn. autorewrite with list ct prop. apply Hforce_k.
 Qed.
 
 
 Corollary sat_mcnf_to_nnf :
   forall (phi : Nnf.t), Mcnf.satisfiable (from_nnf phi) -> Nnf.satisfiable phi.
-Proof with simpl; try autolia; auto.
+Proof with simpl; try lia; auto.
   intros phi Hmcnf_sat.
 
   unfold Mcnf.satisfiable in Hmcnf_sat.

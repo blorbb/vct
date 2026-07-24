@@ -6,13 +6,48 @@ Definition t : Type := list Lit.t.
 
 
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
-  exists l, List.In l phi /\ Lit.force M w0 l.
-
-Arguments force {W R} M w0 phi /.
-
+  List.Exists (Lit.force M w0) phi.
+Arguments force : simpl never.
 
 Definition cpl_forceb (val : Valuation.t) (phi : t) : bool :=
   List.existsb (Lit.cpl_forceb val) phi.
+Arguments cpl_forceb : simpl never.
+
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
+  List.In p (List.map Lit.atm phi).
+Arguments atm_in : simpl never.
+
+
+Lemma force_exists : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t),
+  force M w0 phi <-> exists l, List.In l phi /\ Lit.force M w0 l.
+Proof. intros *. unfold force. now rewrite List.Exists_exists. Qed.
+
+Lemma force_nil : forall {W} {R} (M : @Kripke.t W R) (w0 : W),
+  force M w0 [] <-> False.
+Proof. unfold force. now setoid_rewrite List.Exists_nil. Qed.
+Global Hint Rewrite @force_nil : ct.
+
+Lemma force_cons : forall {W} {R} (M : @Kripke.t W R) (w0 : W) l tl,
+  force M w0 (l::tl) <-> Lit.force M w0 l \/ force M w0 tl.
+Proof. intros *. unfold force. now rewrite List.Exists_cons. Qed.
+Global Hint Rewrite @force_cons : ct.
+
+Lemma forceb_exists : forall V phi,
+  cpl_forceb V phi <-> exists l, List.In l phi /\ Lit.cpl_forceb V l.
+Proof. unfold cpl_forceb. now setoid_rewrite existsb_exists. Qed.
+
+Lemma atm_in_exists : forall p phi,
+  atm_in p phi <-> exists l, List.In l phi /\ Lit.atm_in p l.
+Proof. unfold atm_in. setoid_rewrite List.in_map_iff. now setoid_rewrite (and_comm (In _ _)). Qed.
+
+Lemma atm_in_nil : forall p, atm_in p [] <-> False.
+Proof. intros. now unfold atm_in. Qed.
+Global Hint Rewrite atm_in_nil : ct.
+
+Lemma atm_in_cons : forall p l tl, atm_in p (l::tl) <-> Lit.atm_in p l \/ atm_in p tl.
+Proof. intros. now unfold atm_in. Qed.
+Global Hint Rewrite atm_in_cons : ct.
+
 
 
 Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V phi,
@@ -20,21 +55,19 @@ Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V phi,
   force M w0 phi <-> cpl_forceb V phi.
 Proof with try easy; auto.
   intros * HV. unfold Valuation.forces_atm in HV. split.
-  - cbn. intros [l [Hl_in Hforce_l]].
-    unfold cpl_forceb.
-    =rewrite existsb_exists. exists l. split...
+  - rewrite force_exists.
+    intros [l [Hl_in Hforce_l]].
+    rewrite forceb_exists.
+    exists l. split...
     rewrite Lit.force_cpl_forceb with (V := V) in Hforce_l...
   - cbn. intros Hforceb.
-    unfold cpl_forceb in Hforceb. =rewrite existsb_exists in Hforceb.
+    rewrite forceb_exists in Hforceb.
     destruct Hforceb as [l [Hl_in Hforce_l]].
+    rewrite force_exists.
     exists l. split... rewrite Lit.force_cpl_forceb with (V := V)...
 Qed.
 
 
-Definition atm_in (p : Atom.t) (phi : t) : Prop :=
-  List.In p (List.map Lit.atm phi).
-
-Arguments atm_in p phi /.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
@@ -57,7 +90,8 @@ Proof with simpl; auto.
     destruct l as [p | p]; simpl; rewrite Hagree; tauto.
   }
 
-  simpl. split.
+  unfold force. setoid_rewrite List.Exists_exists.
+  split.
   - intros [l [Hl_in Hforce_l]].
     exists l. split...
     apply Heq_lit...
@@ -91,12 +125,10 @@ Lemma force_singleton : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (l : Lit.t),
   CplClause.force M w0 (from_lit l) <->
   Lit.force M w0 l.
 Proof.
-  intros *. split.
-  - intros Hforce_clause. cbn in Hforce_clause.
-    destruct Hforce_clause as [l' [[Hl_l' | F] Hforce_l']]; subst; easy.
-  - intros Hforce_lit. cbn.
-    exists l. auto.
+  intros *. unfold force, from_lit.
+  rewrite Exists_singleton. reflexivity.
 Qed.
+Hint Rewrite @force_singleton : ct.
 
 
 Global Instance proper_cpl_forceb (clause : t) :
@@ -113,6 +145,6 @@ Lemma force_local : forall {W} {R1 R2} (M1 : @Kripke.t W R1) (M2 : @Kripke.t W R
   Kripke.valuation M1 = Kripke.valuation M2 ->
   force M1 w0 phi <-> force M2 w0 phi.
 Proof.
-  intros * HV. cbn.
+  intros * HV. unfold force. setoid_rewrite List.Exists_exists.
   setoid_rewrite Lit.force_local; easy.
 Qed.

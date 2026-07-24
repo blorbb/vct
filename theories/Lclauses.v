@@ -22,16 +22,14 @@ Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   Cnf.force M w0 (cpls phi) /\
   List.Forall (BoxClause.force M w0) (boxes phi) /\
   List.Forall (DiaClause.force M w0) (dias phi).
-
-Arguments force {W R} M w0 phi /.
+Arguments force {W} {R} M w0 !phi.
 
 
 Definition atm_in (p : Atom.t) (phi : t) : Prop :=
   List.Exists (CplClause.atm_in p) (cpls phi) \/
   List.Exists (BoxClause.atm_in p) (boxes phi) \/
   List.Exists (DiaClause.atm_in p) (dias phi).
-
-Arguments atm_in p phi /.
+Arguments atm_in p !phi.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
@@ -41,79 +39,33 @@ Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
 Lemma meaningful_valuations :
   forall {W} {R} (M M' : @Kripke.t W R) (phi : t) (w0 : W),
   agree phi M M' -> (force M w0 phi <-> force M' w0 phi).
-Proof with try solve [simpl; auto; tauto].
+Proof with try easy; auto.
   intros W R M M' phi w0 Hagree.
   destruct phi as [cpls boxes dias].
 
-  unfold agree in Hagree.
-  cbn in Hagree.
+  unfold agree, atm_in in Hagree.
+  setoid_rewrite List.Exists_exists in Hagree.
+  unfold force. cbn in *.
+  repeat rewrite List.Forall_forall.
+  repeat rewrite Cnf.force_forall.
 
-  cbn. split.
+  split.
   - intros [Hc [Hb Hd]].
-    repeat split.
-
-    (* cpl *)
-    + apply List.Forall_forall.
-      intros cpl Hin.
-      apply (CplClause.meaningful_valuations M M').
-      * unfold CplClause.agree.
-        intros w x Hx_in_cpl.
-        apply Hagree. left.
-        apply List.Exists_exists. exists cpl...
-      * rewrite List.Forall_forall in Hc. apply Hc...
-
-      (* box *)
-    + apply List.Forall_forall.
-      intros box Hin.
-      apply (BoxClause.meaningful_valuations M M').
-      * unfold BoxClause.agree.
-        intros w x Hx_in_box.
-        apply Hagree. right. left.
-        apply List.Exists_exists. exists box...
-      * rewrite List.Forall_forall in Hb. apply Hb...
-
-    (* dia *)
-    + apply List.Forall_forall.
-      intros dia Hin.
-      apply (DiaClause.meaningful_valuations M M').
-      * unfold DiaClause.agree.
-        intros w x Hx_in_dia.
-        apply Hagree. right. right.
-        apply List.Exists_exists. exists dia...
-      * rewrite List.Forall_forall in Hd. apply Hd...
-
+    repeat split; intros cl Hcl_in.
+    + apply (CplClause.meaningful_valuations M M')...
+      intros w p Hp_in. apply Hagree. left. exists cl...
+    + apply (BoxClause.meaningful_valuations M M')...
+      intros w p Hp_in. apply Hagree. right. left. exists cl...
+    + apply (DiaClause.meaningful_valuations M M')...
+      intros w p Hp_in. apply Hagree. right. right. exists cl...
   - intros [Hc [Hb Hd]].
-    repeat split.
-
-    (* cpl *)
-    + apply List.Forall_forall.
-      intros cpl Hin.
-      apply (CplClause.meaningful_valuations M M').
-      * unfold CplClause.agree.
-        intros w x Hx_in_cpl.
-        apply Hagree. left.
-        apply List.Exists_exists. exists cpl...
-      * rewrite List.Forall_forall in Hc. apply Hc...
-
-      (* box *)
-    + apply List.Forall_forall.
-      intros box Hin.
-      apply (BoxClause.meaningful_valuations M M').
-      * unfold BoxClause.agree.
-        intros w x Hx_in_box.
-        apply Hagree. right. left.
-        apply List.Exists_exists. exists box...
-      * rewrite List.Forall_forall in Hb. apply Hb...
-
-    (* dia *)
-    + apply List.Forall_forall.
-      intros dia Hin.
-      apply (DiaClause.meaningful_valuations M M').
-      * unfold DiaClause.agree.
-        intros w x Hx_in_dia.
-        apply Hagree. right. right.
-        apply List.Exists_exists. exists dia...
-      * rewrite List.Forall_forall in Hd. apply Hd...
+    repeat split; intros cl Hcl_in.
+    + apply (CplClause.meaningful_valuations M M')...
+      intros w p Hp_in. apply Hagree. left. exists cl...
+    + apply (BoxClause.meaningful_valuations M M')...
+      intros w p Hp_in. apply Hagree. right. left. exists cl...
+    + apply (DiaClause.meaningful_valuations M M')...
+      intros w p Hp_in. apply Hagree. right. right. exists cl...
 Qed.
 
 
@@ -152,7 +104,7 @@ Qed.
 (** Merge two sets of local clauses into one. *)
 Definition merge (A B : t) : t :=
   make (cpls A ++ cpls B) (boxes A ++ boxes B) (dias A ++ dias B).
-
+Arguments merge : simpl never.
 
 Lemma force_merge_and : forall {W} {R} {M : @Kripke.t W R} {w0 : W} (A B : t),
   force M w0 (merge A B) <-> force M w0 A /\ force M w0 B.
@@ -161,9 +113,9 @@ Proof.
   destruct A as [cpls boxes dias].
 
   unfold force, merge; cbn.
-  repeat rewrite List.Forall_app.
-  intuition.
-Qed.
+  autorewrite with list ct.
+  tauto.
+Qed. Global Hint Rewrite @force_merge_and : ct.
 
 
 Lemma in_merge_or : forall (A B : t) (p : Atom.t),
@@ -172,13 +124,67 @@ Proof.
   intros *.
   destruct A as [Acpls Aboxes Adias].
   destruct B as [Bcpls Bboxes Bdias].
-  unfold merge.
-  cbn. repeat rewrite Exists_app. tauto.
-Qed.
+  unfold merge, atm_in.
+  cbn. autorewrite with list. tauto.
+Qed. Global Hint Rewrite in_merge_or : ct.
 
 
 Lemma force_cpls_app : forall {W} {R} (M : @Kripke.t W R) (w0 : W) app cpls boxes dias,
-  force M w0 (Lclauses.make (app++cpls) boxes dias) <-> Cnf.force M w0 app /\ force M w0 (Lclauses.make cpls boxes dias).
+  force M w0 (make (app++cpls) boxes dias) <-> Cnf.force M w0 app /\ force M w0 (make cpls boxes dias).
 Proof.
-  intros *. cbn. rewrite List.Forall_app. tauto.
+  intros *. unfold force. cbn. rewrite Cnf.force_app. tauto.
+Qed. Global Hint Rewrite @force_cpls_app : ct.
+
+Lemma force_cpls_cons : forall {W} {R} (M : @Kripke.t W R) (w0 : W) cl cpls boxes dias,
+  force M w0 (make (cl::cpls) boxes dias) <-> CplClause.force M w0 cl /\ force M w0 (make cpls boxes dias).
+Proof.
+  intros *.
+  change (cl::cpls0) with ([cl]++cpls0).
+  rewrite force_cpls_app with (app := [cl]).
+  now rewrite Cnf.force_singleton.
+Qed. Global Hint Rewrite @force_cpls_cons : ct.
+
+Lemma force_empty : forall {W} {R} (M : @Kripke.t W R) (w0 : W),
+  force M w0 empty <-> True.
+Proof.
+  intros *. cbn. unfold force. cbn. now autorewrite with list ct prop.
 Qed.
+Global Hint Rewrite @force_empty : ct.
+
+Lemma force_cpls : forall {W} {R} (M : @Kripke.t W R) (w0 : W) cpls,
+  force M w0 (make_cpls cpls) <-> Cnf.force M w0 cpls.
+Proof.
+  unfold force. cbn. now autorewrite with list prop.
+Qed. Global Hint Rewrite @force_cpls : ct.
+
+
+Lemma force_destruct : forall {W} {R} (M : @Kripke.t W R) (w0 : W) cpls boxes dias,
+  force M w0 (make cpls boxes dias) <->
+  Cnf.force M w0 cpls /\
+  List.Forall (BoxClause.force M w0) boxes /\
+  List.Forall (DiaClause.force M w0) dias.
+Proof. unfold force. reflexivity. Qed.
+
+Lemma force_destruct_forall : forall {W} {R} (M : @Kripke.t W R) (w0 : W) cpls boxes dias,
+  force M w0 (make cpls boxes dias) <->
+  (forall cl : CplClause.t, In cl cpls -> CplClause.force M w0 cl) /\
+  (forall bcl : BoxClause.t, In bcl boxes -> BoxClause.force M w0 bcl) /\
+  (forall dcl : DiaClause.t, In dcl dias -> DiaClause.force M w0 dcl).
+Proof.
+  intros *. rewrite force_destruct.
+  rewrite Cnf.force_forall. repeat rewrite List.Forall_forall.
+  reflexivity.
+Qed.
+
+Lemma atm_in_cpls : forall p cpls,
+  atm_in p (make_cpls cpls) <-> List.Exists (CplClause.atm_in p) cpls.
+Proof. intros. unfold atm_in. cbn. now autorewrite with list prop. Qed.
+Global Hint Rewrite atm_in_cpls : ct.
+
+Lemma atm_in_destruct : forall p cpls boxes dias,
+  atm_in p (make cpls boxes dias) <->
+  List.Exists (CplClause.atm_in p) cpls \/
+  List.Exists (BoxClause.atm_in p) boxes \/
+  List.Exists (DiaClause.atm_in p) dias.
+Proof. now unfold atm_in. Qed.
+Global Hint Rewrite atm_in_destruct : ct.

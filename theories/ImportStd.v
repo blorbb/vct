@@ -6,7 +6,7 @@ Open Scope list_scope.
 From Stdlib Require Export
   Relations Program Wellfounded
   Lia RelationClasses SetoidList Permutation SetoidPermutation
-  FunInd Recdef PeanoNat Nat Program.Wf Classical.
+  FunInd Recdef PeanoNat Nat Program.Wf Classical Zify.
 From Equations Require Export Equations.
 Require Export Equations.Prop.Logic.
 

@@ -8,13 +8,29 @@ Definition t := list CplClause.t.
 (** Whether a CNF formula is forced at a particular world. *)
 Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
   List.Forall (CplClause.force M w0) phi.
-
-Arguments force {W R} M w0 phi /.
-
+Arguments force : simpl never.
 
 (** Whether a particular _classical_ valuation forces this formula. *)
 Definition cpl_forceb (V : Valuation.t) (phi : t) : bool :=
   List.forallb (CplClause.cpl_forceb V) phi.
+Arguments cpl_forceb : simpl never.
+
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
+  List.Exists (CplClause.atm_in p) phi.
+Arguments atm_in : simpl never.
+
+
+Lemma force_forall : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t),
+  force M w0 phi <-> forall clause, List.In clause phi -> CplClause.force M w0 clause.
+Proof. unfold force. now setoid_rewrite List.Forall_forall. Qed.
+
+Lemma forceb_forall : forall V phi,
+  cpl_forceb V phi <-> forall clause, List.In clause phi -> CplClause.cpl_forceb V clause.
+Proof. unfold cpl_forceb. now setoid_rewrite forallb_forall. Qed.
+
+Lemma atm_in_exists : forall p phi,
+  atm_in p phi <-> exists clause, List.In clause phi /\ CplClause.atm_in p clause.
+Proof. unfold atm_in. now setoid_rewrite List.Exists_exists. Qed.
 
 
 (* TODO: maybe add a [atm_in p phi] premise? *)
@@ -23,21 +39,14 @@ Lemma force_cpl_forceb : forall {W} {R} (M : @Kripke.t W R) w0 V phi,
   force M w0 phi <-> cpl_forceb V phi.
 Proof with try easy; auto.
   intros * HV.
-  cbn. unfold cpl_forceb. =rewrite List.Forall_forall, List.forallb_forall.
-  split.
-  - intros Hforce clause Hclause_in.
-    setoid_rewrite CplClause.force_cpl_forceb with (V := V) in Hforce...
-    apply Hforce...
-  - intros Hforceb clause Hclause_in.
-    rewrite CplClause.force_cpl_forceb with (V := V)...
+  rewrite force_forall, forceb_forall.
+  setoid_rewrite CplClause.force_cpl_forceb...
 Qed.
 
-
-Definition atm_in (p : Atom.t) (phi : t) : Prop :=
-  List.Exists (CplClause.atm_in p) phi.
-
-Arguments atm_in p phi /.
-
+Lemma atm_in_cons : forall p hd tl,
+  atm_in p (hd::tl) <-> CplClause.atm_in p hd \/ atm_in p tl.
+Proof. unfold atm_in. now setoid_rewrite List.Exists_cons. Qed.
+Global Hint Rewrite atm_in_cons : ct.
 
 (** Creates a CNF formula from unit assumptions.
 
@@ -82,18 +91,12 @@ Proof.
   intros phi p.
   destruct phi as [| head tail].
   - cbn. apply List.Exists_nil.
-  - cbn. rewrite List.nodup_In, List.Exists_cons, List.in_app_iff, List.Exists_exists.
-    split.
-    + intro Hxin.
-      destruct Hxin as [Hxhead | [clause [Hclause_in_tail Hx_in_clause]]].
-      * left. cbn in Hxhead. exact Hxhead.
-      * right. apply List.in_flat_map.
-        exists clause. cbn in Hx_in_clause. split; assumption.
-    + intros [Hxhead | Hxtail].
-      * left. cbn. exact Hxhead.
-      * right. apply List.in_flat_map in Hxtail.
-        destruct Hxtail as [clause [Hclause_in_tail Hx_in_clause]].
-        exists clause. cbn. split; assumption.
+  - cbn.
+    rewrite atm_in_cons, List.nodup_In, List.in_app_iff.
+    rewrite CplClause.atm_in_exists, atm_in_exists, List.in_map_iff, List.in_flat_map.
+    setoid_rewrite (and_comm (In _ head)).
+    setoid_rewrite List.in_map_iff.
+    tauto.
 Qed. Hint Resolve in_atms_of : ct.
 
 
@@ -130,18 +133,35 @@ Proof.
 Qed.
 
 
+Lemma force_nil : forall {W} {R} (M : @Kripke.t W R) (w0 : W),
+  force M w0 [] <-> True.
+Proof. intros *. unfold force. now rewrite Forall_nil_iff. Qed.
+Global Hint Rewrite @force_nil : ct.
 
 Lemma force_app : forall A B {W} {R} (M : @Kripke.t W R) (w0 : W),
   Cnf.force M w0 (A ++ B) <-> Cnf.force M w0 A /\ Cnf.force M w0 B.
 Proof.
   intros. unfold force. apply List.Forall_app.
-Qed. Global Hint Resolve force_app : ct.
+Qed. Global Hint Rewrite force_app : ct.
 
+Lemma forceb_app : forall V A B,
+  Cnf.cpl_forceb V (A ++ B) <-> Cnf.cpl_forceb V A /\ Cnf.cpl_forceb V B.
+Proof.
+  intros *. unfold cpl_forceb. rewrite forallb_app.
+  now =rewrite Bool.andb_true_iff.
+Qed. Global Hint Rewrite forceb_app : ct.
+
+Lemma force_map : forall {A} {W} {R} (M : @Kripke.t W R) (w0 : W) (f : A -> CplClause.t) (xs : list A),
+  Cnf.force M w0 (List.map f xs) <-> forall x, List.In x xs -> CplClause.force M w0 (f x).
+Proof.
+  unfold force. setoid_rewrite List.Forall_map.
+  now setoid_rewrite List.Forall_forall.
+Qed.
 
 Lemma force_from_assumptions : forall {W} {R} (M : @Kripke.t W R) (w0 : W) A,
   Cnf.force M w0 (Cnf.from_assumptions A) <-> List.Forall (Lit.force M w0) A.
 Proof.
-  intros *. cbn. unfold from_assumptions.
+  intros *. cbn. unfold from_assumptions, force.
   rewrite List.Forall_map.
   repeat rewrite List.Forall_forall.
   setoid_rewrite CplClause.force_singleton.
@@ -173,23 +193,14 @@ Definition logically_equivalent A B := forall W R (M : @Kripke.t W R) (w0 : W),
 Lemma force_singleton : forall {W} {R} (M : @Kripke.t W R) (w0 : W) clause,
   Cnf.force M w0 [clause] <-> CplClause.force M w0 clause.
 Proof.
-  intros *. cbn. split.
-  - intros Hforce.
-    rewrite List.Forall_forall in Hforce.
-    apply Hforce.
-    now apply In_singleton.
-  - rewrite List.Forall_forall.
-    intros Hforce clause' Hclause'.
-    rewrite In_singleton in Hclause'. subst.
-    apply Hforce.
-Qed.
+  intros *. unfold force. now rewrite Forall_singleton.
+Qed. Global Hint Rewrite @force_singleton : ct.
 
 
 Lemma force_local : forall {W} {R1 R2} (M1 : @Kripke.t W R1) (M2 : @Kripke.t W R2) (w0 : W) (phi : t),
   Kripke.valuation M1 = Kripke.valuation M2 ->
   force M1 w0 phi <-> force M2 w0 phi.
 Proof.
-  intros * HV. cbn.
-  repeat rewrite List.Forall_forall.
+  intros * HV. cbn. repeat rewrite force_forall.
   setoid_rewrite CplClause.force_local; easy.
 Qed.

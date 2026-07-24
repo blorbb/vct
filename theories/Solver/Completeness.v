@@ -10,12 +10,19 @@ Lemma singleton_tree_force : forall s0 A V cpls boxes mc1,
   Mcnf.force Tree.as_kripke (Tree.make V [])
     (add_assumptions (Lclauses.make cpls boxes [] :: mc1) A).
 Proof with try easy; auto with datatypes ct.
-  intros * Hsat Hcpls. cbn. repeat rewrite List.Forall_forall. repeat split...
-  intros clause Hclause_in.
-  rewrite CplClause.force_cpl_forceb with (V := V)...
+  intros * Hsat Hcpls.
+  cbn. rewrite Lclauses.force_destruct.
+  autorewrite with ct list prop.
   pose proof (CplSolver.solution_completeness s0 A V Hsat) as Hforce.
-  unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. =rewrite forallb_forall in Hforce.
-  apply Hforce. subst cpls. exact Hclause_in.
+  unfold CplSolver.solved_clauses in Hforce.
+  apply Cnf.forceb_app in Hforce as [Hforce_A Hforce_cpls].
+  rewrite Hcpls in Hforce_cpls.
+  repeat split...
+  - rewrite Cnf.force_cpl_forceb with (V := V)...
+  - rewrite Cnf.force_cpl_forceb with (V := V)...
+  - rewrite List.Forall_forall.
+    intros (a,b) Hab_in Hval_a w1 HR_w1.
+    cbn in HR_w1. contradiction.
 Qed.
 
 
@@ -25,7 +32,7 @@ Lemma force_no_assumptions : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 A,
 Proof.
   intros * Hforce. destruct mc0 as [|l0 mc1].
   - cbn. apply I.
-  - cbn in *. intuition. rewrite List.Forall_app in H1. apply (proj2 H1).
+  - cbn in *. autorewrite with ct in *. tauto.
 Qed.
 
 
@@ -43,7 +50,9 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   - inv_clear Hsat. eapply singleton_tree_force... exact Hcpl_sat.
   (* Model forces [cpls,boxes,dias'::mc1]. [(c,d)::dias'] is also forced as c is unfired. *)
   - specialize (H A T1s Hsat IHnt Hcpl_sat).
-    cbn in H |- *. repeat split...
+    cbn in H |- *. autorewrite with ct in *.
+    rewrite Lclauses.force_destruct in *.
+    repeat split...
     apply List.Forall_cons... cbn.
     intros Hforce_c. rewrite Heq in Hforce_c. discriminate.
   - discriminate.
@@ -51,7 +60,7 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   - inversion Hsat as [HT1s]. rename T1s0 into T1s, T1s into T1s', T1 into T1d. clear Hsat.
     cbn -[Mcnf.force].
 
-    cbn [Lclauses.cpls] in Hcpl_sat.
+    unfold cpl_from_lclauses in Hcpl_sat. cbn [Lclauses.cpls] in Hcpl_sat.
     specialize (Hind A T1s').
     forward Hind by exact Heq.
     forward Hind by exact IHnt.
@@ -59,16 +68,17 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
 
     (* Hind and IHnt are useful both simplified and unsimplified. *)
     pose proof Hind as H'.
-    cbn in H'. repeat rewrite List.Forall_forall in H'.
+    cbn in H'. rewrite Lclauses.force_destruct_forall in H'.
     destruct H' as [[Hforce_cpls [Hforce_boxes Hforce_dias]] Hforce_mc1].
 
     specialize (IHnt (d::fired_boxes (Lclauses.make cpls boxes dias'::mc1) V) T1d).
     forward IHnt by symmetry; exact Heq0.
     pose proof IHnt as H'.
-    cbn in H'. repeat rewrite List.Forall_forall in H'.
+    cbn in H'. rewrite Lclauses.force_destruct_forall in H'.
     destruct H' as [[HT1d_force_cpls [HT1d_force_boxes HT1d_force_dias]] HT1d_force_mc2].
 
-    cbn. repeat rewrite List.Forall_forall. repeat split.
+    cbn. rewrite Lclauses.force_destruct_forall.
+    repeat split.
     + tauto.
     + intros (a,b) Hab_in H0_force_a T1_b HR_T1. cbn [fst snd] in *.
       cbn in HR_T1. rewrite List.in_app_iff in HR_T1.
@@ -81,18 +91,16 @@ Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
           rewrite List.map_map. rewrite List.in_map_iff. exists (a, b). split...
           apply List.filter_In. split...
         }
-        cbn in HT1d_force_cpls.
-        destruct HT1d_force_cpls as [b' [Hb'_eq_b Hforce_b]].
-        destruct Hb'_eq_b... subst b'. exact Hforce_b.
+        autorewrite with ct prop in HT1d_force_cpls.
+        exact HT1d_force_cpls.
     + intros (a,b) Hab_in H0_force_a. cbn [fst snd] in *.
       destruct Hab_in as [Hab_cd | Hab_dias'].
       * inversion Hab_cd. subst a b. clear Hab_cd.
         exists T1d. split...
         specialize (HT1d_force_cpls [d]).
         forward HT1d_force_cpls by now left.
-        cbn in HT1d_force_cpls.
-        destruct HT1d_force_cpls as [d' [Hd'_eq_d Hforce_d]].
-        destruct Hd'_eq_d... subst d'. exact Hforce_d.
+        autorewrite with ct prop in HT1d_force_cpls.
+        exact HT1d_force_cpls.
       * specialize (Hforce_dias (a,b) Hab_dias').
         cbn in Hforce_dias. forward Hforce_dias by exact H0_force_a.
         destruct Hforce_dias as [T1 [HT1_in HT1_force_b]].
@@ -112,8 +120,11 @@ Proof with try easy; auto with datatypes ct.
 
   funelim (Spec.tableau mc0 (cplsolver_mcnf mc0) A); rewrite <- Heqcall in Hsat.
   - discriminate.
-  - clear H. inversion_clear Hsat. cbn. intuition.
-    rewrite List.Forall_forall. intros clause Hclause_in.
+  - clear H. inversion_clear Hsat. cbn. split...
+    rewrite Lclauses.force_destruct_forall.
+    setoid_rewrite In_nil_iff. intuition.
+    rename H into Hclause_in.
+
     rewrite CplClause.force_cpl_forceb with (V:=V)...
     set (s0 := CplSolver.make_with_clauses (first_cpls [])) in *.
     pose proof (CplSolver.solution_completeness s0 A V Hcsol_eq) as Hforce.
@@ -126,9 +137,8 @@ Proof with try easy; auto with datatypes ct.
     destruct (Spec.tableau _ _ _) eqn:Htab_cs... inv_clear Hsat.
     (* H assumes that T forces an over constrained formula. *)
     specialize (H _ _ T Htab_cs eq_refl (eq_sym Htab_cs)).
-    cbn in H |- *. intuition.
-    eapply incl_Forall. 2: { exact H. }
-    apply List.incl_app...
+    cbn in H |- *.
+    autorewrite with ct in *. split...
 Qed.
 
 

@@ -12,6 +12,19 @@ Proof.
   intros *. cbn. intuition.
 Qed. Global Hint Rewrite @In_singleton : list.
 
+Lemma Exists_singleton : forall {A} (P : A -> Prop) (x : A),
+  List.Exists P [x] <-> P x.
+Proof. intros *. rewrite Exists_cons, Exists_nil. tauto. Qed.
+Global Hint Rewrite @Exists_singleton : list.
+
+Lemma Forall_singleton : forall {A} (P : A -> Prop) (x : A),
+  List.Forall P [x] <-> P x.
+Proof. intros *. rewrite Forall_cons_iff, Forall_nil_iff. tauto. Qed.
+Global Hint Rewrite @Forall_singleton : list.
+
+Lemma In_nil_iff : forall {A} (a : A), List.In a [] <-> False.
+Proof. reflexivity. Qed.
+Global Hint Rewrite @In_nil_iff : list.
 
 Lemma ex_eqA_iff_inA : forall {A} (eqA : relation A) (x : A) (l : list A),
   List.Exists (eqA x) l <-> InA eqA x l.
@@ -387,12 +400,6 @@ Proof.
   - cbn. reflexivity.
   - cbn. rewrite Bool.negb_orb, IHl. reflexivity.
 Qed.
-
-
-Lemma Exists_singleton : forall {A} (P : A -> Prop) (x : A),
-  List.Exists P [x] <-> P x.
-Proof. intros *. rewrite Exists_cons, Exists_nil. tauto. Qed.
-Hint Rewrite @Exists_singleton : list.
 
 
 Definition is_prefix {A} (prefix l : list A) := exists suffix, prefix++suffix = l.

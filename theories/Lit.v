@@ -190,8 +190,7 @@ Qed.
 
 
 Definition atm_in (p : Atom.t) (phi : t) : Prop :=
-  p = atm phi.
-
+  atm phi = p.
 Arguments atm_in p phi /.
 
 
@@ -235,13 +234,14 @@ Qed.
 
 (* Requires classical logic. *)
 Lemma not_force_negate : forall {W} {R} (M : @Kripke.t W R) (w0 : W) l,
-  ~ Lit.force M w0 l <-> Lit.force M w0 (Lit.negate l).
+  Lit.force M w0 (Lit.negate l) <-> ~ Lit.force M w0 l.
 Proof.
   intros *. split.
+  - intros Hforcen Hforce. destruct l; auto.
   - intros Hnforce. destruct l; auto.
     cbn in *. tauto.
-  - intros Hforcen Hforce. destruct l; auto.
 Qed.
+Global Hint Rewrite @not_force_negate : ct.
 
 
 Module Ordered <: Orders.UsualOrderedTypeFull.

@@ -17,10 +17,13 @@ Fixpoint force {W} {R} (M : @Kripke.t W R) (w0 : W) (phi : t) : Prop :=
     forall w1, R w0 w1 -> force M w1 tail
   end.
 
+Definition atm_in (p : Atom.t) (phi : t) : Prop :=
+  List.Exists (Lclauses.atm_in p) phi.
+Arguments atm_in : simpl never.
+
 
 Definition satisfiable (phi : t) : Prop :=
   exists W R (M : @Kripke.t W R) (w0 : W), force M w0 phi.
-
 
 Definition unsatisfiable (phi : t) : Prop :=
   ~ satisfiable phi.
@@ -32,13 +35,12 @@ Definition unsatisfiable_kt (phi : t) : Prop :=
   ~ satisfiable_kt phi.
 
 
-Definition atm_in (p : Atom.t) (phi : t) : Prop := List.Exists (Lclauses.atm_in p) phi.
-
-Arguments atm_in p phi /.
-
-
+Lemma atm_in_nil : forall p, Mcnf.atm_in p [] <-> False.
+Proof. intros. unfold atm_in. now rewrite List.Exists_nil. Qed.
+Global Hint Rewrite atm_in_nil : ct.
 Lemma atm_in_cons : forall p l0 mc1, Mcnf.atm_in p (l0::mc1) <-> Lclauses.atm_in p l0 \/ Mcnf.atm_in p mc1.
-Proof. intros. cbn. rewrite Exists_cons. reflexivity. Qed.
+Proof. intros. unfold atm_in. now rewrite Exists_cons. Qed.
+Global Hint Rewrite atm_in_cons : ct.
 
 
 Definition agree {W} {R} (phi : t) (M M' : @Kripke.t W R) : Prop :=
@@ -102,7 +104,6 @@ Fixpoint zip_merge (a b : t) : t :=
   | [], b => b
   end.
 
-
 Lemma force_zip_merge_and : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (A B : t),
   force M w0 (zip_merge A B) <-> force M w0 A /\ force M w0 B.
 Proof.
@@ -120,7 +121,7 @@ Proof.
     setoid_rewrite IHta.
     intuition (auto with solve_subterm).
 Qed.
-
+Global Hint Rewrite @force_zip_merge_and : ct.
 
 Lemma in_zip_merge_or :
   forall (A B : t) (p : Atom.t),
@@ -128,13 +129,16 @@ Lemma in_zip_merge_or :
 Proof.
   intros A B p. revert B.
   induction A as [| Al0 Amc1 IH]; intro B; destruct B as [|Bl0 Bmc1].
-  - cbn. autorewrite with list. tauto.
-  - cbn. autorewrite with list. tauto.
-  - cbn. autorewrite with list. tauto.
+  - cbn. now autorewrite with list ct prop.
+  - cbn. now autorewrite with list ct prop.
+  - cbn. now autorewrite with list ct prop.
   - cbn [zip_merge] in *.
     repeat rewrite atm_in_cons. rewrite Lclauses.in_merge_or.
     rewrite IH. tauto.
 Qed.
+Global Hint Rewrite in_zip_merge_or : ct.
+
+Arguments zip_merge : simpl never.
 
 
 (** * Helpers *)
@@ -159,8 +163,8 @@ Lemma force_first_ctx : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
 Proof.
   intros * Hforce.
   destruct mc0 as [|l0 mc1].
-  - cbn. auto.
-  - cbn in Hforce |- *. tauto.
+  - cbn. now apply Lclauses.force_empty.
+  - apply Hforce.
 Qed.
 
 
@@ -188,16 +192,17 @@ Lemma kt_force_unboxed : forall {W R} `{Reflexive W R} (M : @Kripke.t W R) (w0 :
   Cnf.force M w0 (List.map (fun '(a, b) => [Lit.Neg a; b]) boxes0).
 Proof.
   intros * Hrefl * Hf_boxes.
-  cbn. rewrite List.Forall_forall in *.
+  cbn. rewrite List.Forall_forall, Cnf.force_forall in *.
   intros cl Hcl_in.
   rewrite List.in_map_iff in Hcl_in.
   destruct Hcl_in as [[a b] [Hab Hab_in]].
   subst cl.
+  rewrite CplClause.force_exists.
 
   specialize (Hf_boxes (a,b) Hab_in). cbn in *.
   destruct (classic (Kripke.valuation M w0 a)) as [Hf_a | Hnf_b].
   - specialize (Hf_boxes Hf_a w0). forward Hf_boxes by reflexivity.
-    exists b. tauto.
+    exists b. cbn. tauto.
   - exists (Lit.Neg a). tauto.
 Qed.
 
@@ -211,16 +216,15 @@ Proof with try easy; auto.
   destruct l0 as [cpls0 boxes0 dias0].
   split.
   (* add -> unadded easy as add_kt only adds extra clauses *)
-  - cbn. unfold Lclauses.merge. cbn. autorewrite with list.
-    intros [[[[Hf_unboxed0 Hf_c0] Hf_c1] [[Hf_b0 Hf_b1] [Hf_d0 Hf_d1]]] Hf_w1].
+  - cbn. autorewrite with ct.
     setoid_rewrite <- IH. tauto.
 
-  - intros Hf.
-    cbn [add_kt force].
-    rewrite Lclauses.force_merge_and.
+  - intros Hf. cbn. autorewrite with ct.
     split; [split|].
     (* force unboxed + originals *)
-    + cbn in *. autorewrite with list. intuition. now apply kt_force_unboxed.
+    + split.
+      * apply kt_force_unboxed. apply Hf.
+      * apply Hf.
     (* force fst ctx of mc1 *)
     + apply force_first_ctx. apply IH.
       (* w0 forces mc1 by reflexivity *)
@@ -228,12 +232,13 @@ Proof with try easy; auto.
     + setoid_rewrite IH. apply Hf.
 Qed.
 
-Lemma add_kt_sound : forall phi,
+Corollary add_kt_sound : forall phi,
   satisfiable_kt phi -> satisfiable (add_kt phi).
 Proof.
   intros phi Hsatkt_phi. unfold satisfiable, satisfiable_kt in *.
   deex. exists W,R,M,w0. now rewrite add_kt_refl.
 Qed.
+
 
 Definition refl_closure {W} (R : relation W) : relation W :=
   fun w0 w1 => R w0 w1 \/ w0 = w1.
@@ -242,7 +247,6 @@ Global Instance refl_closure_refl : forall {W} (R : relation W), Reflexive (refl
 Proof. intros W R w. unfold refl_closure. now right. Qed.
 
 
-(* TODO: clean this up *)
 Lemma force_add_kt_next : forall {W R} (M : @Kripke.t W R) w0 mc0,
   force M w0 (add_kt mc0) ->
   force M w0 (add_kt (next_ctx mc0)).
@@ -250,13 +254,12 @@ Proof with try easy.
   intros *. revert w0. induction mc0 as [|l0 mc1 IH]...
   intros w0 Hfadd_mc0.
   destruct l0 as [cpls0 boxes0 dias0].
-  cbn in *. unfold Lclauses.merge in Hfadd_mc0. cbn in *.
-  autorewrite with list in Hfadd_mc0.
   destruct mc1 as [|l1 mc2]...
   destruct l1 as [cpls1 boxes1 dias1].
-  cbn in *. unfold Lclauses.merge in *. cbn in *.
-  autorewrite with list in *. split.
-  - repeat rewrite and_assoc in *. intuition.
+
+  cbn in *. autorewrite with ct in *.
+  split.
+  - apply Hfadd_mc0.
   - intros w1 HR_w1. apply IH. now apply Hfadd_mc0.
 Qed.
 
@@ -271,30 +274,32 @@ Proof with try easy.
   induction mc0 as [|l0 mc1 IH]...
 
   intros w0 Hfadd_mc0. destruct l0 as [cpls0 boxes0 dias0].
-  cbn -[Lclauses.force] in Hfadd_mc0.
-  rewrite Lclauses.force_merge_and in Hfadd_mc0.
-  rewrite Lclauses.force_cpls_app in Hfadd_mc0.
-  destruct Hfadd_mc0 as [[[Hf_unboxed [Hf_cs0 [Hf_bs0 Hf_ds0]]] Hfadd_l1] Hfadd_mc1].
-  cbn -[Lclauses.force] in * |-. rewrite List.Forall_map in Hf_unboxed.
+  cbn in Hfadd_mc0. autorewrite with ct in Hfadd_mc0.
+  rewrite Lclauses.force_destruct in Hfadd_mc0.
+
+  repeat rewrite and_assoc in Hfadd_mc0.
+  destruct Hfadd_mc0 as [Hf_unboxed [Hf_cpls0 [Hf_boxes0 [Hf_dias0 [Hfadd_l1 Hfadd_mc1]]]]].
 
   cbn. repeat split.
   - apply (Cnf.force_local M' M)...
 
-  - repeat rewrite List.Forall_forall in *.
+  - cbn.
+    rewrite Cnf.force_map in Hf_unboxed.
+    rewrite List.Forall_forall in Hf_boxes0 |- *.
 
     intros (a,b) Hab_in Hval_a w1 HR'_w1.
     specialize (Hf_unboxed (a,b) Hab_in).
-    cbn in Hf_unboxed.
+    cbn in Hf_unboxed. rewrite CplClause.force_exists in Hf_unboxed.
     destruct Hf_unboxed as [l [[Hl_a | [Hl_b | F]] Hf_l]]...
     + subst l. cbn in Hf_l, Hval_a. contradiction.
     + subst l. apply Lit.force_local with (M1 := M)...
-      unfold refl_closure in HR'_w1. destruct HR'_w1 as [HR_w1 | Hw0w1].
-      * apply (Hf_bs0 (a,b))...
+      destruct HR'_w1 as [HR_w1 | Hw0w1].
+      * apply (Hf_boxes0 (a,b))...
       * now subst w1.
 
-  - rewrite List.Forall_forall in *.
+  - rewrite List.Forall_forall in Hf_dias0 |- *.
     intros (c,d) Hcd_in Hval_c.
-    specialize (Hf_ds0 (c,d) Hcd_in Hval_c).
+    specialize (Hf_dias0 (c,d) Hcd_in Hval_c).
     deex. exists w1. unfold R', refl_closure. tauto.
 
   - intros w1 [HR_w1 | Hw0w1].
@@ -305,7 +310,7 @@ Proof with try easy.
       * apply Hfadd_mc1.
 Qed.
 
-Lemma add_kt_complete : forall phi,
+Corollary add_kt_complete : forall phi,
   satisfiable (add_kt phi) -> satisfiable_kt phi.
 Proof.
   intros phi Hsatadd_phi.

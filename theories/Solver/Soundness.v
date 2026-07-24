@@ -155,9 +155,11 @@ Lemma mcnf_cpls : forall {cpls cpls' boxes dias mc1},
   Mcnf.unsatisfiable (Lclauses.make cpls boxes dias :: mc1) ->
   (forall W R (M : @Kripke.t W R) mc0, Cnf.force M mc0 cpls' -> Cnf.force M mc0 cpls) ->
   Mcnf.unsatisfiable (Lclauses.make cpls' boxes dias :: mc1).
-Proof.
+Proof with try easy.
   intros * Hunsat Himpl [W [R [M [mc0 Hforce]]]]. apply Hunsat.
-  exists W, R, M, mc0. cbn in Hforce |- *. auto with solve_subterm.
+  exists W, R, M, mc0. cbn in Hforce |- *. split...
+  rewrite Lclauses.force_destruct in *. split...
+  apply Himpl...
 Qed.
 
 (** ** Resolution *)
@@ -165,23 +167,17 @@ Qed.
 (** Lemmas to prove that [phi /\ x] and [phi /\ ~x] being unsatisfiable implies
     that [phi] is unsatisfiable. *)
 
-(* TODO: this is really messy. clean up. *)
 Lemma not_all_some_true : forall {W} {R} (M : @Kripke.t W R) mc0 A,
   ~ Cnf.force M mc0 (Cnf.from_assumptions A) ->
   CplClause.force M mc0 (List.map Lit.negate A).
 Proof with try easy; auto.
   intros * Hforce_A.
-  cbn in *.
+  rewrite Cnf.force_from_assumptions in Hforce_A.
+  unfold Cnf.force, CplClause.force in *.
   rewrite <- Exists_Forall_neg in Hforce_A. 2: { intro; apply classic. }
-  rewrite List.Exists_exists in Hforce_A.
-  destruct Hforce_A as [cl [Hcl_in Hnforce]].
-  unfold Cnf.from_assumptions in Hcl_in.
-  rewrite List.in_map_iff in Hcl_in. destruct Hcl_in as [l [Hl_cl Hl_in]]. subst.
-  exists (Lit.negate l). split.
-  - now apply List.in_map.
-  - cbn in *.
-    apply not_ex_all_not with (n := l) in Hnforce.
-    apply Lit.not_force_negate...
+  rewrite List.Exists_map.
+  rewrite List.Exists_exists in *.
+  setoid_rewrite Lit.not_force_negate. exact Hforce_A.
 Qed.
 
 (** Weird definition to fit the contexts this is used in. *)
@@ -191,8 +187,8 @@ Lemma force_first_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls boxes 
   Cnf.force M w0 cpls.
 Proof.
   intros * Hforce Hl0. destruct mc0 as [|l0 mc1]; cbn in *.
-  - inversion_clear Hl0. auto.
-  - subst l0; cbn in *. tauto.
+  - inv_clear Hl0. now unfold Cnf.force.
+  - subst l0. unfold Lclauses.force in Hforce. apply Hforce.
 Qed.
 
 Lemma force_new_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls' cpls boxes dias,
@@ -200,29 +196,32 @@ Lemma force_new_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls' cpls bo
   Mcnf.force M w0 mc0 ->
   Cnf.force M w0 cpls' ->
   Mcnf.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: next_ctx mc0).
-Proof.
+Proof with try easy.
   intros * Hl0_eq Hforce_w0 Hforce_cpls'. destruct mc0 as [|l0 mc1].
-  - cbn in *. inversion_clear Hl0_eq. intuition.
-    apply Forall_app; auto.
-  - cbn in *; subst; cbn in *. intuition.
-    apply Forall_app; auto.
+  - cbn in *. inv_clear Hl0_eq. split...
+    autorewrite with ct...
+  - cbn in *; subst. autorewrite with ct...
 Qed.
+
+Lemma first_ctx_destruct : forall mc0,
+  first_ctx mc0 = Lclauses.make (Lclauses.cpls (first_ctx mc0)) (Lclauses.boxes (first_ctx mc0)) (Lclauses.dias (first_ctx mc0)).
+Proof. intros [|[cpls boxes dias] mc1]; reflexivity. Qed.
+Global Hint Resolve first_ctx_destruct : ct.
 
 Lemma mcnf_resolution : forall mc0 (A : list Lit.t),
   Mcnf.unsatisfiable (add_assumptions mc0 A) ->
   Mcnf.unsatisfiable (add_neg_assumptions mc0 A) ->
   Mcnf.unsatisfiable mc0.
-Proof with try easy; auto.
+Proof with try easy; auto with ct.
   intros mc0 cs Hcs Hncs [W [R [M [w Hforce]]]].
   apply Hncs. exists W, R, M, w.
-  (* rewrite unsat_force in Hcs. *)
-  cbn. repeat split; try solve [destruct mc0; cbn in *; intuition].
-  destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq; cbn.
-  apply List.Forall_cons.
-  - cbn in *. rewrite Hl0_eq in *; cbn in *.
-    apply not_all_some_true. intro Hforce_cnf.
-    apply Hcs. exists W, R, M, w. apply force_new_cpls...
-  - apply (force_first_cpls mc0 cpls boxes dias)...
+  cbn.
+  autorewrite with ct. split; [split|].
+  - apply not_all_some_true. intro Hf_cnf.
+    apply Hcs. exists W,R,M,w. apply force_new_cpls...
+  - rewrite <- first_ctx_destruct.
+    now apply Mcnf.force_first_ctx.
+  - destruct mc0... cbn in Hforce |- *...
 Qed.
 
 Corollary mcnf_resolution_cs : forall mc0 (cs : list Atom.t),
@@ -299,21 +298,18 @@ Proof with try easy; auto with datatypes.
   set (mc0 := l0::mc1) in *.
   destruct l0 as [cpls boxes dias] eqn:Hl0.
   cbn in *.
-  destruct Hparent_force as [[Hf_cpls0 [Hf_boxes0 Hf_dias0]] Hf_w1].
+  autorewrite with ct in *.
+  destruct Hparent_force as [[Hf_cs [Hf_cpls0 [Hf_boxes0 Hf_dias0]]] Hf_w1].
 
   (* get the world where the dia clause must be forced *)
-  rewrite List.Forall_forall in *.
+  rewrite List.Forall_forall, Cnf.force_forall in *.
   specialize (Hf_dias0 (c,d) Hdia_in).
   unfold DiaClause.force in Hf_dias0.
   forward Hf_dias0. {
     cbn.
     fold (Lit.force M w0 (Lit.Pos c)).
     rewrite <- CplClause.force_singleton.
-    apply Hf_cpls0.
-    rewrite List.in_app_iff. left.
-    unfold Cnf.from_assumptions.
-    rewrite List.in_map_iff. exists (Lit.Pos c). split...
-    rewrite List.in_map_iff. exists c. split...
+    apply Hf_cs.
     unfold cs, conflict_set_of. cbn. now left.
   }
   destruct Hf_dias0 as [w1d [HR_w1d Hw1d_force_d]]. cbn in Hw1d_force_d.
@@ -336,11 +332,11 @@ Proof with try easy; auto with datatypes.
   apply (Hf_boxes0 (a,b))... cbn.
 
   (* a must also be forced *)
-  specialize (Hf_cpls0 (CplClause.from_lit (Lit.Pos a))).
-  rewrite CplClause.force_singleton in Hf_cpls0.
-  apply Hf_cpls0.
+  specialize (Hf_cs (CplClause.from_lit (Lit.Pos a))).
+  rewrite CplClause.force_singleton in Hf_cs.
+  apply Hf_cs.
 
-  cbn. apply List.in_app_iff. left.
+  cbn.
   unfold Cnf.from_assumptions. apply List.in_map_iff. exists (Lit.Pos a). split...
   apply List.in_map_iff. exists a. split...
 

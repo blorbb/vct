@@ -345,9 +345,8 @@ Proof with try easy; auto with datatypes ct.
     cbn in H |- *.
     unfold Mcnf.satisfiable in H. deex.
     exists W, R, M, w0.
-    cbn in H |- *. intuition.
-    eapply (Cnf.permutation_force). 2: { exact H. }
-    symmetry. apply Permutation_middle.
+    cbn in H |- *. autorewrite with ct in H |- *.
+    tauto.
   }
 
   rewrite add_conflict_set_neg_assumptions.
@@ -371,7 +370,7 @@ Proof with try easy; auto with ct.
   intros A Hcontains_A.
   specialize (H A Hcontains_A).
   unfold Mcnf.satisfiable in H. deex. exists W,R,M,w0.
-  cbn in *. autorewrite with list in *. tauto.
+  cbn in *. autorewrite with ct in *. tauto.
 Qed.
 
 
