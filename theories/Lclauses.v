@@ -172,5 +172,13 @@ Proof.
   intros *.
   destruct A as [Acpls Aboxes Adias].
   destruct B as [Bcpls Bboxes Bdias].
+  unfold merge.
   cbn. repeat rewrite Exists_app. tauto.
+Qed.
+
+
+Lemma force_cpls_app : forall {W} {R} (M : @Kripke.t W R) (w0 : W) app cpls boxes dias,
+  force M w0 (Lclauses.make (app++cpls) boxes dias) <-> Cnf.force M w0 app /\ force M w0 (Lclauses.make cpls boxes dias).
+Proof.
+  intros *. cbn. rewrite List.Forall_app. tauto.
 Qed.
