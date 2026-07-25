@@ -1,4 +1,4 @@
-From CegarTableaux Require Import ImportStd.
+From Vct Require Import ImportStd.
 
 
 (** Valuation represented as a list of forced atoms. *)

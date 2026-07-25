@@ -1,5 +1,5 @@
-From CegarTableaux Require Lit Valuation.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Lit Valuation.
+From Vct Require Import ImportStd.
 
 (** A CPL-clause, a _disjunction_ of literals. *)
 Definition t : Type := list Lit.t.

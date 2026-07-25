@@ -3,7 +3,7 @@
 From Stdlib Require Import PeanoNat Arith Lia.
 Import List.ListNotations.
 Open Scope list_scope.
-From CegarTableaux Require Atom.
+From Vct Require Atom.
 Import Atom.Notations.
 Open Scope atom_scope.
 

@@ -1,7 +1,7 @@
 (** Does not construct a model/derivation. *)
 
-From CegarTableaux.Solver Require Import SearchBasics.
-From CegarTableaux.Solver Require Spec Soundness Completeness.
+From Vct.Solver Require Import SearchBasics.
+From Vct.Solver Require Spec Soundness Completeness.
 
 
 Module JumpSolution.

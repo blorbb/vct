@@ -1,7 +1,7 @@
 (** MCNF type with basic lemmas and definitions *)
 
-From CegarTableaux Require Lit Nnf Kripke Lclauses.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Lit Nnf Kripke Lclauses.
+From Vct Require Import ImportStd.
 
 
 (** An MCNF formula, a list of clauses, where the 'local' clauses at the head

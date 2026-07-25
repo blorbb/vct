@@ -1,7 +1,7 @@
 (** Helpers to manipulate an [Mcnf.t] for the CEGARBox implementation. *)
 
-From CegarTableaux Require CplSolver Lit Assumptions Valuation Tree Mcnf.
-From CegarTableaux Require Import ImportStd.
+From Vct Require CplSolver Lit Assumptions Valuation Tree Mcnf.
+From Vct Require Import ImportStd.
 
 
 

@@ -1,6 +1,6 @@
-From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import McnfExt SearchBasics.
-From CegarTableaux.Solver Require Derivation Spec.
+From Vct Require Import ImportStd.
+From Vct.Solver Require Import McnfExt SearchBasics.
+From Vct.Solver Require Derivation Spec.
 
 (** Completeness of the [Spec] implementation. *)
 

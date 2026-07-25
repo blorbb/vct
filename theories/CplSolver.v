@@ -6,9 +6,9 @@
 
     See the Extract module for details about our Minisat implementation. *)
 
-From CegarTableaux Require CplClause Assumptions Lit Cnf Valuation.
-From CegarTableaux Require Import ImportStd.
-From CegarTableaux Require CplSolution.
+From Vct Require CplClause Assumptions Lit Cnf Valuation.
+From Vct Require Import ImportStd.
+From Vct Require CplSolution.
 
 
 (** A (possibly stateful) classical SAT-solver oracle. *)

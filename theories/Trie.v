@@ -13,7 +13,7 @@
     or the commit with message 'finish proving trie lemmas, remove sorted'.
     (We call the constraint [sorted] instead of [wf]) *)
 
-From CegarTableaux Require Import ImportStd.
+From Vct Require Import ImportStd.
 From Stdlib.Structures Require Import Orders.
 
 

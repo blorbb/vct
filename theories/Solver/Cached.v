@@ -1,8 +1,8 @@
 (** With a satisfiability cache. *)
 
-From CegarTableaux Require Trie.
-From CegarTableaux.Solver Require Import SearchBasics.
-From CegarTableaux.Solver Require NoModel.
+From Vct Require Trie.
+From Vct.Solver Require Import SearchBasics.
+From Vct.Solver Require NoModel.
 From Stdlib.Structures Require Import Orders.
 
 

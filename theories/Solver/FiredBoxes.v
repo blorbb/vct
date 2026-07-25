@@ -1,8 +1,8 @@
 (** Extension of [Cached] with [fired_boxes] only calculated once per set of jumps. *)
 
-From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Cached.
-From CegarTableaux.Solver Require Import SearchBasics.
+From Vct Require Import ImportStd.
+From Vct.Solver Require Cached.
+From Vct.Solver Require Import SearchBasics.
 
 Module Cache := Cached.Cache.
 Module Caches := Cached.Caches.

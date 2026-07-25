@@ -2,8 +2,8 @@
 
     We use the term 'surrogate' to mean an unused atom value. *)
 
-From CegarTableaux Require Lit Nnf Kripke Lclauses Mcnf.Mcnf.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Lit Nnf Kripke Lclauses Mcnf.Mcnf.
+From Vct Require Import ImportStd.
 
 Local Arguments Lclauses.force {W} {R} M w0 phi /.
 

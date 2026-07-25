@@ -1,6 +1,6 @@
 (** Simple, unoptimised implementation that is easier to prove correctness of. *)
 
-From CegarTableaux.Solver Require Import SearchBasics.
+From Vct.Solver Require Import SearchBasics.
 
 
 Module JumpSolution.

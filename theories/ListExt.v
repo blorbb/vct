@@ -4,7 +4,7 @@ From Stdlib Require List.
 Import List.ListNotations.
 Open Scope list_scope.
 From Stdlib Require Import Relations SetoidPermutation Permutation RelationClasses SetoidList PeanoNat Lia Classical.
-From CegarTableaux Require Import Tactics.
+From Vct Require Import Tactics.
 
 
 Lemma In_singleton : forall {A} (x y : A), List.In x [y] <-> x = y.

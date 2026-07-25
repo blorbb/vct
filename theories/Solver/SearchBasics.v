@@ -5,10 +5,10 @@
     their definition (i.e. their termination). *)
 
 
-From CegarTableaux Require CplSolver Lit Mcnf Assumptions Valuation Tree.
-From CegarTableaux Require Export ImportStd.
-From CegarTableaux.Solver Require Export McnfExt.
-From CegarTableaux.Solver Require Derivation.
+From Vct Require CplSolver Lit Mcnf Assumptions Valuation Tree.
+From Vct Require Export ImportStd.
+From Vct.Solver Require Export McnfExt.
+From Vct.Solver Require Derivation.
 
 
 (** Default auto-solver simplifies a bit too much. *)

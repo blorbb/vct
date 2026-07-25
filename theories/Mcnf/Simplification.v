@@ -1,7 +1,7 @@
-From CegarTableaux Require Import ImportStd.
+From Vct Require Import ImportStd.
 From Stdlib Require Import Sorting.
-From CegarTableaux Require CplClause BoxClause Lclauses.
-From CegarTableaux.Mcnf Require Mcnf.
+From Vct Require CplClause BoxClause Lclauses.
+From Vct.Mcnf Require Mcnf.
 
 (** * Simplifications *)
 (** TODO: prove its correctness *)

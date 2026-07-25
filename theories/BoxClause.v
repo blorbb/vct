@@ -1,5 +1,5 @@
-From CegarTableaux Require Lit.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Lit.
+From Vct Require Import ImportStd.
 
 (** An MCNF box-clause [a -> []b].
 

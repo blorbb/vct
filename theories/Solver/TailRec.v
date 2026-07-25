@@ -1,7 +1,7 @@
 (** Tail recursive [tableau_jumps]. *)
 
-From CegarTableaux.Solver Require Import SearchBasics.
-From CegarTableaux.Solver Require Spec.
+From Vct.Solver Require Import SearchBasics.
+From Vct.Solver Require Spec.
 
 
 Module Solution := Spec.Solution.

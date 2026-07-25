@@ -1,7 +1,7 @@
 From Stdlib Require List.
 From Stdlib Require Import Lia.
-From CegarTableaux Require Lit Kripke CplClause BoxClause DiaClause Cnf.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Lit Kripke CplClause BoxClause DiaClause Cnf.
+From Vct Require Import ImportStd.
 Import List.ListNotations.
 Open Scope list_scope.
 

@@ -1,4 +1,4 @@
-From CegarTableaux Require Kripke Lit.
+From Vct Require Kripke Lit.
 
 
 (** An arbitrary modal formula [Fml.t]. *)

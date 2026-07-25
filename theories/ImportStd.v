@@ -19,11 +19,11 @@ Tactic Notation "=" tactic(H) := unfold is_true in *; H.
 Create HintDb ct.
 Create Rewrite HintDb ct.
 
-From CegarTableaux Require Atom.
+From Vct Require Atom.
 Export Atom.Notations.
 Open Scope atom_scope.
 
-From CegarTableaux Require Export Tactics ListExt.
+From Vct Require Export Tactics ListExt.
 
 Hint Rewrite
   Exists_cons Forall_cons_iff

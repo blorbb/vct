@@ -1,5 +1,5 @@
-From CegarTableaux Require Kripke Valuation.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Kripke Valuation.
+From Vct Require Import ImportStd.
 
 Scheme All for list.
 

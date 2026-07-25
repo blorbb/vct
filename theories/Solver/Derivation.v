@@ -1,8 +1,8 @@
 (** A concrete derivation of unsatisfiability. *)
 
-From CegarTableaux Require Mcnf Assumptions CplSolver Lclauses.
-From CegarTableaux Require Import ImportStd.
-From CegarTableaux.Solver Require Import McnfExt.
+From Vct Require Mcnf Assumptions CplSolver Lclauses.
+From Vct Require Import ImportStd.
+From Vct.Solver Require Import McnfExt.
 
 
 (** A closed tableau derivation.

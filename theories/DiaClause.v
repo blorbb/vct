@@ -1,5 +1,5 @@
-From CegarTableaux Require Lit BoxClause.
-From CegarTableaux Require Import ImportStd.
+From Vct Require Lit BoxClause.
+From Vct Require Import ImportStd.
 
 (** An MCNF dia-clause [a -> <>b].
 

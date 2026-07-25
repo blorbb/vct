@@ -1,6 +1,6 @@
 (** This needs to be a separate file for OCaml bindings to be able to import this. *)
 
-From CegarTableaux Require Valuation Assumptions.
+From Vct Require Valuation Assumptions.
 
 (** The return type of a classical SAT-solver. *)
 Inductive t : Type :=

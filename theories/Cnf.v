@@ -1,5 +1,5 @@
-From CegarTableaux Require CplClause.
-From CegarTableaux Require Import ImportStd.
+From Vct Require CplClause.
+From Vct Require Import ImportStd.
 
 (** A classical formula in conjunctive normal form. *)
 Definition t := list CplClause.t.

@@ -1,6 +1,6 @@
-From CegarTableaux.Solver Require Spec TailRec NoModel Cached FiredBoxes Derivation Soundness Completeness.
-From CegarTableaux.Solver Require Import McnfExt.
-From CegarTableaux Require Import ImportStd.
+From Vct.Solver Require Spec TailRec NoModel Cached FiredBoxes Derivation Soundness Completeness.
+From Vct.Solver Require Import McnfExt.
+From Vct Require Import ImportStd.
 
 Include Soundness.
 Include Completeness.

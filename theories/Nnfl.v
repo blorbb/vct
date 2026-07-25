@@ -1,5 +1,5 @@
-From CegarTableaux Require Import ImportStd.
-From CegarTableaux Require Lit Nnf.
+From Vct Require Import ImportStd.
+From Vct Require Lit Nnf.
 
 Scheme All for list.
 Scheme All for Forall.

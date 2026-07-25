@@ -1,5 +1,5 @@
-From CegarTableaux Require Import ImportStd.
-From CegarTableaux Require Lit.
+From Vct Require Import ImportStd.
+From Vct Require Lit.
 
 (** A list of unit assumptions. *)
 Definition t := list Lit.t.

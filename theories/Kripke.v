@@ -1,4 +1,4 @@
-From CegarTableaux Require Import ImportStd.
+From Vct Require Import ImportStd.
 
 (** A Kripke model with a parameterised Kripke frame [W, R] and [valuation].
 

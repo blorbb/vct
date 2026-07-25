@@ -1,5 +1,5 @@
 From Stdlib Require Extraction ExtrOcamlBasic.
-From CegarTableaux Require Mcnf Tree Solver CplSolver.
+From Vct Require Mcnf Tree Solver CplSolver.
 
 Extraction Language OCaml.
 Set Extraction Output Directory "src/lib/gen".
