@@ -77,7 +77,7 @@ Lemma tableau_deriv : forall mc0 A core deriv,
 Proof with auto.
   intros *. intros Hunsat. funelim (Spec.tableau mc0 (cplsolver_mcnf mc0) A).
   - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hderiv. subst.
-    apply Derivation.IdCond. now unfold cpl_solve.
+    apply Derivation.LocalCond. now unfold cpl_solve.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - clear H0 H1. rewrite <- Heqcall in Hunsat.

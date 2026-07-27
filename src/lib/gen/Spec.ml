@@ -137,7 +137,7 @@ let tableau a a0 b =
               | Solution.Unsat (rs_core, rs_deriv) ->
                 Solution.Unsat (rs_core, (JumpRestart (v, (t1, t2), deriv,
                   rs_deriv))))))
-     | Unsat core -> Solution.Unsat (core, (Id core)))
+     | Unsat core -> Solution.Unsat (core, (Local core)))
   in fix_F (a,(a0,b))
 
 (** val solve_mcnf : Mcnf0.t -> Solution.t **)

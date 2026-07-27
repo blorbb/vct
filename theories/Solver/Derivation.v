@@ -13,7 +13,7 @@ From Vct.Solver Require Import McnfExt.
     held by the solver and that having such conditions _is_ a proof of
     unsatisfiability. *)
 Inductive t : Type :=
-| Id (core : Assumptions.t)
+| Local (core : Assumptions.t)
 | JumpRestart
   (** Valuation returned by a sat solver. *)
   (V : Valuation.t)
@@ -29,13 +29,13 @@ Inductive t : Type :=
     conflict set). The restart core is for the parent context to use. *)
 Fixpoint get_core (t : t) :=
   match t with
-  | Id core => core
+  | Local core => core
   | JumpRestart _ _ _ rs_deriv => get_core rs_deriv
   end.
 
 
 Inductive conds : Mcnf.t -> Assumptions.t -> t -> Prop :=
-| IdCond : forall mc0 A core, cpl_solve mc0 A = CplSolution.Unsat core -> conds mc0 A (Id core)
+| LocalCond : forall mc0 A core, cpl_solve mc0 A = CplSolution.Unsat core -> conds mc0 A (Local core)
 | JumpRestartCond : forall mc0 A V failed_dia jump_deriv rs_deriv,
   cpl_solve mc0 A = CplSolution.Sat V ->
   List.In failed_dia (first_dias mc0) ->
