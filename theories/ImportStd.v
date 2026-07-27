@@ -56,6 +56,13 @@ Proof. tauto. Qed.
 Create Rewrite HintDb prop.
 Hint Rewrite or_false_l or_false_r and_true_l and_true_r imp_false_r imp_true_r imp_true_l @imp_true_l_forall not_false not_true @eq_true : prop.
 
+(* Rewriting bool expressions to props *)
+Create Rewrite HintDb bool.
+Hint Rewrite
+  Bool.andb_true_iff Bool.andb_false_iff
+  Bool.orb_true_iff Bool.orb_false_iff
+  : bool.
+Hint Rewrite <- Bool.eq_true_not_negb_iff : bool.
 
 (** Function pipeline operator *)
 Notation "x |> f" := (f x) (at level 51, left associativity, only parsing).

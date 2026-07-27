@@ -31,4 +31,14 @@ Definition relation (w0 w1 : t) : Prop :=
   | make _ children => List.In w1 children
   end.
 
+Definition relation_refl (w0 w1 : t) : Prop :=
+  w0 = w1 \/
+  match w0 with
+  | make _ children => List.In w1 children
+  end.
+
+Global Instance relation_refl_refl : Reflexive relation_refl.
+Proof. now left. Qed.
+
 Definition as_kripke : @Kripke.t t relation := Kripke.make t relation valuation.
+Definition as_refl : @Kripke.t t relation_refl := Kripke.make t relation_refl valuation.
