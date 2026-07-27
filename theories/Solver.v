@@ -77,10 +77,10 @@ Qed.
         forall (s : CplSolver.t) (A : Assumptions.t) (V : Valuation.t),
         CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
         forall p : nat, List.In p V -> CplSolver.atm_in p s A
-      CplSolver.valuation_clash_free :
+      CplSolver.valuation_nodup :
         forall (s : CplSolver.t) (A : Assumptions.t) (V : Valuation.t),
         CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
-        Valuation.clash_free V
+        Valuation.nodup V
       CplSolver.solution_soundness :
         forall (s : CplSolver.t) (A core : Assumptions.t),
         CplSolution.Unsat core = CplSolver.solve_with_assumptions s A ->

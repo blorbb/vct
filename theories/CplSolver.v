@@ -95,10 +95,10 @@ Definition clause_atms_incl (clause : CplClause.t) (s : t) (A : Assumptions.t) :
 Arguments clause_atms_incl clause s A /.
 
 
-(** The valuation returned by a satisfiable result is [clash_free]. *)
-Axiom valuation_clash_free : forall s A V,
+(** The valuation returned by a satisfiable result has no duplicates. *)
+Axiom valuation_nodup : forall s A V,
   solve_with_assumptions s A = CplSolution.Sat V ->
-  Valuation.clash_free V.
+  Valuation.nodup V.
 
 (** Every atom in the valuation is an atom in the solver or assumptions. *)
 Axiom valuation_in_clauses : forall s A V,
@@ -197,7 +197,7 @@ Proof with auto.
   intros s A V Hsat.
   unfold every_valuation, atms_of.
   set (atms := Cnf.atms_of _).
-  pose proof (valuation_clash_free _ _ _ Hsat) as Hcf.
+  pose proof (valuation_nodup _ _ _ Hsat) as Hcf.
   apply Valuation.val_with_atms_in_every_val...
   intros p Hp_in. apply Cnf.in_atms_of.
   apply valuation_in_clauses with (V := V)...
@@ -275,17 +275,16 @@ Qed. Global Hint Resolve add_no_new_atms : ct.
 Definition add_conflict_set s cs := add_clause s (List.map Lit.Neg cs).
 
 
-(** If [V] = solution of [s] and [s'] contains the conflict set
-    as one of it's clauses, [V] cannot be one of the possible valuations. *)
-Lemma refined_solver_diff_val : forall s A V cs s',
-  CplSolution.Sat V = solve_with_assumptions s A ->
+(** If [s] contains the conflict set as one of it's clauses,
+    any superset of the conflict set cannot be one of the possible valuations. *)
+Lemma refined_solver_diff_val : forall A V cs s,
   List.incl cs V ->
   cs <> [] ->
-  List.In (List.map Lit.Neg cs) (clauses_of s') ->
-  ~ Valuation.val_in_vals V (every_sat_valuation s' A).
+  List.In (List.map Lit.Neg cs) (clauses_of s) ->
+  ~ Valuation.val_in_vals V (every_sat_valuation s A).
 Proof with auto with typeclass_instances; try easy.
   (* TODO: this is very forward proof-y, can probably simplify *)
-  intros s A V cs s' HV Hcs_incl Hcs_ne Hcs_in_s' HV_in.
+  intros * Hcs_incl Hcs_ne Hcs_in_s HV_in.
   unfold Valuation.val_in_vals, every_sat_valuation in HV_in.
   apply filter_InA in HV_in...
   destruct HV_in as [HV_in HV_force].

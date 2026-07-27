@@ -65,8 +65,7 @@ Proof with auto with typeclass_instances datatypes ct; try lia.
     apply CplSolver.every_sat_valuation_nodup.
   - intro Hlen.
 
-    apply CplSolver.refined_solver_diff_val with s0 A V cs s0'.
-    + symmetry. exact HV_sat.
+    apply CplSolver.refined_solver_diff_val with A V cs s0'.
     + apply conflict_set_incl_val with s0 A...
     + subst cs. unfold conflict_set_of.
       discriminate.

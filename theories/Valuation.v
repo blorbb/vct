@@ -5,12 +5,14 @@ From Vct Require Import ImportStd.
 Definition t := list Atom.t.
 
 
-(** Every atom must appear at most once. *)
-Definition clash_free (V : t) := List.NoDup V.
+(** Every atom must appear at most once.
+
+    Useful as inference is sometimes bad when using [NoDup] directly. *)
+Definition nodup (V : t) : Prop := List.NoDup V.
 
 
-Lemma clash_free_nil : clash_free [].
-Proof. unfold clash_free. apply List.NoDup_nil. Qed.
+Lemma nodup_nil : nodup [].
+Proof. unfold nodup. apply List.NoDup_nil. Qed.
 
 
 Definition forces_atm (V : t) (p : Atom.t) : bool := List.existsb (Atom.eqb p) V.
@@ -27,10 +29,10 @@ Global Instance eq_equivalence : Equivalence eq := {}.
 
 (** These 2 are unused but might be helpful later. *)
 
-Lemma eq_clash_free : forall (V V' : t), eq V V' -> clash_free V -> clash_free V'.
+Lemma eq_nodup : forall (V V' : t), eq V V' -> nodup V -> nodup V'.
 Proof with auto.
   intros V V' Heq Hcf.
-  unfold clash_free, eq in *.
+  unfold nodup, eq in *.
   eapply Permutation_NoDup.
   - exact Heq.
   - assumption.
@@ -83,23 +85,23 @@ Section AllValuations.
   Qed.
 
 
-  Lemma every_valuation_clash_free : forall (atms : list Atom.t),
+  Lemma every_valuation_nodup : forall (atms : list Atom.t),
     List.NoDup atms ->
-    List.Forall clash_free (every_valuation_of_atms atms).
+    List.Forall nodup (every_valuation_of_atms atms).
   Proof with try easy; auto with datatypes ct.
     intros atms Hnodup.
     induction Hnodup as [| head tail Hhead_nin Hnd IH].
     - cbn. apply List.Forall_forall.
       intros V Hval_nil.
       cbn in Hval_nil. destruct Hval_nil as [Hval_nil | F]...
-      subst V. apply clash_free_nil.
+      subst V. apply nodup_nil.
     - rewrite List.Forall_forall in *.
       intros V Hval_in.
       cbn in Hval_in. apply List.in_app_iff in Hval_in.
       destruct Hval_in as [Hval_in_t | Hval_in_ht].
       + apply IH...
       + apply List.in_map_iff in Hval_in_ht as [t' [Ht' Ht'_in]]. subst V.
-        unfold clash_free. apply List.NoDup_cons.
+        unfold nodup. apply List.NoDup_cons.
         * intro Hhead_in. apply Hhead_nin.
           pose proof (every_valuation_exact_atms tail) as Hatms_of_val.
           rewrite List.Forall_forall in Hatms_of_val.
@@ -121,7 +123,7 @@ Section AllValuations.
 
   Lemma val_with_atms_in_every_val :
     forall atms V,
-      clash_free V ->
+      nodup V ->
       List.incl V atms ->
       val_in_vals V (every_valuation_of_atms atms).
   Proof with auto with typeclass_instances datatypes ct.
@@ -132,7 +134,7 @@ Section AllValuations.
 
     (* h in V *)
     - apply in_split in Hin. destruct Hin as [l1 [l2 Hval]].
-      unfold clash_free in *. subst V.
+      unfold nodup in *. subst V.
       apply NoDup_remove in Hcf as [Hnd_l1l2 Hh_nin_l1l2].
       assert (incl (l1++l2) t) as Hl1l2_incl. {
         eapply incl_Add_inv.
@@ -250,4 +252,4 @@ Section AllValuations.
   Qed.
 End AllValuations.
 
-Global Hint Resolve every_valuation_exact_atms every_valuation_clash_free atms_in_ev_atms val_with_atms_in_every_val every_valuation_perm every_valuation_unique : ct.
+Global Hint Resolve every_valuation_exact_atms every_valuation_nodup atms_in_ev_atms val_with_atms_in_every_val every_valuation_perm every_valuation_unique : ct.
