@@ -5,57 +5,23 @@ From Vct Require Import ImportStd.
 
 
 
-Definition first_ctx (mc0 : Mcnf.t) :=
-  match mc0 with
-  | [] => Lclauses.empty
-  | l0::_ => l0
-  end.
-
 Definition first_cpls (mc0 : Mcnf.t) :=
-  Lclauses.cpls (first_ctx mc0).
+  Lclauses.cpls (Mcnf.first_ctx mc0).
 
 Definition first_boxes (mc0 : Mcnf.t) :=
-  Lclauses.boxes (first_ctx mc0).
+  Lclauses.boxes (Mcnf.first_ctx mc0).
 
 Definition first_dias (mc0 : Mcnf.t) :=
-  Lclauses.dias (first_ctx mc0).
+  Lclauses.dias (Mcnf.first_ctx mc0).
 
 Definition fired_boxes (mc0 : Mcnf.t) (V : Valuation.t) :=
   first_boxes mc0
   |> List.filter (fun '(a,b) => Valuation.forces_atm V a)
   |> List.map snd.
 
-Definition next_ctx (mc0 : Mcnf.t) :=
-  match mc0 with
-  | [] => []
-  | _::mc1 => mc1
-  end.
-
-
-Definition with_first_cpls mc0 f :=
-  let l0 := first_ctx mc0 in
-  let mc1 := next_ctx mc0 in
-  Lclauses.make (f (Lclauses.cpls l0)) (Lclauses.boxes l0) (Lclauses.dias l0) :: mc1.
-Arguments with_first_cpls mc0 f /.
-
-Definition add_conflict_set mc0 cs :=
-  with_first_cpls mc0 (cons (List.map Lit.Neg cs)).
-Arguments add_conflict_set mc0 cs /.
-
-(** Adds the conjunction of each literal in [A]. *)
-Definition add_assumptions mc0 A :=
-  with_first_cpls mc0 (app (Cnf.from_assumptions A)).
-Arguments add_assumptions mc0 A /.
-
-(** Adds [~A] to the cpls of [mc0] via adding the disjunction of
-    the negation of each literal in [A]. *)
-Definition add_neg_assumptions mc0 A :=
-  with_first_cpls mc0 (cons (List.map Lit.negate A)).
-Arguments add_neg_assumptions mc0 A /.
-
 
 Lemma add_conflict_set_neg_assumptions : forall mc0 cs,
-  add_conflict_set mc0 cs = add_neg_assumptions mc0 (List.map Lit.Pos cs).
+  Mcnf.add_cs mc0 cs = Mcnf.add_nA mc0 (List.map Lit.Pos cs).
 Proof. intros mc0 cs. cbn. rewrite List.map_map. cbn. reflexivity. Qed.
 
 Definition cplsolver_mcnf (mc0 : Mcnf.t) :=
@@ -126,11 +92,21 @@ Proof with auto.
   now apply Hsubset.
 Qed.
 
+Lemma incl_cpls_force : forall {W} {R} {M : @Kripke.t W R} {w0 : W} cpls' cpls boxes dias mc1,
+  List.incl cpls' cpls ->
+  Mcnf.force M w0 (Lclauses.make cpls boxes dias :: mc1) ->
+  Mcnf.force M w0 (Lclauses.make cpls' boxes dias :: mc1).
+Proof.
+  intros * Hincl Hf_cpls.
+  cbn in *. rewrite Lclauses.force_destruct in *.
+  intuition.
+  apply Cnf.incl_force with (A' := cpls); easy.
+Qed.
 
-Lemma incl_force : forall {W} {R} {M : @Kripke.t W R} {w0 : W} mc0 A A',
+Lemma incl_A_force : forall {W} {R} {M : @Kripke.t W R} {w0 : W} mc0 A A',
   List.incl A A' ->
-  Mcnf.force M w0 (add_assumptions mc0 A') ->
-  Mcnf.force M w0 (add_assumptions mc0 A).
+  Mcnf.force M w0 (Mcnf.add_A mc0 A') ->
+  Mcnf.force M w0 (Mcnf.add_A mc0 A).
 Proof with try easy.
   intros * Hincl Hforce.
   cbn in *. autorewrite with ct in *.
@@ -141,28 +117,28 @@ Proof with try easy.
   now apply incl_map.
 Qed.
 
-Corollary incl_sat : forall mc0 A A',
+Corollary incl_A_sat : forall mc0 A A',
   List.incl A A' ->
-  Mcnf.satisfiable (add_assumptions mc0 A') ->
-  Mcnf.satisfiable (add_assumptions mc0 A).
+  Mcnf.satisfiable (Mcnf.add_A mc0 A') ->
+  Mcnf.satisfiable (Mcnf.add_A mc0 A).
 Proof.
   intros mc0 A A' Hincl Hsat.
   unfold Mcnf.satisfiable in *. deex.
   exists W, R, M, w0.
-  apply incl_force with A'; easy.
+  apply incl_A_force with A'; easy.
 Qed.
 
 
 Lemma force_assumptions_comm : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A B,
-  Mcnf.force M w0 (add_assumptions (add_assumptions mc0 A) B) <->
-  Mcnf.force M w0 (add_assumptions (add_assumptions mc0 B) A).
+  Mcnf.force M w0 (Mcnf.add_A (Mcnf.add_A mc0 A) B) <->
+  Mcnf.force M w0 (Mcnf.add_A (Mcnf.add_A mc0 B) A).
 Proof.
   intros *. cbn. autorewrite with ct. intuition; repeat rewrite List.Forall_app in *; tauto.
 Qed.
 
 
 Lemma force_ctx_first_next : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0,
-  Mcnf.force M w0 (first_ctx mc0 :: next_ctx mc0) <-> Mcnf.force M w0 mc0.
+  Mcnf.force M w0 (Mcnf.first_ctx mc0 :: Mcnf.next_ctx mc0) <-> Mcnf.force M w0 mc0.
 Proof.
   intros *. destruct mc0 as [|l0 mc1].
   - cbn. now autorewrite with list ct prop.
@@ -170,7 +146,7 @@ Proof.
 Qed.
 
 Lemma force_rm_assumptions : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
-  Mcnf.force M w0 (add_assumptions mc0 A) ->
+  Mcnf.force M w0 (Mcnf.add_A mc0 A) ->
   Mcnf.force M w0 mc0.
 Proof.
   intros * Hforce. destruct mc0 as [|l0 mc1].
@@ -180,7 +156,7 @@ Qed.
 
 
 Lemma force_app_and : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
-  Mcnf.force M w0 (add_assumptions mc0 A) <->
+  Mcnf.force M w0 (Mcnf.add_A mc0 A) <->
   Mcnf.force M w0 mc0 /\ Cnf.force M w0 (Cnf.from_assumptions A).
 Proof with try easy.
   intros *. split.
@@ -196,11 +172,11 @@ Qed.
 
 
 Lemma force_add_no_assumptions : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0,
-  Mcnf.force M w0 (add_assumptions mc0 []) <-> Mcnf.force M w0 mc0.
+  Mcnf.force M w0 (Mcnf.add_A mc0 []) <-> Mcnf.force M w0 mc0.
 Proof. intros *. destruct mc0 as [|l0 mc1]; cbn; autorewrite with ct; intuition. Qed.
 Global Hint Resolve force_add_no_assumptions : ct.
 
 Lemma sat_add_no_assumptions : forall mc0,
-  Mcnf.satisfiable (add_assumptions mc0 []) <-> Mcnf.satisfiable mc0.
+  Mcnf.satisfiable (Mcnf.add_A mc0 []) <-> Mcnf.satisfiable mc0.
 Proof. unfold Mcnf.satisfiable. setoid_rewrite force_add_no_assumptions. tauto. Qed.
 Global Hint Resolve sat_add_no_assumptions : ct.

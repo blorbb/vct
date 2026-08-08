@@ -172,10 +172,10 @@ Definition force {W} {R} (M : @Kripke.t W R) (w0 : W) (l : t) : Prop :=
   end.
 
 
-Definition cpl_forceb (val : Valuation.t) (l : t) : bool :=
+Definition cpl_forceb (V : Valuation.t) (l : t) : bool :=
   match l with
-  | Pos p => List.existsb (Atom.eqb p) val
-  | Neg p => negb (List.existsb (Atom.eqb p) val)
+  | Pos p => Valuation.forces_atm V p
+  | Neg p => negb (Valuation.forces_atm V p)
   end.
 
 
@@ -217,7 +217,7 @@ Proof.
   intros v1 v2 Heq.
   destruct l as [p|p].
   - apply perm_existsb. assumption.
-  - unfold cpl_forceb. repeat rewrite negb_exb_forallb.
+  - unfold cpl_forceb. repeat rewrite Valuation.not_force_forallb.
     apply perm_forallb. assumption.
 Qed.
 

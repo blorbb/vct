@@ -183,7 +183,7 @@ Qed.
 (** Weird definition to fit the contexts this is used in. *)
 Lemma force_first_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls boxes dias,
   Mcnf.force M w0 mc0 ->
-  first_ctx mc0 = Lclauses.make cpls boxes dias ->
+  Mcnf.first_ctx mc0 = Lclauses.make cpls boxes dias ->
   Cnf.force M w0 cpls.
 Proof.
   intros * Hforce Hl0. destruct mc0 as [|l0 mc1]; cbn in *.
@@ -192,10 +192,10 @@ Proof.
 Qed.
 
 Lemma force_new_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls' cpls boxes dias,
-  first_ctx mc0 = Lclauses.make cpls boxes dias ->
+  Mcnf.first_ctx mc0 = Lclauses.make cpls boxes dias ->
   Mcnf.force M w0 mc0 ->
   Cnf.force M w0 cpls' ->
-  Mcnf.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: next_ctx mc0).
+  Mcnf.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: Mcnf.next_ctx mc0).
 Proof with try easy.
   intros * Hl0_eq Hforce_w0 Hforce_cpls'. destruct mc0 as [|l0 mc1].
   - cbn in *. inv_clear Hl0_eq. split...
@@ -204,13 +204,13 @@ Proof with try easy.
 Qed.
 
 Lemma first_ctx_destruct : forall mc0,
-  first_ctx mc0 = Lclauses.make (Lclauses.cpls (first_ctx mc0)) (Lclauses.boxes (first_ctx mc0)) (Lclauses.dias (first_ctx mc0)).
+  Mcnf.first_ctx mc0 = Lclauses.make (Lclauses.cpls (Mcnf.first_ctx mc0)) (Lclauses.boxes (Mcnf.first_ctx mc0)) (Lclauses.dias (Mcnf.first_ctx mc0)).
 Proof. intros [|[cpls boxes dias] mc1]; reflexivity. Qed.
 Global Hint Resolve first_ctx_destruct : ct.
 
 Lemma mcnf_resolution : forall mc0 (A : list Lit.t),
-  Mcnf.unsatisfiable (add_assumptions mc0 A) ->
-  Mcnf.unsatisfiable (add_neg_assumptions mc0 A) ->
+  Mcnf.unsatisfiable (Mcnf.add_A mc0 A) ->
+  Mcnf.unsatisfiable (Mcnf.add_nA mc0 A) ->
   Mcnf.unsatisfiable mc0.
 Proof with try easy; auto with ct.
   intros mc0 cs Hcs Hncs [W [R [M [w Hforce]]]].
@@ -225,8 +225,8 @@ Proof with try easy; auto with ct.
 Qed.
 
 Corollary mcnf_resolution_cs : forall mc0 (cs : list Atom.t),
-  Mcnf.unsatisfiable (add_conflict_set mc0 cs) ->
-  Mcnf.unsatisfiable (add_assumptions mc0 (List.map Lit.Pos cs)) ->
+  Mcnf.unsatisfiable (Mcnf.add_cs mc0 cs) ->
+  Mcnf.unsatisfiable (Mcnf.add_A mc0 (List.map Lit.Pos cs)) ->
   Mcnf.unsatisfiable mc0.
 Proof.
   intros * Hcs HA. apply mcnf_resolution with (A := (List.map Lit.Pos cs)).
@@ -237,12 +237,12 @@ Qed.
 
 Corollary force_not_A_neg_A : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
   Mcnf.force M w0 mc0 ->
-  ~ Mcnf.force M w0 (add_assumptions mc0 A) ->
-  Mcnf.force M w0 (add_neg_assumptions mc0 A).
+  ~ Mcnf.force M w0 (Mcnf.add_A mc0 A) ->
+  Mcnf.force M w0 (Mcnf.add_nA mc0 A).
 Proof with try easy; auto.
   intros * Hforce_mc0 Hnforce_A.
-  unfold add_neg_assumptions, with_first_cpls.
-  destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
+  unfold Mcnf.add_nA, Mcnf.with_first_cpls.
+  destruct (Mcnf.first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
   apply (force_new_cpls mc0 [List.map Lit.negate A])...
   apply Cnf.force_singleton.
   apply not_all_some_true. intros Hforce_A. apply Hnforce_A.
@@ -253,8 +253,8 @@ Qed.
 
 Corollary sat_not_A_neg_A : forall mc0 A,
   Mcnf.satisfiable mc0 ->
-  Mcnf.unsatisfiable (add_assumptions mc0 A) ->
-  Mcnf.satisfiable (add_neg_assumptions mc0 A).
+  Mcnf.unsatisfiable (Mcnf.add_A mc0 A) ->
+  Mcnf.satisfiable (Mcnf.add_nA mc0 A).
 Proof with try easy.
   intros * Hsat_mc0 Hunsat_mc0A.
   unfold Mcnf.satisfiable in *. deex. exists W,R,M,w0.
@@ -266,7 +266,7 @@ Qed.
 (** ** Soundness of derivation *)
 
 Lemma cpls_of_add_assumptions : forall mc0 A,
-  first_cpls (add_assumptions mc0 A) = Cnf.from_assumptions A ++ first_cpls mc0.
+  first_cpls (Mcnf.add_A mc0 A) = Cnf.from_assumptions A ++ first_cpls mc0.
 Proof.
   intros. destruct mc0.
   - cbn. now rewrite List.app_nil_r.
@@ -291,8 +291,8 @@ Lemma force_pos_cs_jump : forall l0 mc1 V c d child_A {W} {R} (M : @Kripke.t W R
   let cs := conflict_set_of (l0::mc1) V c child_A in
   List.In (c,d) (Lclauses.dias l0) ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
-  Mcnf.force M w0 (add_assumptions (l0::mc1) (List.map Lit.Pos cs)) ->
-  exists w1, (*R w0 w1 /\*) Mcnf.force M w1 (add_assumptions mc1 child_A).
+  Mcnf.force M w0 (Mcnf.add_A (l0::mc1) (List.map Lit.Pos cs)) ->
+  exists w1, (*R w0 w1 /\*) Mcnf.force M w1 (Mcnf.add_A mc1 child_A).
 Proof with try easy; auto with datatypes.
   intros * Hdia_in Hchild_A_incl Hparent_force.
   set (mc0 := l0::mc1) in *.
@@ -317,7 +317,7 @@ Proof with try easy; auto with datatypes.
   (* w1d must be the satisfying world *)
   exists w1d. (* split... *)
 
-  destruct (first_ctx mc1) as [cpls1 boxes1 dias1] eqn:Hl1. cbn.
+  destruct (Mcnf.first_ctx mc1) as [cpls1 boxes1 dias1] eqn:Hl1. cbn.
   apply force_new_cpls...
 
   rewrite Cnf.force_from_assumptions, List.Forall_forall.
@@ -351,8 +351,8 @@ Lemma sat_pos_cs_jump : forall l0 mc1 V c d child_A,
   let cs := conflict_set_of (l0::mc1) V c child_A in
   List.In (c,d) (Lclauses.dias l0) ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
-  Mcnf.satisfiable (add_assumptions (l0::mc1) (List.map Lit.Pos cs)) ->
-  Mcnf.satisfiable (add_assumptions mc1 child_A).
+  Mcnf.satisfiable (Mcnf.add_A (l0::mc1) (List.map Lit.Pos cs)) ->
+  Mcnf.satisfiable (Mcnf.add_A mc1 child_A).
 Proof with try easy; auto with datatypes.
 Proof.
   intros * Hdia_in Hchild_A_incl Hsat.
@@ -370,8 +370,8 @@ Lemma unsat_pos_cs_jump : forall l0 mc1 V c d child_A A,
   let cs := conflict_set_of (l0::mc1) V c child_A in
   List.In (c,d) (Lclauses.dias l0) ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
-  Mcnf.unsatisfiable (add_assumptions mc1 child_A) ->
-  Mcnf.unsatisfiable (add_assumptions (add_assumptions (l0::mc1) A) (List.map Lit.Pos cs)).
+  Mcnf.unsatisfiable (Mcnf.add_A mc1 child_A) ->
+  Mcnf.unsatisfiable (Mcnf.add_A (Mcnf.add_A (l0::mc1) A) (List.map Lit.Pos cs)).
 Proof with try easy; auto with datatypes.
 Proof.
   intros * Hdia_in Hchild_A_incl Hunsat Hsat. apply Hunsat.
@@ -387,7 +387,7 @@ Qed.
 
 Theorem deriv_sound : forall mc0 A deriv,
   Derivation.conds mc0 A deriv ->
-  Mcnf.unsatisfiable (add_assumptions mc0 (Derivation.get_core deriv)).
+  Mcnf.unsatisfiable (Mcnf.add_A mc0 (Derivation.get_core deriv)).
 Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   intros mc0 A deriv Hconds.
   induction Hconds as
@@ -410,15 +410,15 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
     apply mcnf_resolution_cs with (cs := cs).
     (* mc0 /\ ~cs *)
     + clear -IHrs.
-      destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
+      destruct (Mcnf.first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
       apply (mcnf_cpls IHrs).
       intros W R M w0 Hforce.
       rewrite Cnf.permutation_force. { exact Hforce. }
       symmetry. cbn. apply Permutation_middle.
     (* mc0 /\ cs *)
     + clear IHrs.
-      destruct (first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
-      set (mc1 := next_ctx mc0) in *.
+      destruct (Mcnf.first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
+      set (mc1 := Mcnf.next_ctx mc0) in *.
       pose proof (deriv_core_incl_A mc1 (d::fired_boxes mc0 V) jump_deriv Hjump) as Hcore_incl.
 
       apply unsat_pos_cs_jump with (d := d)...
@@ -429,19 +429,19 @@ Qed.
 
 Lemma tableau_sound : forall mc0 A,
   negb (Spec.Solution.is_sat (Spec.tableau mc0 (cplsolver_mcnf mc0) A)) ->
-  Mcnf.unsatisfiable (add_assumptions mc0 A).
+  Mcnf.unsatisfiable (Mcnf.add_A mc0 A).
 Proof with try easy.
   intros mc0 A Hunsat.
   destruct (Spec.tableau mc0 (cplsolver_mcnf mc0) A) eqn:Hsolve... clear Hunsat.
   pose proof (tableau_deriv mc0 A core deriv Hsolve) as Hconds.
   pose proof (deriv_sound mc0 A deriv Hconds) as Hunsat.
   pose proof (deriv_core_incl_A mc0 A deriv Hconds) as Hincl.
-  intros Hsat. apply Hunsat. apply incl_sat with (A' := A)...
+  intros Hsat. apply Hunsat. apply incl_A_sat with (A' := A)...
 Qed.
 
 
 Corollary tableau_sound_contrapos : forall mc0 A,
-  Mcnf.satisfiable (add_assumptions mc0 A) ->
+  Mcnf.satisfiable (Mcnf.add_A mc0 A) ->
   Spec.Solution.is_sat (Spec.tableau mc0 (cplsolver_mcnf mc0) A).
 Proof with try easy.
   intros mc0 A Hsat.

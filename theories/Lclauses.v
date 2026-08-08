@@ -176,6 +176,20 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma force_app_sym : forall {W} {R} (M : @Kripke.t W R) (w0 : W) cpls cpls' boxes dias,
+  force M w0 (make (cpls++cpls') boxes dias) <->
+  force M w0 (make (cpls'++cpls) boxes dias).
+Proof.
+  intros *. repeat rewrite force_destruct. repeat rewrite Cnf.force_app. tauto.
+Qed.
+
+Corollary force_merge_app_sym : forall {W} {R} (M : @Kripke.t W R) (w0 : W) cpls cpls' boxes dias l1,
+  force M w0 (merge (make (cpls++cpls') boxes dias) l1) <->
+  force M w0 (merge (make (cpls'++cpls) boxes dias) l1).
+Proof.
+  intros *. repeat rewrite force_merge_and. now rewrite force_app_sym.
+Qed.
+
 Lemma atm_in_cpls : forall p cpls,
   atm_in p (make_cpls cpls) <-> List.Exists (CplClause.atm_in p) cpls.
 Proof. intros. unfold atm_in. cbn. now autorewrite with list prop. Qed.

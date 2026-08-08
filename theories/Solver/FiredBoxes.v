@@ -92,7 +92,7 @@ with Caches.contains caches A =>
           | JumpSolution.Unsat c jump_core caches1' eqn:Hj_eq =>
             let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
             let s0' := CplSolver.add_conflict_set s0 conflict_set in
-            let mc0' := add_conflict_set (l0::mc1) conflict_set in
+            let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
             tableau mc0' s0' A (cache0::caches1')
 .
 Next Obligation.

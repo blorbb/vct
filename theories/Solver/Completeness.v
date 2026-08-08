@@ -8,7 +8,7 @@ Lemma singleton_tree_force : forall s0 A V cpls boxes mc1,
   CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
   CplSolver.clauses_of s0 = cpls ->
   Mcnf.force Tree.as_kripke (Tree.make V [])
-    (add_assumptions (Lclauses.make cpls boxes [] :: mc1) A).
+    (Mcnf.add_A (Lclauses.make cpls boxes [] :: mc1) A).
 Proof with try easy; auto with datatypes ct.
   intros * Hsat Hcpls.
   cbn. rewrite Lclauses.force_destruct.
@@ -27,7 +27,7 @@ Qed.
 
 
 Lemma force_no_assumptions : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 A,
-  Mcnf.force M w0 (add_assumptions mc0 A) ->
+  Mcnf.force M w0 (Mcnf.add_A mc0 A) ->
   Mcnf.force M w0 mc0.
 Proof.
   intros * Hforce. destruct mc0 as [|l0 mc1].
@@ -40,9 +40,9 @@ Lemma tableau_jumps_completeness : forall A V l0 mc1 T1s,
   Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Sat T1s ->
   (forall A' T0,
     Spec.Solution.Sat T0 = Spec.tableau $mc1 A' ->
-    Mcnf.force Tree.as_kripke T0 (add_assumptions mc1 A')) ->
+    Mcnf.force Tree.as_kripke T0 (Mcnf.add_A mc1 A')) ->
   CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
-  Mcnf.force Tree.as_kripke (Tree.make V T1s) (add_assumptions (l0::mc1) A).
+  Mcnf.force Tree.as_kripke (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsat IHnt Hcpl_sat.
 
@@ -114,7 +114,7 @@ Qed.
 
 Theorem tableau_completeness_force : forall mc0 A T,
   Spec.tableau mc0 (cplsolver_mcnf mc0) A = Spec.Solution.Sat T ->
-  Mcnf.force Tree.as_kripke T (add_assumptions mc0 A).
+  Mcnf.force Tree.as_kripke T (Mcnf.add_A mc0 A).
 Proof with try easy; auto with datatypes ct.
   intros mc0 A T Hsat.
 
@@ -170,7 +170,7 @@ Qed.
 
 Corollary tableau_completeness_sat : forall mc0 A,
   Spec.Solution.is_sat (Spec.tableau mc0 (cplsolver_mcnf mc0) A) ->
-  Mcnf.satisfiable (add_assumptions mc0 A).
+  Mcnf.satisfiable (Mcnf.add_A mc0 A).
 Proof with try easy.
   intros mc0 A Hsat.
   destruct (Spec.tableau _ _ _) eqn:H...

@@ -110,7 +110,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
         (* Add conflict set to mc0 to get the restarted mc0'.
           This is needed for the closed tableau types to work out.
           The cpls of l0 aren't used anyways. The SAT solver state stays incremental. *)
-        let mc0' := add_conflict_set (l0::mc1) conflict_set in
+        let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         match tableau mc0' s0' A with (* recursion: RESTART *)
         | Solution.Sat T0 => Solution.Sat T0
         | Solution.Unsat rs_core rs_deriv =>

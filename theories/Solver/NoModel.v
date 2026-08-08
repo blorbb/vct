@@ -104,7 +104,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) := {
       | JumpSolution.Unsat c jump_core eqn:Hj_eq =>
         let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
-        let mc0' := add_conflict_set (l0::mc1) conflict_set in
+        let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         tableau mc0' s0' A
     }
 }.
@@ -202,7 +202,7 @@ Proof with try easy; try congruence; auto.
     set (spec_call := Spec.tableau _ _ _) in *.
     simp tableau. cbn.
     dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
-    cbn -[add_conflict_set]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
+    cbn -[Mcnf.add_cs]. rewrite Hs_eq in Hcsol_eq. inversion_clear Hcsol_eq.
     eta.
     pose proof (tableau_jumps_spec_ind V l0 mc1 Hind) as Hj_matches.
 
@@ -234,7 +234,7 @@ Qed.
 
 Theorem tableau_sound_complete : forall mc0 A,
   Solution.is_sat (tableau mc0 (cplsolver_mcnf mc0) A) <->
-  Mcnf.satisfiable (add_assumptions mc0 A).
+  Mcnf.satisfiable (Mcnf.add_A mc0 A).
 Proof.
   intros mc0 A. split.
   - intro Hsat. apply Completeness.tableau_completeness_sat.

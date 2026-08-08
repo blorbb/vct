@@ -1,6 +1,8 @@
 From Vct Require Lit Valuation.
 From Vct Require Import ImportStd.
 
+Open Scope bool_scope.
+
 (** A CPL-clause, a _disjunction_ of literals. *)
 Definition t : Type := list Lit.t.
 
@@ -27,10 +29,27 @@ Lemma force_nil : forall {W} {R} (M : @Kripke.t W R) (w0 : W),
 Proof. unfold force. now setoid_rewrite List.Exists_nil. Qed.
 Global Hint Rewrite @force_nil : ct.
 
+Lemma forceb_nil : forall V, cpl_forceb V [] <-> False.
+Proof.
+  intros V. unfold cpl_forceb. =rewrite existsb_exists.
+  split; try easy. intros [l [Hl_in _]]. easy.
+Qed.
+Global Hint Rewrite forceb_nil : ct.
+
 Lemma force_cons : forall {W} {R} (M : @Kripke.t W R) (w0 : W) l tl,
   force M w0 (l::tl) <-> Lit.force M w0 l \/ force M w0 tl.
 Proof. intros *. unfold force. now rewrite List.Exists_cons. Qed.
 Global Hint Rewrite @force_cons : ct.
+
+Lemma forceb_cons : forall V l tl,
+  cpl_forceb V (l::tl) <-> Lit.cpl_forceb V l \/ cpl_forceb V tl.
+Proof.
+  intros *. unfold cpl_forceb.
+  change (l::tl) with ([l]++tl).
+  rewrite existsb_app. cbn. rewrite Bool.orb_false_r.
+  now =autorewrite with bool.
+Qed.
+Global Hint Rewrite @forceb_cons : ct.
 
 Lemma forceb_exists : forall V phi,
   cpl_forceb V phi <-> exists l, List.In l phi /\ Lit.cpl_forceb V l.

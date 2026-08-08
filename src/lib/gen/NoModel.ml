@@ -89,8 +89,8 @@ let tableau a a0 b =
            | JumpSolution.Sat -> Solution.Sat
            | JumpSolution.Unsat (c, core) ->
              let conflict_set = conflict_set_of (t0 :: l) v c core in
-             let s0' = CplSolver.add_conflict_set s0 conflict_set in
-             let mc0' = add_conflict_set (t0 :: l) conflict_set in
+             let s0' = add_conflict_set s0 conflict_set in
+             let mc0' = add_cs (t0 :: l) conflict_set in
              tableau0 mc0' s0' a1 __))
      | Unsat core -> Solution.Unsat core)
   in fix_F (a,(a0,b))

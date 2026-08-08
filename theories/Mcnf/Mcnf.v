@@ -167,11 +167,32 @@ Proof.
   - apply Hforce.
 Qed.
 
+Definition with_first_cpls mc0 f :=
+  let l0 := first_ctx mc0 in
+  let mc1 := next_ctx mc0 in
+  Lclauses.make (f (Lclauses.cpls l0)) (Lclauses.boxes l0) (Lclauses.dias l0) :: mc1.
+Arguments with_first_cpls mc0 f /.
+
+Definition add_cs mc0 cs :=
+  with_first_cpls mc0 (cons (List.map Lit.Neg cs)).
+Arguments add_cs mc0 cs /.
+
+(** Adds the conjunction of each literal in [A]. *)
+Definition add_A mc0 A :=
+  with_first_cpls mc0 (app (Cnf.from_assumptions A)).
+Arguments add_A mc0 A /.
+
+(** Adds [~A] to the cpls of [mc0] via adding the disjunction of
+    the negation of each literal in [A]. *)
+Definition add_nA mc0 A :=
+  with_first_cpls mc0 (cons (List.map Lit.negate A)).
+Arguments add_nA mc0 A /.
 
 
 
 (** * Extensions *)
 
+(** Order that cpls are made matters for [add_cs_kt] to hold. *)
 Fixpoint add_kt (mc0 : t) : t :=
   match mc0 with
   | [] => []
@@ -181,10 +202,25 @@ Fixpoint add_kt (mc0 : t) : t :=
     let mc1_kt := add_kt mc1 in
     (* Add all clauses from the next modal context *)
     Lclauses.merge
-      (Lclauses.make (unboxed++cpls0) boxes0 dias0)
+      (Lclauses.make (cpls0++unboxed) boxes0 dias0)
       (first_ctx mc1_kt)
     :: mc1_kt
   end.
+
+
+Lemma add_cs_kt : forall mc0 cs,
+  add_cs (Mcnf.add_kt mc0) cs =
+  Mcnf.add_kt (add_cs mc0 cs).
+Proof.
+  intros *. destruct mc0 as [|[cpls boxes dias] mc1]; reflexivity.
+Qed.
+
+
+Lemma add_kt_tail : forall l0 mc1,
+  next_ctx (add_kt (l0::mc1)) = add_kt mc1.
+Proof.
+  intros l0 mc1. destruct l0. cbn. reflexivity.
+Qed. Global Hint Rewrite add_kt_tail : ct.
 
 
 Lemma kt_force_unboxed : forall {W R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) (boxes0 : list BoxClause.t),
@@ -216,10 +252,10 @@ Proof with try easy; auto.
   destruct l0 as [cpls0 boxes0 dias0].
   split.
   (* add -> unadded easy as add_kt only adds extra clauses *)
-  - cbn. autorewrite with ct.
+  - cbn. rewrite Lclauses.force_merge_app_sym. autorewrite with ct.
     setoid_rewrite <- IH. tauto.
 
-  - intros Hf. cbn. autorewrite with ct.
+  - intros Hf. cbn. rewrite Lclauses.force_merge_app_sym. autorewrite with ct.
     split; [split|].
     (* force unboxed + originals *)
     + split.
@@ -239,12 +275,6 @@ Proof.
   deex. exists W,R,M,w0. now rewrite add_kt_refl.
 Qed.
 
-
-Definition refl_closure {W} (R : relation W) : relation W :=
-  fun w0 w1 => R w0 w1 \/ w0 = w1.
-
-Global Instance refl_closure_refl : forall {W} (R : relation W), Reflexive (refl_closure R).
-Proof. intros W R w. unfold refl_closure. now right. Qed.
 
 
 Lemma force_add_kt_next : forall {W R} (M : @Kripke.t W R) w0 mc0,
@@ -278,7 +308,7 @@ Proof with try easy.
   rewrite Lclauses.force_destruct in Hfadd_mc0.
 
   repeat rewrite and_assoc in Hfadd_mc0.
-  destruct Hfadd_mc0 as [Hf_unboxed [Hf_cpls0 [Hf_boxes0 [Hf_dias0 [Hfadd_l1 Hfadd_mc1]]]]].
+  destruct Hfadd_mc0 as [Hf_cpls0 [Hf_unboxed [Hf_boxes0 [Hf_dias0 [Hfadd_l1 Hfadd_mc1]]]]].
 
   cbn. repeat split.
   - apply (Cnf.force_local M' M)...
@@ -315,7 +345,7 @@ Corollary add_kt_complete : forall phi,
 Proof.
   intros phi Hsatadd_phi.
   unfold satisfiable, satisfiable_kt in *.
-  deex. exists _, _, _, (Kripke.make W (refl_closure R) (Kripke.valuation M)), w0.
+  deex. exists W, (refl_closure R), _, (Kripke.make W (refl_closure R) (Kripke.valuation M)), w0.
   now apply force_refl_closure.
 Qed.
 

@@ -61,8 +61,15 @@ Create Rewrite HintDb bool.
 Hint Rewrite
   Bool.andb_true_iff Bool.andb_false_iff
   Bool.orb_true_iff Bool.orb_false_iff
+  Bool.negb_true_iff Bool.negb_false_iff
   : bool.
-Hint Rewrite <- Bool.eq_true_not_negb_iff : bool.
 
 (** Function pipeline operator *)
 Notation "x |> f" := (f x) (at level 51, left associativity, only parsing).
+
+
+Definition refl_closure {W} (R : relation W) : relation W :=
+  fun w0 w1 => R w0 w1 \/ w0 = w1.
+
+Global Instance refl_closure_refl : forall {W} (R : relation W), Reflexive (refl_closure R).
+Proof. intros W R w. unfold refl_closure. now right. Qed.

@@ -91,7 +91,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
       | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
         let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
-        let mc0' := add_conflict_set (l0::mc1) conflict_set in
+        let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         match tableau mc0' s0' A with
         | Solution.Sat T0 => Solution.Sat T0
         | Solution.Unsat rs_core rs_deriv =>
@@ -154,7 +154,7 @@ Proof with try easy; try congruence; auto.
     2: { apply functional_extensionality. intro A'. now rewrite Hind. }
 
     set (spec_call := Spec.tableau _ _ _).
-    simp tableau. cbn -[add_conflict_set]. eta.
+    simp tableau. cbn -[Mcnf.add_cs]. eta.
     dep_destruct (CplSolver.solve_with_assumptions s0 A) as Hs_eq...
     rewrite Hs_eq in Hcsol_eq. inv_clear Hcsol_eq.
     rewrite Hj_eq. now rewrite <- H.

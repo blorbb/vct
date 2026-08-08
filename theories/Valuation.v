@@ -16,7 +16,7 @@ Proof. unfold nodup. apply List.NoDup_nil. Qed.
 
 
 Definition forces_atm (V : t) (p : Atom.t) : bool := List.existsb (Atom.eqb p) V.
-
+Arguments forces_atm : simpl never.
 
 (** Set-equality of valuations *)
 Definition eq (a b : t) : Prop :=
@@ -25,6 +25,10 @@ Hint Unfold eq : ct.
 
 (* coq can auto solve these *)
 Global Instance eq_equivalence : Equivalence eq := {}.
+
+
+Lemma not_force_forallb : forall V p, negb (Valuation.forces_atm V p) = List.forallb (fun a => negb (p =? a)) V.
+Proof. intros V p. unfold forces_atm. now rewrite negb_exb_forallb. Qed.
 
 
 (** These 2 are unused but might be helpful later. *)

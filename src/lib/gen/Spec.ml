@@ -130,8 +130,8 @@ let tableau a a0 b =
            | JumpSolution.Unsat (failed_dia, core, deriv) ->
              let (t1, t2) = failed_dia in
              let conflict_set = conflict_set_of (t0 :: l) v t1 core in
-             let s0' = CplSolver.add_conflict_set s0 conflict_set in
-             let mc0' = add_conflict_set (t0 :: l) conflict_set in
+             let s0' = add_conflict_set s0 conflict_set in
+             let mc0' = add_cs (t0 :: l) conflict_set in
              (match tableau0 mc0' s0' a1 __ with
               | Solution.Sat t3 -> Solution.Sat t3
               | Solution.Unsat (rs_core, rs_deriv) ->

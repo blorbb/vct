@@ -297,7 +297,7 @@ Proof with auto with typeclass_instances; try easy.
   rewrite List.existsb_exists in HV_force.
   destruct HV_force as [l [Hl_in HV_force_l]].
   apply List.in_map_iff in Hl_in. destruct Hl_in as [p [Hpl Hp_in]]. subst.
-  cbn in HV_force_l. rewrite negb_exb_forallb in HV_force_l.
+  cbn in HV_force_l. rewrite Valuation.not_force_forallb in HV_force_l.
   rewrite List.forallb_forall in HV_force_l.
   specialize (HV_force_l p).
   forward HV_force_l by now apply Hcs_incl.
