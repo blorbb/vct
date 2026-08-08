@@ -71,7 +71,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
       | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
-        let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
+        let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
         let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         match tableau mc0' s0' A with
@@ -93,7 +93,7 @@ Fail Next Obligation.
 
 
 Definition solve_mcnf (mc0 : Mcnf.t) : Solution.t :=
-  let mc0_kt := Mcnf.add_kt mc0 in
+  let mc0_kt := Mcnf.build_kt mc0 in
   tableau mc0_kt (cplsolver_mcnf mc0_kt) [].
 
 
@@ -177,47 +177,8 @@ Proof with try easy; try congruence; auto with ct datatypes solve_subterm.
 Qed.
 
 
-(* TODO: move these to mcnf module *)
-Lemma in_kt_boxes_cpls : forall mc0 a b,
-  List.In (a,b) (first_boxes (Mcnf.add_kt mc0)) ->
-  List.In [Lit.Neg a; b] (first_cpls (Mcnf.add_kt mc0)).
-Proof with try easy.
-  intros * Hab_in.
-  induction mc0 as [|[cpls boxes dias] mc1 IH]...
-  cbn in *. unfold Lclauses.merge in *. cbn in *.
-  repeat rewrite List.in_app_iff in *.
-  destruct Hab_in as [Hab_in_boxes | Hab_in_boxes1].
-  - left. right.
-    rewrite List.in_map_iff. exists (a,b)...
-  - right. apply IH...
-Qed.
-
-
-Lemma force_add_kt_tail : forall V T1s mc0,
-  Lclauses.force Tree.as_refl (Tree.make V T1s) (Mcnf.first_ctx (Mcnf.add_kt mc0)) ->
-  (forall T, List.In T T1s -> Mcnf.force Tree.as_refl T (Mcnf.next_ctx (Mcnf.add_kt mc0))) ->
-  Mcnf.force Tree.as_refl (Tree.make V T1s) (Mcnf.next_ctx (Mcnf.add_kt mc0)).
-Proof with try easy.
-  intros V T1s mc0 Hf_l0 Hf_mc1.
-  induction mc0 as [|[cpls boxes dias] mc1 IH]...
-
-  cbn in Hf_mc1 |- *.
-
-  destruct (Mcnf.add_kt mc1) as [|l1kt mc2kt] eqn:Hmc1...
-  cbn in *. autorewrite with ct in *. rewrite Hmc1 in *. cbn in *.
-  split...
-
-  intros T1 [HT1_in | HT1].
-  + specialize (Hf_mc1 T1 HT1_in). apply Hf_mc1...
-  + subst T1. apply IH... intros T HT_in.
-    specialize (Hf_mc1 T HT_in). apply Hf_mc1...
-Qed.
-
-
-
-
 Lemma tableau_jumps_completeness : forall A V mc0 l0 mc1 T1s,
-  Mcnf.add_kt mc0 = l0::mc1 ->
+  Mcnf.build_kt mc0 = l0::mc1 ->
   tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Sat T1s ->
   (forall A' T0,
     Solution.Sat T0 = tableau $mc1 A' ->
@@ -253,7 +214,7 @@ Proof with try easy; try congruence; auto with ct datatypes.
         apply List.in_map.
         apply List.filter_In. split...
 
-      (* T1 forces b here because of add_kt *)
+      (* T1 forces b here because of build_kt *)
       + rewrite <- HT1. cbn in Hab_in.
         rewrite Lit.force_cpl_forceb with (V := V)...
         (* replace_hyp Hval_a with (Lit.cpl_) *)
@@ -266,9 +227,9 @@ Proof with try easy; try congruence; auto with ct datatypes.
         specialize (Hf_cpls [Lit.Neg a; b]).
         autorewrite with ct prop in Hf_cpls.
         forward Hf_cpls. {
-          change cpls with (first_cpls (Lclauses.make cpls boxes dias :: mc1)).
+          change cpls with (Mcnf.fst_cpls (Lclauses.make cpls boxes dias :: mc1)).
           rewrite <- Hkt.
-          apply in_kt_boxes_cpls.
+          apply Mcnf.build_kt_box_cl_in_cpls.
           rewrite Hkt. cbn...
         }
         destruct Hf_cpls as [Hf_na | Hf_b]...
@@ -297,18 +258,18 @@ Proof with try easy; try congruence; auto with ct datatypes.
   - intros T1 HR_T1. destruct HR_T1 as [HT1_in | HR_T1].
     + apply Hmc1. exact HT1_in.
     + subst T1.
-      replace mc1 with (Mcnf.next_ctx (Mcnf.add_kt mc0)). 2: { now rewrite Hkt. }
-      apply force_add_kt_tail; rewrite Hkt...
+      replace mc1 with (Mcnf.next_mc (Mcnf.build_kt mc0)). 2: { now rewrite Hkt. }
+      apply Mcnf.force_kt_build_kt_next; rewrite Hkt...
 Qed.
 
 
 Theorem tableau_completeness_force : forall mc0 A T,
-  tableau $(Mcnf.add_kt mc0) A = Solution.Sat T ->
-  Mcnf.force Tree.as_refl T (Mcnf.add_A (Mcnf.add_kt mc0) A).
+  tableau $(Mcnf.build_kt mc0) A = Solution.Sat T ->
+  Mcnf.force Tree.as_refl T (Mcnf.add_A (Mcnf.build_kt mc0) A).
 Proof with try easy; auto with datatypes ct.
   intros * Hsat.
 
-  funelim (tableau $(Mcnf.add_kt mc0) A); rewrite <- Heqcall in Hsat.
+  funelim (tableau $(Mcnf.build_kt mc0) A); rewrite <- Heqcall in Hsat.
   - discriminate.
   - clear H.
     inv_clear Hsat. rewrite <- H0 in *.
@@ -321,13 +282,12 @@ Proof with try easy; auto with datatypes ct.
 
   - clear H H0.
     inv_clear Hsat.
-    destruct mc0 as [| l0k mc1k]...
-    destruct (Mcnf.add_kt (l0k::mc1k)) eqn:Hmc0... symmetry in H1. inv_clear H1.
+    rename H1 into Hmc0. rewrite <- Hmc0 in *.
 
-    pose proof (Mcnf.add_kt_tail l0k mc1k) as Hkt_mc1.
-    rewrite Hmc0 in Hkt_mc1. cbn in Hkt_mc1.
+    pose proof (Mcnf.next_mc_build_kt_comm mc0) as Hkt_mc1.
+    rewrite <- Hmc0 in Hkt_mc1. cbn in Hkt_mc1.
 
-    apply tableau_jumps_completeness with (mc0 := (l0k::mc1k))...
+    apply tableau_jumps_completeness with (mc0 := mc0)...
     intros A' T Htab.
     rewrite Hkt_mc1 in Htab |- *.
     setoid_rewrite Hkt_mc1 in Hind.
@@ -335,20 +295,20 @@ Proof with try easy; auto with datatypes ct.
 
   - clear H0 H1. rename H2 into Hmc0.
     destruct (tableau _ _ _) eqn:Htab_cs... inv_clear Hsat.
-    set (cs := conflict_set_of _ _ _ _) in *.
+    set (cs := c :: box_culprits _ _ _) in *.
 
     (* H assumes that T forces an over constrained formula. *)
     specialize (H (Mcnf.add_cs mc0 cs) A T).
     assert (
-      CplSolver.add_conflict_set (cplsolver_mcnf (Mcnf.add_kt mc0)) cs
-      = cplsolver_mcnf (Mcnf.add_kt (Mcnf.add_cs mc0 cs))
+      CplSolver.add_conflict_set (cplsolver_mcnf (Mcnf.build_kt mc0)) cs
+      = cplsolver_mcnf (Mcnf.build_kt (Mcnf.add_cs mc0 cs))
     ) as Hcplsolver. { destruct mc0 as [|[cpls boxes dias] mc1k]; easy. }
     rewrite Hcplsolver in *.
-    forward H. { rewrite <- Htab_cs. now rewrite Hmc0, Mcnf.add_cs_kt. }
-    forward H. { now rewrite Hmc0, Mcnf.add_cs_kt. }
-    forward H. { rewrite <- Htab_cs. now rewrite Hmc0, Mcnf.add_cs_kt. }
-    rewrite <- Mcnf.add_cs_kt in H.
-    apply incl_cpls_force with (cpls := first_cpls (Mcnf.add_A (Mcnf.add_cs (Mcnf.add_kt mc0) cs) A)).
+    forward H. { rewrite <- Htab_cs. now rewrite Hmc0, Mcnf.add_cs_build_kt_comm. }
+    forward H. { now rewrite Hmc0, Mcnf.add_cs_build_kt_comm. }
+    forward H. { rewrite <- Htab_cs. now rewrite Hmc0, Mcnf.add_cs_build_kt_comm. }
+    rewrite <- Mcnf.add_cs_build_kt_comm in H.
+    apply incl_cpls_force with (cpls := Mcnf.fst_cpls (Mcnf.add_A (Mcnf.add_cs (Mcnf.build_kt mc0) cs) A)).
     + rewrite <- Hmc0. cbn...
     + apply H.
 Qed.
@@ -362,6 +322,6 @@ Proof with try easy.
   unfold solve_mcnf in Hsat.
   apply tableau_completeness_force in Hsat.
   rewrite force_add_no_assumptions in Hsat.
-  now apply Mcnf.add_kt_refl.
+  now apply Mcnf.build_kt_refl_iff.
 Qed.
 

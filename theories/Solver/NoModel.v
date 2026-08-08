@@ -46,7 +46,7 @@ Equations tableau_jumps
   (l0 : Lclauses.t)
   (mc1 : Mcnf.t)
   (* The [tableau] function below with [mc1] and
-    [s1 := CplSolver.make_with_clauses (first_cpls mc1)]. *)
+    [s1 := CplSolver.make_with_clauses (Mcnf.fst_cpls mc1)]. *)
   (next_tableau : Assumptions.t -> Solution.t)
   : JumpSolution.t
   by wf (List.length (Lclauses.dias l0)) lt
@@ -102,7 +102,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) := {
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) := {
       | JumpSolution.Sat eqn:Hj_eq => Solution.Sat
       | JumpSolution.Unsat c jump_core eqn:Hj_eq =>
-        let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
+        let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
         let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         tableau mc0' s0' A

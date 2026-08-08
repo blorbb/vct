@@ -34,7 +34,7 @@ Equations tableau_jumps
   (l0 : Lclauses.t)
   (mc1 : Mcnf.t)
   (* The [tableau] function below with [mc1] and
-    [s1 := CplSolver.make_with_clauses (first_cpls mc1)]. *)
+    [s1 := CplSolver.make_with_clauses (Mcnf.fst_cpls mc1)]. *)
   (next_tableau : Assumptions.t -> Solution.t)
   : JumpSolution.t
   by wf (List.length (Lclauses.dias l0)) lt
@@ -103,7 +103,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
       | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
         (* all names that fired some literal in the core + the antecedent of the unsat dia clause *)
-        let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
+        let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
         (* conflict_set is interpreted as a conjunction *)
         (* negate the whole thing to become a cpl clause, interpreted as a disjunction *)
         let s0' := CplSolver.add_conflict_set s0 conflict_set in

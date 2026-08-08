@@ -38,10 +38,10 @@ Inductive conds : Mcnf.t -> Assumptions.t -> t -> Prop :=
 | LocalCond : forall mc0 A core, cpl_solve mc0 A = CplSolution.Unsat core -> conds mc0 A (Local core)
 | JumpRestartCond : forall mc0 A V failed_dia jump_deriv rs_deriv,
   cpl_solve mc0 A = CplSolution.Sat V ->
-  List.In failed_dia (first_dias mc0) ->
+  List.In failed_dia (Mcnf.fst_dias mc0) ->
   Valuation.forces_atm V (fst failed_dia) ->
   (* Jump tableau also satisfies conds. *)
-  conds (Mcnf.next_ctx mc0) (snd failed_dia :: fired_boxes mc0 V) jump_deriv ->
+  conds (Mcnf.next_mc mc0) (snd failed_dia :: fired_boxes mc0 V) jump_deriv ->
   (* Restart tableau also satisfies conds. *)
-  conds (Mcnf.add_cs mc0 (conflict_set_of mc0 V (fst failed_dia) (get_core jump_deriv))) A rs_deriv ->
+  conds (Mcnf.add_cs mc0 ((fst failed_dia) :: box_culprits mc0 V (get_core jump_deriv))) A rs_deriv ->
   conds mc0 A (JumpRestart V failed_dia jump_deriv rs_deriv).

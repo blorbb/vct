@@ -4,28 +4,21 @@ From Vct Require CplSolver Lit Assumptions Valuation Tree Mcnf.
 From Vct Require Import ImportStd.
 
 
-
-Definition first_cpls (mc0 : Mcnf.t) :=
-  Lclauses.cpls (Mcnf.first_ctx mc0).
-
-Definition first_boxes (mc0 : Mcnf.t) :=
-  Lclauses.boxes (Mcnf.first_ctx mc0).
-
-Definition first_dias (mc0 : Mcnf.t) :=
-  Lclauses.dias (Mcnf.first_ctx mc0).
-
 Definition fired_boxes (mc0 : Mcnf.t) (V : Valuation.t) :=
-  first_boxes mc0
+  Mcnf.fst_boxes mc0
   |> List.filter (fun '(a,b) => Valuation.forces_atm V a)
   |> List.map snd.
 
+Definition box_culprits (mc0 : Mcnf.t) (V : Valuation.t) (core : Assumptions.t) :=
+  Mcnf.fst_boxes mc0
+  |> List.filter (fun box => Valuation.forces_atm V (fst box))
+  |> List.filter (fun box => List.existsb (Lit.eqb (snd box)) core)
+  |> List.map fst.
+Arguments box_culprits : simpl never.
 
-Lemma add_conflict_set_neg_assumptions : forall mc0 cs,
-  Mcnf.add_cs mc0 cs = Mcnf.add_nA mc0 (List.map Lit.Pos cs).
-Proof. intros mc0 cs. cbn. rewrite List.map_map. cbn. reflexivity. Qed.
 
 Definition cplsolver_mcnf (mc0 : Mcnf.t) :=
-  CplSolver.make_with_clauses (first_cpls mc0).
+  CplSolver.make_with_clauses (Mcnf.fst_cpls mc0).
 
 Definition cpl_from_lclauses (l0 : Lclauses.t) :=
   CplSolver.make_with_clauses (Lclauses.cpls l0).
@@ -36,42 +29,29 @@ Definition cpl_solve (mc0 : Mcnf.t) (A : Assumptions.t) :=
 
 (** * Conflict set lemmas *)
 
-(** Creates a conflict set. *)
-Definition conflict_set_of mc0 V dia_antecedent core :=
-  first_boxes mc0
-  |> List.filter (fun box => Valuation.forces_atm V (fst box))
-  |> List.filter (fun box => List.existsb (Lit.eqb (snd box)) core)
-  |> List.map fst
-  |> cons dia_antecedent.
-Arguments conflict_set_of mc0 V dia_antecedent core : simpl never.
-
-
 (** The conflict set is a subset of the valuation. *)
-Lemma conflict_set_incl_val : forall mc0 V dia_antecedent core s A,
+Lemma cs_incl_V : forall mc0 V core c s A,
   CplSolution.Sat V = CplSolver.solve_with_assumptions s A ->
-  Valuation.forces_atm V dia_antecedent ->
-  let conflict_set := conflict_set_of mc0 V dia_antecedent core in
-  List.incl conflict_set V.
+  Valuation.forces_atm V c ->
+  List.incl (c :: box_culprits mc0 V core) V.
 Proof.
-  intros mc0 V dia_antecedent core s A Hval Hforce_ante conflict_set.
-  unfold conflict_set, conflict_set_of. intros x Hx_in_cs.
-  cbn in Hx_in_cs. destruct Hx_in_cs as [Hante | Hin].
-  - subst x.
-    unfold Valuation.forces_atm in Hforce_ante.
-    apply List.existsb_exists in Hforce_ante as [l [Hl_in_val Heq_ante]].
+  intros mc0 V core c s A Hval Hf_c.
+  intros p [Hp_c | Hp_in].
+  - subst p.
+    unfold Valuation.forces_atm in Hf_c.
+    apply List.existsb_exists in Hf_c as [l [Hl_in_val Heq_ante]].
     apply Atom.eqb_eq in Heq_ante. subst l. assumption.
-  - setoid_rewrite List.in_map_iff in Hin.
-    destruct Hin as [pair [Hfst_x Hpair_in]].
+  - setoid_rewrite List.in_map_iff in Hp_in.
+    destruct Hp_in as [(a,b) [Ha_p Hab_in]].
 
     (* remove the two filters *)
     (* first filter doesn't matter, second filter shows that (fst box) is in solver V *)
-    apply List.incl_filter in Hpair_in.
-    apply List.filter_In in Hpair_in.
-    destruct Hpair_in as [_ Hin].
+    apply List.incl_filter in Hab_in.
+    apply List.filter_In in Hab_in.
+    destruct Hab_in as [_ Hp_in].
 
-    unfold Valuation.forces_atm in Hin.
-    apply List.existsb_exists in Hin as [l [Hl_in_val Heq_ante]].
-    apply Atom.eqb_eq in Heq_ante. subst l x. assumption.
+    cbn [fst snd] in *. subst p.
+    now rewrite <- Valuation.forces_atm_iff_in.
 Qed.
 
 
@@ -138,7 +118,7 @@ Qed.
 
 
 Lemma force_ctx_first_next : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0,
-  Mcnf.force M w0 (Mcnf.first_ctx mc0 :: Mcnf.next_ctx mc0) <-> Mcnf.force M w0 mc0.
+  Mcnf.force M w0 (Mcnf.fst_mc mc0 :: Mcnf.next_mc mc0) <-> Mcnf.force M w0 mc0.
 Proof.
   intros *. destruct mc0 as [|l0 mc1].
   - cbn. now autorewrite with list ct prop.

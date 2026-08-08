@@ -129,7 +129,7 @@ let tableau a a0 b =
            | JumpSolution.Sat t1s -> Solution.Sat (Coq_make (v, t1s))
            | JumpSolution.Unsat (failed_dia, core, deriv) ->
              let (t1, t2) = failed_dia in
-             let conflict_set = conflict_set_of (t0 :: l) v t1 core in
+             let conflict_set = t1 :: (box_culprits (t0 :: l) v core) in
              let s0' = add_conflict_set s0 conflict_set in
              let mc0' = add_cs (t0 :: l) conflict_set in
              (match tableau0 mc0' s0' a1 __ with

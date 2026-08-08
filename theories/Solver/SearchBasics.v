@@ -41,10 +41,10 @@ Proof.
 Qed.
 
 
-Lemma decreasing_sat_vals : forall s0 A mc0 V c jump_core,
+Lemma decreasing_sat_vals : forall s0 A mc0 V jump_core c,
   CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
   Valuation.forces_atm V c ->
-  let cs := conflict_set_of mc0 V c jump_core in
+  let cs := c :: box_culprits mc0 V jump_core in
   let s0' := CplSolver.add_conflict_set s0 cs in
   (List.length (CplSolver.every_sat_valuation s0' A) <
   List.length (CplSolver.every_sat_valuation s0 A))%nat.
@@ -56,7 +56,7 @@ Proof with auto with typeclass_instances datatypes ct; try lia.
   assert (inclA Valuation.eq s0'_sats s0_sats) as Hincl. {
     apply CplSolver.refined_solver_sat_vals_subset with (clause := List.map Lit.Neg cs).
     - apply val_subset_no_new_atms with (V := V)...
-      apply conflict_set_incl_val with (s := s0) (A := A)...
+      apply cs_incl_V with (s := s0) (A := A)...
     - subst s0'. reflexivity.
   }
 
@@ -66,9 +66,8 @@ Proof with auto with typeclass_instances datatypes ct; try lia.
   - intro Hlen.
 
     apply CplSolver.refined_solver_diff_val with A V cs s0'.
-    + apply conflict_set_incl_val with s0 A...
-    + subst cs. unfold conflict_set_of.
-      discriminate.
+    + apply cs_incl_V with s0 A...
+    + subst cs. discriminate.
     + subst s0'. unfold CplSolver.add_conflict_set. rewrite CplSolver.add_clause_cons.
       now left.
     + apply PermutationA_inA with (l := s0_sats)...

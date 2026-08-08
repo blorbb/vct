@@ -31,24 +31,6 @@ Record t {W : Type} {R : relation W} : Type := {
 Definition make W R (valuation : W -> Atom.t -> Prop) : @t W R :=
   {| valuation := valuation  |}.
 
-
-Module Kt.
-  Record t {W : Type} {R : relation W} : Type := {
-    to_k : @Kripke.t W R;
-    refl : Reflexive R;
-  }.
-End Kt.
-
-Module K4.
-  Record t {W : Type} {R : relation W} : Type := {
-    to_k : @Kripke.t W R;
-    trans : Transitive R;
-  }.
-End K4.
-
-Module Kt4.
-  Record t {W : Type} {R : relation W} : Type := {
-    model_kt4 : @Kripke.t W R;
-    preord_kt4 : PreOrder R;
-  }.
-End Kt4.
+(** Makes a model reflexive. *)
+Definition to_kt {W} {R} (M : @t W R) : @t W (refl_closure R) :=
+  make W (refl_closure R) (Kripke.valuation M).

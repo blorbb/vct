@@ -1,4 +1,5 @@
 open Atom
+open BoxClause
 open CplClause
 open Datatypes
 open Lclauses
@@ -9,11 +10,15 @@ open Nnf
 
 type t = Lclauses.t list
 
-val first_ctx : t -> Lclauses.t
+val fst_mc : t -> Lclauses.t
 
-val next_ctx : t -> Lclauses.t list
+val next_mc : t -> Lclauses.t list
 
-val with_first_cpls :
+val fst_cpls : t -> CplClause.t list
+
+val fst_boxes : t -> BoxClause.t list
+
+val with_fst_cpls :
   t -> (CplClause.t list -> CplClause.t list) -> Lclauses.t list
 
 val add_cs : t -> int list -> Lclauses.t list

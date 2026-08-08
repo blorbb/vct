@@ -31,6 +31,17 @@ Lemma not_force_forallb : forall V p, negb (Valuation.forces_atm V p) = List.for
 Proof. intros V p. unfold forces_atm. now rewrite negb_exb_forallb. Qed.
 
 
+Lemma forces_atm_iff_in : forall V p, forces_atm V p <-> List.In p V.
+Proof.
+  intros V p. unfold forces_atm. =rewrite List.existsb_exists.
+  split.
+  - intros [p' [Hp'V Hpp']]. fold (is_true (p =? p')) in Hpp'.
+    rewrite Atom.eqb_eq in Hpp'. now subst p.
+  - intros Hp_in. exists p. fold (is_true (p =? p)).
+    split; easy.
+Qed.
+
+
 (** These 2 are unused but might be helpful later. *)
 
 Lemma eq_nodup : forall (V V' : t), eq V V' -> nodup V -> nodup V'.

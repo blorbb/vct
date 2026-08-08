@@ -85,7 +85,7 @@ Proof with auto.
     inv_clear Hunsat.
     apply Derivation.JumpRestartCond.
     + auto.
-    + unfold first_dias. cbn. eauto using jump_failed_dia.
+    + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using Spec.jump_c_forced.
     + apply tableau_jumps_deriv_ind with (core := jump_core).
       * apply Hj_eq.
@@ -130,7 +130,7 @@ Qed.
 
 (** Some helpers to simplify unsat goals. *)
 
-Lemma cnf_unsat_subset : forall phi, Cnf.unsatisfiable (first_cpls phi) -> Mcnf.unsatisfiable phi.
+Lemma cnf_unsat_subset : forall phi, Cnf.unsatisfiable (Mcnf.fst_cpls phi) -> Mcnf.unsatisfiable phi.
 Proof.
   intros phi. induction phi as [|l0 mc1].
   - cbn. intros Hcnf_unsat Hm_sat.
@@ -181,9 +181,9 @@ Proof with try easy; auto.
 Qed.
 
 (** Weird definition to fit the contexts this is used in. *)
-Lemma force_first_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls boxes dias,
+Lemma force_fst_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls boxes dias,
   Mcnf.force M w0 mc0 ->
-  Mcnf.first_ctx mc0 = Lclauses.make cpls boxes dias ->
+  Mcnf.fst_mc mc0 = Lclauses.make cpls boxes dias ->
   Cnf.force M w0 cpls.
 Proof.
   intros * Hforce Hl0. destruct mc0 as [|l0 mc1]; cbn in *.
@@ -192,10 +192,10 @@ Proof.
 Qed.
 
 Lemma force_new_cpls : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 cpls' cpls boxes dias,
-  Mcnf.first_ctx mc0 = Lclauses.make cpls boxes dias ->
+  Mcnf.fst_mc mc0 = Lclauses.make cpls boxes dias ->
   Mcnf.force M w0 mc0 ->
   Cnf.force M w0 cpls' ->
-  Mcnf.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: Mcnf.next_ctx mc0).
+  Mcnf.force M w0 ((Lclauses.make (cpls' ++ cpls) boxes dias) :: Mcnf.next_mc mc0).
 Proof with try easy.
   intros * Hl0_eq Hforce_w0 Hforce_cpls'. destruct mc0 as [|l0 mc1].
   - cbn in *. inv_clear Hl0_eq. split...
@@ -203,10 +203,10 @@ Proof with try easy.
   - cbn in *; subst. autorewrite with ct...
 Qed.
 
-Lemma first_ctx_destruct : forall mc0,
-  Mcnf.first_ctx mc0 = Lclauses.make (Lclauses.cpls (Mcnf.first_ctx mc0)) (Lclauses.boxes (Mcnf.first_ctx mc0)) (Lclauses.dias (Mcnf.first_ctx mc0)).
+Lemma fst_mc_destruct : forall mc0,
+  Mcnf.fst_mc mc0 = Lclauses.make (Lclauses.cpls (Mcnf.fst_mc mc0)) (Lclauses.boxes (Mcnf.fst_mc mc0)) (Lclauses.dias (Mcnf.fst_mc mc0)).
 Proof. intros [|[cpls boxes dias] mc1]; reflexivity. Qed.
-Global Hint Resolve first_ctx_destruct : ct.
+Global Hint Resolve fst_mc_destruct : ct.
 
 Lemma mcnf_resolution : forall mc0 (A : list Lit.t),
   Mcnf.unsatisfiable (Mcnf.add_A mc0 A) ->
@@ -219,8 +219,8 @@ Proof with try easy; auto with ct.
   autorewrite with ct. split; [split|].
   - apply not_all_some_true. intro Hf_cnf.
     apply Hcs. exists W,R,M,w. apply force_new_cpls...
-  - rewrite <- first_ctx_destruct.
-    now apply Mcnf.force_first_ctx.
+  - rewrite <- fst_mc_destruct.
+    now apply Mcnf.force_fst_mc.
   - destruct mc0... cbn in Hforce |- *...
 Qed.
 
@@ -241,8 +241,8 @@ Corollary force_not_A_neg_A : forall {W} {R} (M : @Kripke.t W R) (w0 : W) mc0 A,
   Mcnf.force M w0 (Mcnf.add_nA mc0 A).
 Proof with try easy; auto.
   intros * Hforce_mc0 Hnforce_A.
-  unfold Mcnf.add_nA, Mcnf.with_first_cpls.
-  destruct (Mcnf.first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
+  unfold Mcnf.add_nA, Mcnf.with_fst_cpls.
+  destruct (Mcnf.fst_mc mc0) as [cpls boxes dias] eqn:Hl0.
   apply (force_new_cpls mc0 [List.map Lit.negate A])...
   apply Cnf.force_singleton.
   apply not_all_some_true. intros Hforce_A. apply Hnforce_A.
@@ -266,7 +266,7 @@ Qed.
 (** ** Soundness of derivation *)
 
 Lemma cpls_of_add_assumptions : forall mc0 A,
-  first_cpls (Mcnf.add_A mc0 A) = Cnf.from_assumptions A ++ first_cpls mc0.
+  Mcnf.fst_cpls (Mcnf.add_A mc0 A) = Cnf.from_assumptions A ++ Mcnf.fst_cpls mc0.
 Proof.
   intros. destruct mc0.
   - cbn. now rewrite List.app_nil_r.
@@ -288,7 +288,7 @@ Qed.
 
 
 Lemma force_pos_cs_jump : forall l0 mc1 V c d child_A {W} {R} (M : @Kripke.t W R) w0,
-  let cs := conflict_set_of (l0::mc1) V c child_A in
+  let cs := c :: box_culprits (l0::mc1) V child_A in
   List.In (c,d) (Lclauses.dias l0) ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
   Mcnf.force M w0 (Mcnf.add_A (l0::mc1) (List.map Lit.Pos cs)) ->
@@ -298,26 +298,21 @@ Proof with try easy; auto with datatypes.
   set (mc0 := l0::mc1) in *.
   destruct l0 as [cpls boxes dias] eqn:Hl0.
   cbn in *.
-  autorewrite with ct in *.
-  destruct Hparent_force as [[Hf_cs [Hf_cpls0 [Hf_boxes0 Hf_dias0]]] Hf_w1].
+  autorewrite with ct prop in *.
+  destruct Hparent_force as [[Hf_cs [Hf_culprits [Hf_cpls0 [Hf_boxes0 Hf_dias0]]]] Hf_w1].
+  cbn in Hf_cs.
 
   (* get the world where the dia clause must be forced *)
   rewrite List.Forall_forall, Cnf.force_forall in *.
   specialize (Hf_dias0 (c,d) Hdia_in).
   unfold DiaClause.force in Hf_dias0.
-  forward Hf_dias0. {
-    cbn.
-    fold (Lit.force M w0 (Lit.Pos c)).
-    rewrite <- CplClause.force_singleton.
-    apply Hf_cs.
-    unfold cs, conflict_set_of. cbn. now left.
-  }
+  forward Hf_dias0 by exact Hf_cs.
   destruct Hf_dias0 as [w1d [HR_w1d Hw1d_force_d]]. cbn in Hw1d_force_d.
 
   (* w1d must be the satisfying world *)
   exists w1d. (* split... *)
 
-  destruct (Mcnf.first_ctx mc1) as [cpls1 boxes1 dias1] eqn:Hl1. cbn.
+  destruct (Mcnf.fst_mc mc1) as [cpls1 boxes1 dias1] eqn:Hl1. cbn.
   apply force_new_cpls...
 
   rewrite Cnf.force_from_assumptions, List.Forall_forall.
@@ -332,15 +327,12 @@ Proof with try easy; auto with datatypes.
   apply (Hf_boxes0 (a,b))... cbn.
 
   (* a must also be forced *)
-  specialize (Hf_cs (CplClause.from_lit (Lit.Pos a))).
-  rewrite CplClause.force_singleton in Hf_cs.
-  apply Hf_cs.
+  specialize (Hf_culprits (CplClause.from_lit (Lit.Pos a))).
+  rewrite CplClause.force_singleton in Hf_culprits.
+  apply Hf_culprits.
 
-  cbn.
-  unfold Cnf.from_assumptions. apply List.in_map_iff. exists (Lit.Pos a). split...
-  apply List.in_map_iff. exists a. split...
+  repeat apply List.in_map.
 
-  subst cs. unfold conflict_set_of. cbn. right.
   apply List.in_map_iff. exists (a, b). split...
   repeat rewrite List.filter_In. repeat split...
   cbn. rewrite List.existsb_exists. exists b. split... apply Lit.eqb_equiv.
@@ -348,7 +340,7 @@ Qed.
 
 
 Lemma sat_pos_cs_jump : forall l0 mc1 V c d child_A,
-  let cs := conflict_set_of (l0::mc1) V c child_A in
+  let cs := c :: box_culprits (l0::mc1) V child_A in
   List.In (c,d) (Lclauses.dias l0) ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
   Mcnf.satisfiable (Mcnf.add_A (l0::mc1) (List.map Lit.Pos cs)) ->
@@ -367,7 +359,7 @@ Qed.
 
 (** Has an extra [A] that is basically unused as this pattern appears several times. *)
 Lemma unsat_pos_cs_jump : forall l0 mc1 V c d child_A A,
-  let cs := conflict_set_of (l0::mc1) V c child_A in
+  let cs := c :: box_culprits (l0::mc1) V child_A in
   List.In (c,d) (Lclauses.dias l0) ->
   List.incl child_A (d :: fired_boxes (l0::mc1) V) ->
   Mcnf.unsatisfiable (Mcnf.add_A mc1 child_A) ->
@@ -397,8 +389,8 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   - apply cnf_unsat_subset.
 
     rewrite cpls_of_add_assumptions.
-    rewrite <- (CplSolver.clauses_of_make_with_clauses (first_cpls mc0)).
-    unfold cpl_solve in Hunsat. set (s0 := CplSolver.make_with_clauses (first_cpls mc0)) in *.
+    rewrite <- (CplSolver.clauses_of_make_with_clauses (Mcnf.fst_cpls mc0)).
+    unfold cpl_solve in Hunsat. set (s0 := CplSolver.make_with_clauses (Mcnf.fst_cpls mc0)) in *.
     apply (CplSolver.solution_soundness s0 A core)...
 
   (* mc0 /\ cs and mc0 /\ ~cs are both unsatisfiable.
@@ -406,19 +398,19 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
      mc0 /\ ~cs is from IHrs. *)
   - destruct failed_dia as [c d]; cbn [fst snd] in *.
     cbn [Derivation.get_core].
-    set (cs := conflict_set_of mc0 V c (Derivation.get_core jump_deriv)) in *.
+    set (cs := c :: box_culprits mc0 V (Derivation.get_core jump_deriv)) in *.
     apply mcnf_resolution_cs with (cs := cs).
     (* mc0 /\ ~cs *)
     + clear -IHrs.
-      destruct (Mcnf.first_ctx mc0) as [cpls boxes dias] eqn:Hl0_eq.
+      destruct (Mcnf.fst_mc mc0) as [cpls boxes dias] eqn:Hl0_eq.
       apply (mcnf_cpls IHrs).
       intros W R M w0 Hforce.
       rewrite Cnf.permutation_force. { exact Hforce. }
       symmetry. cbn. apply Permutation_middle.
     (* mc0 /\ cs *)
     + clear IHrs.
-      destruct (Mcnf.first_ctx mc0) as [cpls boxes dias] eqn:Hl0.
-      set (mc1 := Mcnf.next_ctx mc0) in *.
+      destruct (Mcnf.fst_mc mc0) as [cpls boxes dias] eqn:Hl0.
+      set (mc1 := Mcnf.next_mc mc0) in *.
       pose proof (deriv_core_incl_A mc1 (d::fired_boxes mc0 V) jump_deriv Hjump) as Hcore_incl.
 
       apply unsat_pos_cs_jump with (d := d)...

@@ -143,23 +143,30 @@ Arguments zip_merge : simpl never.
 
 (** * Helpers *)
 
-Definition first_ctx (mc0 : t) :=
+Definition fst_mc (mc0 : t) :=
   match mc0 with
   | [] => Lclauses.empty
   | l0::_ => l0
   end.
 
-
-Definition next_ctx (mc0 : t) :=
+Definition next_mc (mc0 : t) :=
   match mc0 with
   | [] => []
   | _::mc1 => mc1
   end.
 
+Definition fst_cpls (mc0 : Mcnf.t) :=
+  Lclauses.cpls (fst_mc mc0).
 
-Lemma force_first_ctx : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
+Definition fst_boxes (mc0 : t) :=
+  Lclauses.boxes (fst_mc mc0).
+
+Definition fst_dias (mc0 : t) :=
+  Lclauses.dias (fst_mc mc0).
+
+Lemma force_fst_mc : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
   force M w0 mc0 ->
-  Lclauses.force M w0 (first_ctx mc0).
+  Lclauses.force M w0 (fst_mc mc0).
 Proof.
   intros * Hforce.
   destruct mc0 as [|l0 mc1].
@@ -167,60 +174,79 @@ Proof.
   - apply Hforce.
 Qed.
 
-Definition with_first_cpls mc0 f :=
-  let l0 := first_ctx mc0 in
-  let mc1 := next_ctx mc0 in
+Definition with_fst_cpls mc0 f :=
+  let l0 := fst_mc mc0 in
+  let mc1 := next_mc mc0 in
   Lclauses.make (f (Lclauses.cpls l0)) (Lclauses.boxes l0) (Lclauses.dias l0) :: mc1.
-Arguments with_first_cpls mc0 f /.
+Arguments with_fst_cpls mc0 f /.
 
 Definition add_cs mc0 cs :=
-  with_first_cpls mc0 (cons (List.map Lit.Neg cs)).
+  with_fst_cpls mc0 (cons (List.map Lit.Neg cs)).
 Arguments add_cs mc0 cs /.
 
 (** Adds the conjunction of each literal in [A]. *)
 Definition add_A mc0 A :=
-  with_first_cpls mc0 (app (Cnf.from_assumptions A)).
+  with_fst_cpls mc0 (app (Cnf.from_assumptions A)).
 Arguments add_A mc0 A /.
 
 (** Adds [~A] to the cpls of [mc0] via adding the disjunction of
     the negation of each literal in [A]. *)
 Definition add_nA mc0 A :=
-  with_first_cpls mc0 (cons (List.map Lit.negate A)).
+  with_fst_cpls mc0 (cons (List.map Lit.negate A)).
 Arguments add_nA mc0 A /.
+
+
+Lemma add_cs_nA_eq : forall mc0 cs,
+  add_cs mc0 cs = add_nA mc0 (List.map Lit.Pos cs).
+Proof. intros mc0 cs. cbn. rewrite List.map_map. cbn. reflexivity. Qed.
 
 
 
 (** * Extensions *)
 
 (** Order that cpls are made matters for [add_cs_kt] to hold. *)
-Fixpoint add_kt (mc0 : t) : t :=
+Fixpoint build_kt (mc0 : t) : t :=
   match mc0 with
   | [] => []
   | Lclauses.make cpls0 boxes0 dias0 :: mc1 =>
     (* a -> b for each a -> []b in the current context *)
     let unboxed := List.map (fun '(a, b) => [Lit.Neg a; b]) boxes0 in
-    let mc1_kt := add_kt mc1 in
+    let mc1_kt := build_kt mc1 in
     (* Add all clauses from the next modal context *)
     Lclauses.merge
       (Lclauses.make (cpls0++unboxed) boxes0 dias0)
-      (first_ctx mc1_kt)
+      (fst_mc mc1_kt)
     :: mc1_kt
   end.
 
 
-Lemma add_cs_kt : forall mc0 cs,
-  add_cs (Mcnf.add_kt mc0) cs =
-  Mcnf.add_kt (add_cs mc0 cs).
+Lemma add_cs_build_kt_comm : forall mc0 cs,
+  add_cs (build_kt mc0) cs =
+  build_kt (add_cs mc0 cs).
 Proof.
   intros *. destruct mc0 as [|[cpls boxes dias] mc1]; reflexivity.
 Qed.
 
-
-Lemma add_kt_tail : forall l0 mc1,
-  next_ctx (add_kt (l0::mc1)) = add_kt mc1.
+Lemma next_mc_build_kt_comm : forall mc0,
+  next_mc (build_kt mc0) = build_kt (next_mc mc0).
 Proof.
-  intros l0 mc1. destruct l0. cbn. reflexivity.
-Qed. Global Hint Rewrite add_kt_tail : ct.
+  intros [|[cpls boxes dias] mc1]; easy.
+Qed. Global Hint Rewrite next_mc_build_kt_comm : ct.
+
+
+Lemma build_kt_box_cl_in_cpls : forall mc0 a b,
+  List.In (a,b) (fst_boxes (build_kt mc0)) ->
+  List.In [Lit.Neg a; b] (fst_cpls (build_kt mc0)).
+Proof with try easy.
+  intros * Hab_in.
+  induction mc0 as [|[cpls boxes dias] mc1 IH]...
+  cbn in *. unfold Lclauses.merge in *. cbn in *.
+  repeat rewrite List.in_app_iff in *.
+  destruct Hab_in as [Hab_in_boxes | Hab_in_boxes1].
+  - left. right.
+    rewrite List.in_map_iff. exists (a,b)...
+  - right. apply IH...
+Qed.
 
 
 Lemma kt_force_unboxed : forall {W R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) (boxes0 : list BoxClause.t),
@@ -243,15 +269,15 @@ Proof.
 Qed.
 
 
-Lemma add_kt_refl : forall {W} {R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
-  Mcnf.force M w0 (add_kt mc0) <-> Mcnf.force M w0 mc0.
+Lemma build_kt_refl_iff : forall {W} {R} `{Reflexive W R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
+  Mcnf.force M w0 (build_kt mc0) <-> Mcnf.force M w0 mc0.
 Proof with try easy; auto.
   intros * Hrefl *. revert w0. induction mc0 as [|l0 mc1 IH]; intros w0.
   { tauto. }
 
   destruct l0 as [cpls0 boxes0 dias0].
   split.
-  (* add -> unadded easy as add_kt only adds extra clauses *)
+  (* add -> unadded easy as build_kt only adds extra clauses *)
   - cbn. rewrite Lclauses.force_merge_app_sym. autorewrite with ct.
     setoid_rewrite <- IH. tauto.
 
@@ -262,24 +288,45 @@ Proof with try easy; auto.
       * apply kt_force_unboxed. apply Hf.
       * apply Hf.
     (* force fst ctx of mc1 *)
-    + apply force_first_ctx. apply IH.
+    + apply force_fst_mc. apply IH.
       (* w0 forces mc1 by reflexivity *)
       apply Hf. reflexivity.
     + setoid_rewrite IH. apply Hf.
 Qed.
 
-Corollary add_kt_sound : forall phi,
-  satisfiable_kt phi -> satisfiable (add_kt phi).
+Corollary build_kt_sound : forall phi,
+  satisfiable_kt phi -> satisfiable (build_kt phi).
 Proof.
   intros phi Hsatkt_phi. unfold satisfiable, satisfiable_kt in *.
-  deex. exists W,R,M,w0. now rewrite add_kt_refl.
+  deex. exists W,R,M,w0. now rewrite build_kt_refl_iff.
 Qed.
 
 
+(* Only knowing that _non-reflexive_ successors is enough to know that [mc1] is forced. *)
+Lemma force_kt_build_kt_next : forall {W} {R} (M : @Kripke.t W R) w0 mc0,
+  Lclauses.force (Kripke.to_kt M) w0 (Mcnf.fst_mc (Mcnf.build_kt mc0)) ->
+  (forall w1, R w0 w1 -> Mcnf.force (Kripke.to_kt M) w1 (Mcnf.next_mc (Mcnf.build_kt mc0))) ->
+  Mcnf.force (Kripke.to_kt M) w0 (Mcnf.next_mc (Mcnf.build_kt mc0)).
+Proof with try easy.
+  intros * Hf_l0 Hf_mc1.
+  induction mc0 as [|[cpls boxes dias] mc1 IH]...
 
-Lemma force_add_kt_next : forall {W R} (M : @Kripke.t W R) w0 mc0,
-  force M w0 (add_kt mc0) ->
-  force M w0 (add_kt (next_ctx mc0)).
+  cbn in Hf_mc1 |- *.
+
+  destruct (Mcnf.build_kt mc1) as [|l1kt mc2kt] eqn:Hmc1...
+  cbn in *. autorewrite with ct in *. rewrite Hmc1 in *. cbn in *.
+  split...
+
+  intros T1 [HT1_in | HT1].
+  + specialize (Hf_mc1 T1 HT1_in). apply Hf_mc1...
+  + subst T1. apply IH... intros T HT_in.
+    specialize (Hf_mc1 T HT_in). apply Hf_mc1...
+Qed.
+
+
+Lemma force_build_kt_next : forall {W} {R} (M : @Kripke.t W R) w0 mc0,
+  force M w0 (build_kt mc0) ->
+  force M w0 (build_kt (next_mc mc0)).
 Proof with try easy.
   intros *. revert w0. induction mc0 as [|l0 mc1 IH]...
   intros w0 Hfadd_mc0.
@@ -295,8 +342,8 @@ Qed.
 
 
 Lemma force_refl_closure : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : t),
-  force M w0 (add_kt mc0) ->
-  force (Kripke.make W (refl_closure R) (Kripke.valuation M)) w0 mc0.
+  force M w0 (build_kt mc0) ->
+  force (Kripke.to_kt M) w0 mc0.
 Proof with try easy.
   intros *. revert w0.
   set (R' := refl_closure R).
@@ -335,13 +382,13 @@ Proof with try easy.
   - intros w1 [HR_w1 | Hw0w1].
     + apply IH. now apply Hfadd_mc1.
     + subst w1. apply IH.
-      apply force_add_kt_next with (mc0 := Lclauses.empty::mc1). cbn. split.
+      apply force_build_kt_next with (mc0 := Lclauses.empty::mc1). cbn. split.
       * unfold Lclauses.merge. cbn. apply Hfadd_l1.
       * apply Hfadd_mc1.
 Qed.
 
-Corollary add_kt_complete : forall phi,
-  satisfiable (add_kt phi) -> satisfiable_kt phi.
+Corollary build_kt_complete : forall phi,
+  satisfiable (build_kt phi) -> satisfiable_kt phi.
 Proof.
   intros phi Hsatadd_phi.
   unfold satisfiable, satisfiable_kt in *.
@@ -349,10 +396,10 @@ Proof.
   now apply force_refl_closure.
 Qed.
 
-Theorem add_kt_sound_complete : forall phi,
-  satisfiable_kt phi <-> satisfiable (add_kt phi).
+Theorem build_kt_sound_complete : forall phi,
+  satisfiable_kt phi <-> satisfiable (build_kt phi).
 Proof.
   intros phi. split.
-  - apply add_kt_sound.
-  - apply add_kt_complete.
+  - apply build_kt_sound.
+  - apply build_kt_complete.
 Qed.

@@ -128,7 +128,7 @@ Equations tableau_jumps
   (l0 : Lclauses.t)
   (mc1 : Mcnf.t)
   (* The [tableau] function below with [mc1] and
-    [s1 := CplSolver.make_with_clauses (first_cpls mc1)]. *)
+    [s1 := CplSolver.make_with_clauses (Mcnf.fst_cpls mc1)]. *)
   (next_tableau : Assumptions.t -> Caches.t -> Solution.t)
   (** Cache from [mc1], not [l0]. *)
   (caches1 : Caches.t)
@@ -197,7 +197,7 @@ with Caches.contains caches A =>
           ) =>
           | JumpSolution.Sat caches1' eqn:Hj_eq => Solution.Sat (Cache.add cache0 A :: caches1')
           | JumpSolution.Unsat c jump_core caches1' eqn:Hj_eq =>
-            let conflict_set := conflict_set_of (l0::mc1) V c jump_core in
+            let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
             let s0' := CplSolver.add_conflict_set s0 conflict_set in
             let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
             tableau mc0' s0' A (cache0::caches1')
@@ -237,7 +237,7 @@ Inductive sat_caches : Caches.t -> Mcnf.t -> Prop :=
   | sat_caches_nil : forall mc0, sat_caches [] mc0
   | sat_caches_cons : forall cache0 caches1 mc0,
     sat_cache cache0 mc0 ->
-    sat_caches caches1 (Mcnf.next_ctx mc0) ->
+    sat_caches caches1 (Mcnf.next_mc mc0) ->
     sat_caches (cache0::caches1) mc0.
 Global Hint Constructors sat_caches : ct.
 
@@ -314,7 +314,7 @@ Qed.
 
 
 Lemma cs_preserve_sat : forall caches l0 mc1 V c jump_core,
-  let cs := conflict_set_of (l0::mc1) V c jump_core in
+  let cs := c :: box_culprits (l0::mc1) V jump_core in
   NoModel.tableau_jumps V l0 mc1 (NoModel.tableau $mc1) = NoModel.JumpSolution.Unsat c jump_core ->
   sat_caches caches (l0::mc1) ->
   sat_caches caches (Mcnf.add_cs (l0::mc1) cs).
@@ -349,7 +349,7 @@ Proof with try easy; auto with datatypes ct.
     tauto.
   }
 
-  rewrite add_conflict_set_neg_assumptions.
+  rewrite Mcnf.add_cs_nA_eq.
   apply Soundness.sat_not_A_neg_A...
 
   apply Soundness.unsat_pos_cs_jump with (d := d).
@@ -509,11 +509,11 @@ Proof with try easy; try congruence; auto with datatypes ct.
 
   (* conflict set branch *)
   - clear H0 H1.
-    set (cs := conflict_set_of (l0::mc1) V c jump_core) in *.
+    set (cs := c :: box_culprits (l0::mc1) V jump_core) in *.
     set (nomodel_call := NoModel.tableau _ _ _) in *.
     set (s0 := cplsolver_mcnf (l0::mc1)) in *.
     set (mc0_cs := Mcnf.add_cs (l0::mc1) cs) in *.
-    assert (CplSolver.add_conflict_set s0 cs = CplSolver.make_with_clauses (first_cpls mc0_cs)) as Hs0_cs by reflexivity.
+    assert (CplSolver.add_conflict_set s0 cs = CplSolver.make_with_clauses (Mcnf.fst_cpls mc0_cs)) as Hs0_cs by reflexivity.
 
     simp tableau. unfold tableau_unfold_clause_1.
     destruct (Caches.contains caches A) eqn:Hcached; split...

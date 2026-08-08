@@ -126,7 +126,7 @@ Proof with try easy; auto with datatypes ct.
     rename H into Hclause_in.
 
     rewrite CplClause.force_cpl_forceb with (V:=V)...
-    set (s0 := CplSolver.make_with_clauses (first_cpls [])) in *.
+    set (s0 := CplSolver.make_with_clauses (Mcnf.fst_cpls [])) in *.
     pose proof (CplSolver.solution_completeness s0 A V Hcsol_eq) as Hforce.
     unfold Cnf.cpl_forceb, CplSolver.solved_clauses in Hforce. =rewrite forallb_forall in Hforce.
     apply Hforce. rewrite List.in_app_iff. left.

@@ -36,4 +36,4 @@ Definition relation_refl := refl_closure relation.
 Global Instance relation_refl_refl : Reflexive relation_refl := _.
 
 Definition as_kripke : @Kripke.t t relation := Kripke.make t relation valuation.
-Definition as_refl : @Kripke.t t relation_refl := Kripke.make t relation_refl valuation.
+Definition as_refl : @Kripke.t t relation_refl := Kripke.to_kt as_kripke.

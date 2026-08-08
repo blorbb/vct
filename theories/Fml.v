@@ -1,3 +1,4 @@
+From Vct Require Import ImportStd.
 From Vct Require Kripke Lit.
 
 
@@ -32,7 +33,7 @@ Definition unsatisfiable (phi : t) : Prop :=
 
 
 Definition satisfiable_kt (phi : t) : Prop :=
-  exists W R (M : @Kripke.Kt.t W R) (w0 : W), force (Kripke.Kt.to_k M) w0 phi.
+  exists W R `(Reflexive W R) (M : @Kripke.t W R) (w0 : W), force M w0 phi.
 
 Definition unsatisfiable_kt (phi : t) : Prop :=
   ~ satisfiable_kt phi.
