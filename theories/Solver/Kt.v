@@ -101,165 +101,203 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
   phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 
 
-(** NOTE: the conclusion cannot be the same as usual,
-    [Mcnf.force Tree.as_refl (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A)].
 
-    With the usual conclusion, the inductive step fails. We are given
-    [Tree.relation_refl (Tree.make V T1s') T1] but need to prove that
-    [Tree.relation_refl (Tree.make V (T1d::T1s') T1)]. The reflexive [w0 = w1]
-    case is unprovable. *)
-Lemma tableau_jumps_completeness_ind : forall A V l0 mc1 T1s,
+(** [Mcnf.force] but a dia-clause may not be forced if [d] is forced at the current world. *)
+Fixpoint weak_force {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : Mcnf.t) :=
+  match mc0 with
+  | [] => True
+  | Lclauses.make cpls boxes dias :: mc1 =>
+    Cnf.force M w0 cpls /\
+    List.Forall (BoxClause.force M w0) boxes /\
+    List.Forall (fun '(c,d) => ~ (Lit.force M w0 d) -> DiaClause.force M w0 (c,d)) dias /\
+    forall w1, R w0 w1 -> weak_force M w1 mc1
+  end.
+
+
+Lemma strong_force_weak : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : Mcnf.t),
+  Mcnf.force M w0 mc0 -> weak_force M w0 mc0.
+Proof with try easy; auto.
+  intros *. revert w0.
+  induction mc0 as [|l0 mc1 IH]...
+  intros w0 Hf.
+  destruct l0 as [cpls boxes dias].
+  cbn in *. unfold Lclauses.force in Hf. cbn in *.
+  intuition. rewrite List.Forall_forall in *.
+  intros (c,d) Hcd_in H'. apply (H3 (c,d))...
+Qed.
+
+
+Lemma force_no_assumptions : forall {W} {R} {M : @Kripke.t W R} {w0} mc0 A,
+  weak_force M w0 (Mcnf.add_A mc0 A) ->
+  weak_force M w0 mc0.
+Proof.
+  intros * Hforce. destruct mc0 as [|[cpls boxes dias] mc1].
+  - cbn. apply I.
+  - cbn in *. autorewrite with ct in *. tauto.
+Qed.
+
+
+Lemma kt_forces_weak : forall {W} {R} (M : @Kripke.t W R) (w0 : W) (mc0 : Mcnf.t),
+  weak_force M w0 (Mcnf.build_kt mc0) -> Mcnf.force (Kripke.to_kt M) w0 (Mcnf.build_kt mc0).
+Proof with try easy; auto with datatypes ct.
+  intros W R M w0 mc0. revert w0.
+  induction mc0 as [|l0 mc1 IH]...
+  intros w0 Hwf.
+
+  assert (Lclauses.force (Kripke.to_kt M) w0 (Mcnf.fst_mc (Mcnf.build_kt (l0::mc1)))) as Hf_l0. {
+    destruct l0 as [cpls boxes dias]. cbn in *. set (l0 := Lclauses.make cpls boxes dias).
+    unfold Lclauses.merge, Lclauses.force in *. cbn in *.
+    destruct Hwf as [Hwf_cpls [Hwf_boxes [Hwf_dias Hwf_w1]]].
+    repeat rewrite List.Forall_forall in *.
+    repeat split.
+    - cbn. apply Hwf_cpls.
+    - cbn. intros (a,b) Hab_in Hf_a w1 HR_w1. cbn in *.
+      destruct HR_w1 as [HR_w1 | Hw0w1].
+      + apply (Hwf_boxes (a,b))...
+      + subst w1.
+        rewrite Cnf.force_forall in Hwf_cpls.
+        specialize (Hwf_cpls [Lit.Neg a; b]).
+        forward Hwf_cpls. {
+          repeat rewrite List.in_app_iff in *.
+          destruct Hab_in.
+          - left. right.
+            rewrite List.in_map_iff.
+            exists (a, b). split...
+          - right. now apply Mcnf.build_kt_box_cl_in_cpls.
+        }
+        autorewrite with ct prop in Hwf_cpls. destruct Hwf_cpls...
+    - cbn. intros (c,d) Hcd_in Hf_c.
+      destruct (classic (Lit.force M w0 d)) as [Hf_d | Hnf_d].
+      (* w0 already forces d *)
+      + exists w0. split...
+      (* w0 does not force d, so it is forced at some w1 *)
+      + specialize (Hwf_dias (c,d) Hcd_in Hnf_d Hf_c).
+        destruct Hwf_dias as [w1 [HR_w1 Hf_w1_d]].
+        exists w1. split... now left.
+  }
+
+  destruct l0 as [cpls boxes dias]. set (l0 := Lclauses.make cpls boxes dias). cbn in *.
+  unfold Lclauses.merge in *. cbn in *.
+  split.
+  - apply Hf_l0.
+  - intros w1 HR_w1. destruct HR_w1 as [HR_w1 | HR_w1].
+    + apply IH. apply Hwf. apply HR_w1.
+    + subst w1.
+      replace (Mcnf.build_kt mc1) with (Mcnf.next_mc (Mcnf.build_kt (l0::mc1))). 2: { apply Mcnf.next_mc_build_kt_comm. }
+      apply Mcnf.force_kt_build_kt_next...
+      intros w1 HR_w1.
+      apply IH. apply Hwf. apply HR_w1.
+Qed.
+
+
+
+(** A copy of [Completeness.tableau_jumps_completeness] with minor modifications. *)
+Lemma tableau_jumps_completeness_weak : forall A V l0 mc1 T1s,
   tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Sat T1s ->
   (forall A' T0,
     Solution.Sat T0 = tableau $mc1 A' ->
-    Mcnf.force Tree.as_refl T0 (Mcnf.add_A mc1 A')) ->
+    weak_force Tree.as_kripke T0 (Mcnf.add_A mc1 A')) ->
   CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
-  (* Force fired boxes *)
-  (forall T1 b, List.In T1 T1s -> List.In b (fired_boxes (l0::mc1) V) -> Lit.force Tree.as_refl T1 b)
-  /\
-  (* Exists fired dia (if d also not forced) *)
-  (forall c d, List.In (c,d) (Lclauses.dias l0) ->
-    Valuation.forces_atm V c ->
-    Lit.cpl_forceb V d = false ->
-    exists T1, List.In T1 T1s /\ Lit.force Tree.as_refl T1 d)
-  /\
-  (forall T1, List.In T1 T1s -> Mcnf.force Tree.as_refl T1 mc1).
-Proof with try easy; try congruence; auto with ct datatypes solve_subterm.
+  weak_force Tree.as_kripke (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
+Proof with try easy; try congruence; try auto with ct datatypes.
   intros * Hsat IHnt Hcpl_sat.
 
-  funelim (tableau_jumps V l0 mc1 (tableau $mc1)); rewrite <- Heqcall in Hsat.
-  - inv_clear Hsat. cbn. tauto.
+  funelim (tableau_jumps V l0 mc1 (tableau $mc1)); rewrite <- Heqcall in Hsat; clear Heqcall.
+  - inv_clear Hsat.
+    apply strong_force_weak.
+    eapply Completeness.singleton_tree_force... exact Hcpl_sat.
+  (* Model forces [cpls,boxes,dias'::mc1]. [(c,d)::dias'] is also forced as c is unfired. *)
   - specialize (H A T1s Hsat IHnt Hcpl_sat).
-    cbn in H |- *. repeat split...
-
-    intros c' d' [Hcd | Hc'd'_in] Hf_c' Hnf_d'.
-    { inv_clear Hcd. autorewrite with bool in Heq. destruct Heq... }
-    destruct H as [_ Hdias].
-    apply Hdias with (c := c')...
-
+    cbn in H |- *. autorewrite with ct in *.
+    repeat split...
+    apply List.Forall_cons...
+    intros Hnf_d Hf_c.
+    rewrite Lit.force_cpl_forceb with (V := V) in Hnf_d...
+    autorewrite with bool in Heq.
+    destruct Heq...
   - discriminate.
-
   (* Fired dia clause. *)
-  - inv_clear Hsat. rename T1s into T1s', T1 into T1d.
+  - inversion Hsat as [HT1s]. rename T1s0 into T1s, T1s into T1s', T1 into T1d. clear Hsat.
+    cbn -[Mcnf.force].
 
     unfold cpl_from_lclauses in Hcpl_sat. cbn [Lclauses.cpls] in Hcpl_sat.
-    specialize (Hind A T1s' Heq IHnt Hcpl_sat).
-    destruct Hind as [Hboxes [Hdias Hmc1]].
+    specialize (Hind A T1s').
+    forward Hind by exact Heq.
+    forward Hind by exact IHnt.
+    forward Hind by exact Hcpl_sat.
 
-    (* T1d forces required cpls/boxes/dias. *)
-    specialize (IHnt _ _ (eq_sym Heq0)) as HT1d_f.
-    (* HT1d_f unsimplified used for successor case *)
-    pose proof HT1d_f as H.
-    cbn in H. autorewrite with ct prop in H.
-    destruct H as [[HT1d_f_d [HT1d_f_boxes HT1d_f_l1]] HT1d_f_w1].
+    (* Hind and IHnt are useful both simplified and unsimplified. *)
+    pose proof Hind as H'.
+    cbn in H'.
+    destruct H' as [Hforce_cpls [Hforce_boxes [Hforce_dias Hforce_mc1]]].
 
+    specialize (IHnt (d::fired_boxes (Lclauses.make cpls boxes dias'::mc1) V) T1d).
+    forward IHnt by symmetry; exact Heq0.
+    pose proof IHnt as H'.
+    cbn in H'.
+    destruct H' as [HT1d_force_cpls [HT1d_force_boxes [HT1d_force_dias HT1d_force_mc2]]].
+
+    cbn. repeat rewrite List.Forall_forall in *. rewrite Cnf.force_forall in *.
     repeat split.
-    + intros T1 b [HT1d | HT1_in] Hb_in.
-      (* new dia world also forces box by IHnt *)
+    + tauto.
+    + intros (a,b) Hab_in H0_force_a T1_b HR_T1. cbn [fst snd] in *.
+      cbn in HR_T1.
+      destruct HR_T1 as [HT1_eq_d | HT1_in_T1s'].
+      * subst T1_b.
+        specialize (HT1d_force_cpls [b]).
+        forward HT1d_force_cpls. {
+          right. rewrite List.in_app_iff. left.
+          rewrite List.map_map. rewrite List.in_map_iff. exists (a, b). split...
+          apply List.filter_In. split...
+        }
+        autorewrite with ct prop in HT1d_force_cpls.
+        exact HT1d_force_cpls.
+      * apply (Hforce_boxes (a,b))...
+    + intros (a,b) Hab_in Hnf_b H0_force_a. cbn [fst snd] in *.
+      destruct Hab_in as [Hab_cd | Hab_dias'].
+      * inversion Hab_cd. subst a b. clear Hab_cd.
+        exists T1d. split...
+        specialize (HT1d_force_cpls [d]).
+        forward HT1d_force_cpls by now left.
+        autorewrite with ct prop in HT1d_force_cpls.
+        exact HT1d_force_cpls.
+      * specialize (Hforce_dias (a,b) Hab_dias' Hnf_b).
+        cbn in Hforce_dias. forward Hforce_dias by exact H0_force_a.
+        destruct Hforce_dias as [T1 [HT1_in HT1_force_b]].
+        exists T1...
+    + intros T1 [HT1_eq_T1d | HT1_in_T1s'].
       * subst T1.
-        rewrite Cnf.force_forall in HT1d_f_boxes.
-        specialize (HT1d_f_boxes (CplClause.from_lit b)).
-        rewrite CplClause.force_singleton in HT1d_f_boxes.
-        apply HT1d_f_boxes.
-        apply List.in_map.
-        cbn in Hb_in. exact Hb_in.
-      * apply Hboxes...
-
-    + intros c' d' [Hcd | Hc'd'_in] Hf_c' Hnf_d'.
-      * inv_clear Hcd. exists T1d. split...
-      * specialize (Hdias c' d' Hc'd'_in Hf_c' Hnf_d').
-        destruct Hdias as [T1 [HT1_in HT1_f_d]]. exists T1. split...
-
-    + intros T1 [HT1_T1d | HT1_in]... subst T1.
-      apply force_rm_assumptions in HT1d_f. exact HT1d_f.
-
+        eapply force_no_assumptions. exact IHnt.
+      * apply Hforce_mc1...
   - discriminate.
 Qed.
 
 
-Lemma tableau_jumps_completeness : forall A V mc0 l0 mc1 T1s,
-  Mcnf.build_kt mc0 = l0::mc1 ->
-  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Sat T1s ->
-  (forall A' T0,
-    Solution.Sat T0 = tableau $mc1 A' ->
-    Mcnf.force Tree.as_refl T0 (Mcnf.add_A mc1 A')) ->
-  CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
-  Mcnf.force Tree.as_refl (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
-Proof with try easy; try congruence; auto with ct datatypes.
-  intros * Hkt Hsat IHnt Hcpl_sat.
+(** A copy of [Completeness.tableau_completeness_force] with minor modifications. *)
+Theorem tableau_completeness_force_weak : forall mc0 A T,
+  tableau mc0 (cplsolver_mcnf mc0) A = Solution.Sat T ->
+  weak_force Tree.as_kripke T (Mcnf.add_A mc0 A).
+Proof with try easy; auto with datatypes ct.
+  intros mc0 A T Hsat.
 
-  pose proof (tableau_jumps_completeness_ind _ _ _ _ _ Hsat IHnt Hcpl_sat) as [Hboxes [Hdia Hmc1]].
+  funelim (tableau mc0 (cplsolver_mcnf mc0) A); rewrite <- Heqcall in Hsat.
+  - discriminate.
+  - clear H. inv_clear Hsat. cbn. split...
+    autorewrite with ct prop.
 
-  assert (Lclauses.force Tree.as_refl (Tree.make V T1s) l0) as Hf_l0. {
-    destruct l0 as [cpls boxes dias].
-    rewrite Lclauses.force_destruct. repeat split.
-
-    (* forces cpls *)
-    - apply CplSolver.solution_completeness in Hcpl_sat.
-      unfold cpl_from_lclauses, CplSolver.solved_clauses in Hcpl_sat.
-      rewrite CplSolver.clauses_of_make_with_clauses, Cnf.forceb_app in Hcpl_sat.
-      rewrite Cnf.force_cpl_forceb.
-      + apply Hcpl_sat.
-      + cbn. reflexivity.
-
-    (* forces boxes *)
-    - rewrite List.Forall_forall.
-      intros (a,b) Hab_in Hval_a T1 HR_T1.
-      cbn. destruct HR_T1 as [HR_T1 | HT1].
-      (* b forced at all successors. *)
-      + apply Hboxes...
-        cbn in Hab_in |- *.
-
-        change (b) with (snd (a,b)).
-        apply List.in_map.
-        apply List.filter_In. split...
-
-      (* T1 forces b here because of build_kt *)
-      + rewrite <- HT1. cbn in Hab_in.
-        rewrite Lit.force_cpl_forceb with (V := V)...
-        (* replace_hyp Hval_a with (Lit.cpl_) *)
-        apply CplSolver.solution_completeness in Hcpl_sat.
-        unfold CplSolver.solved_clauses, cpl_from_lclauses in Hcpl_sat.
-        rewrite CplSolver.clauses_of_make_with_clauses in Hcpl_sat.
-        autorewrite with ct in Hcpl_sat. cbn in Hcpl_sat.
-        destruct Hcpl_sat as [_ Hf_cpls].
-        rewrite Cnf.forceb_forall in Hf_cpls.
-        specialize (Hf_cpls [Lit.Neg a; b]).
-        autorewrite with ct prop in Hf_cpls.
-        forward Hf_cpls. {
-          change cpls with (Mcnf.fst_cpls (Lclauses.make cpls boxes dias :: mc1)).
-          rewrite <- Hkt.
-          apply Mcnf.build_kt_box_cl_in_cpls.
-          rewrite Hkt. cbn...
-        }
-        destruct Hf_cpls as [Hf_na | Hf_b]...
-        cbn in Hf_na, Hval_a. =autorewrite with bool in Hf_na...
-
-    - rewrite List.Forall_forall.
-      intros (c,d) Hcd_in Hval_c.
-      destruct (Lit.cpl_forceb V d) eqn:Hf_d.
-      + exists (Tree.make V T1s). split...
-        cbn. rewrite Lit.force_cpl_forceb with (V := V)...
-      + specialize (Hdia c d Hcd_in Hval_c Hf_d).
-        destruct Hdia as [T1 [HT1_in HT1_f_d]].
-        exists T1. split... now left.
-  }
-
-  cbn. autorewrite with ct. split; [split|].
-  - apply CplSolver.solution_completeness in Hcpl_sat.
-    unfold cpl_from_lclauses, CplSolver.solved_clauses in Hcpl_sat.
-    rewrite Cnf.forceb_app in Hcpl_sat.
-    rewrite Cnf.force_cpl_forceb.
-    + apply Hcpl_sat.
-    + cbn. reflexivity.
-
-  - apply Hf_l0.
-
-  - intros T1 HR_T1. destruct HR_T1 as [HT1_in | HR_T1].
-    + apply Hmc1. exact HT1_in.
-    + subst T1.
-      replace mc1 with (Mcnf.next_mc (Mcnf.build_kt mc0)). 2: { now rewrite Hkt. }
-      apply Mcnf.force_kt_build_kt_next; rewrite Hkt...
+    rewrite Cnf.force_cpl_forceb with (V:=V)...
+    set (s0 := cplsolver_mcnf []) in *.
+    replace (Cnf.from_assumptions A) with (CplSolver.solved_clauses s0 A).
+    2: { cbn. unfold CplSolver.solved_clauses. now autorewrite with ct list. }
+    apply CplSolver.solution_completeness...
+  - clear H H0. inv_clear Hsat.
+    eapply tableau_jumps_completeness_weak...
+  - clear H0 H1.
+    destruct (tableau _ _ _) eqn:Htab_cs... inv_clear Hsat.
+    (* H assumes that T forces an over constrained formula. *)
+    specialize (H _ _ T Htab_cs eq_refl (eq_sym Htab_cs)).
+    cbn in H |- *.
+    autorewrite with ct in *. split...
 Qed.
 
 
@@ -269,48 +307,11 @@ Theorem tableau_completeness_force : forall mc0 A T,
 Proof with try easy; auto with datatypes ct.
   intros * Hsat.
 
-  funelim (tableau $(Mcnf.build_kt mc0) A); rewrite <- Heqcall in Hsat.
-  - discriminate.
-  - clear H.
-    inv_clear Hsat. rewrite <- H0 in *.
-    cbn. autorewrite with ct prop.
-    rewrite Cnf.force_cpl_forceb with (V := V)...
-    apply CplSolver.solution_completeness in Hcsol_eq.
-    unfold CplSolver.solved_clauses in Hcsol_eq.
-    cbn in Hcsol_eq. autorewrite with ct prop in Hcsol_eq.
-    exact Hcsol_eq.
-
-  - clear H H0.
-    inv_clear Hsat.
-    rename H1 into Hmc0. rewrite <- Hmc0 in *.
-
-    pose proof (Mcnf.next_mc_build_kt_comm mc0) as Hkt_mc1.
-    rewrite <- Hmc0 in Hkt_mc1. cbn in Hkt_mc1.
-
-    apply tableau_jumps_completeness with (mc0 := mc0)...
-    intros A' T Htab.
-    rewrite Hkt_mc1 in Htab |- *.
-    setoid_rewrite Hkt_mc1 in Hind.
-    apply (Hind A')...
-
-  - clear H0 H1. rename H2 into Hmc0.
-    destruct (tableau _ _ _) eqn:Htab_cs... inv_clear Hsat.
-    set (cs := c :: box_culprits _ _ _) in *.
-
-    (* H assumes that T forces an over constrained formula. *)
-    specialize (H (Mcnf.add_cs mc0 cs) A T).
-    assert (
-      CplSolver.add_conflict_set (cplsolver_mcnf (Mcnf.build_kt mc0)) cs
-      = cplsolver_mcnf (Mcnf.build_kt (Mcnf.add_cs mc0 cs))
-    ) as Hcplsolver. { destruct mc0 as [|[cpls boxes dias] mc1k]; easy. }
-    rewrite Hcplsolver in *.
-    forward H. { rewrite <- Htab_cs. now rewrite Hmc0, Mcnf.add_cs_build_kt_comm. }
-    forward H. { now rewrite Hmc0, Mcnf.add_cs_build_kt_comm. }
-    forward H. { rewrite <- Htab_cs. now rewrite Hmc0, Mcnf.add_cs_build_kt_comm. }
-    rewrite <- Mcnf.add_cs_build_kt_comm in H.
-    apply incl_cpls_force with (cpls := Mcnf.fst_cpls (Mcnf.add_A (Mcnf.add_cs (Mcnf.build_kt mc0) cs) A)).
-    + rewrite <- Hmc0. cbn...
-    + apply H.
+  unfold Tree.as_refl.
+  rewrite Mcnf.add_A_build_kt_comm.
+  apply kt_forces_weak.
+  rewrite <- Mcnf.add_A_build_kt_comm.
+  apply tableau_completeness_force_weak...
 Qed.
 
 

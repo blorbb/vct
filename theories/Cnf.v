@@ -143,6 +143,12 @@ Lemma forceb_nil : forall V,
 Proof. now unfold cpl_forceb, forallb. Qed.
 Global Hint Rewrite forceb_nil : ct.
 
+Lemma force_cons : forall {W} {R} (M : @Kripke.t W R) (w0 : W) h t,
+  force M w0 (h::t) <-> CplClause.force M w0 h /\ Cnf.force M w0 t.
+Proof.
+  intros *. unfold force. apply Forall_cons_iff.
+Qed. Global Hint Rewrite @force_cons : ct.
+
 Lemma force_app : forall A B {W} {R} (M : @Kripke.t W R) (w0 : W),
   Cnf.force M w0 (A ++ B) <-> Cnf.force M w0 A /\ Cnf.force M w0 B.
 Proof.

@@ -227,6 +227,17 @@ Proof.
   intros *. destruct mc0 as [|[cpls boxes dias] mc1]; reflexivity.
 Qed.
 
+
+Lemma add_A_build_kt_comm : forall mc0 A,
+  add_A (build_kt mc0) A =
+  build_kt (add_A mc0 A).
+Proof.
+  intros *. destruct mc0 as [|[cpls boxes dias] mc1].
+  - cbn. unfold Lclauses.merge. autorewrite with list. reflexivity.
+  - cbn. unfold Lclauses.merge. cbn. repeat rewrite List.app_assoc. reflexivity.
+Qed.
+
+
 Lemma next_mc_build_kt_comm : forall mc0,
   next_mc (build_kt mc0) = build_kt (next_mc mc0).
 Proof.
