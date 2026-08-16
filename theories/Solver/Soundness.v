@@ -72,10 +72,10 @@ Proof.
 Qed.
 
 Lemma tableau_deriv : forall mc0 A core deriv,
-  Spec.tableau mc0 (cplsolver_mcnf mc0) A = Spec.Solution.Unsat core deriv ->
+  Spec.tableau $mc0 A = Spec.Solution.Unsat core deriv ->
   Derivation.conds mc0 A deriv.
 Proof with auto.
-  intros *. intros Hunsat. funelim (Spec.tableau mc0 (cplsolver_mcnf mc0) A).
+  intros *. intros Hunsat. funelim (Spec.tableau $mc0 A).
   - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hderiv. subst.
     apply Derivation.LocalCond. now unfold cpl_solve.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
@@ -420,11 +420,11 @@ Qed.
 (** ** Soundness of tableau *)
 
 Lemma tableau_sound : forall mc0 A,
-  negb (Spec.Solution.is_sat (Spec.tableau mc0 (cplsolver_mcnf mc0) A)) ->
+  negb (Spec.Solution.is_sat (Spec.tableau $mc0 A)) ->
   Mcnf.unsatisfiable (Mcnf.add_A mc0 A).
 Proof with try easy.
   intros mc0 A Hunsat.
-  destruct (Spec.tableau mc0 (cplsolver_mcnf mc0) A) eqn:Hsolve... clear Hunsat.
+  destruct (Spec.tableau $mc0 A) eqn:Hsolve... clear Hunsat.
   pose proof (tableau_deriv mc0 A core deriv Hsolve) as Hconds.
   pose proof (deriv_sound mc0 A deriv Hconds) as Hunsat.
   pose proof (deriv_core_incl_A mc0 A deriv Hconds) as Hincl.
@@ -434,10 +434,10 @@ Qed.
 
 Corollary tableau_sound_contrapos : forall mc0 A,
   Mcnf.satisfiable (Mcnf.add_A mc0 A) ->
-  Spec.Solution.is_sat (Spec.tableau mc0 (cplsolver_mcnf mc0) A).
+  Spec.Solution.is_sat (Spec.tableau $mc0 A).
 Proof with try easy.
   intros mc0 A Hsat.
-  destruct (Spec.tableau mc0 (cplsolver_mcnf mc0) A) eqn:Hunsat...
+  destruct (Spec.tableau $mc0 A) eqn:Hunsat...
   exfalso. apply (tableau_sound mc0 A)...
   now rewrite Hunsat.
 Qed.

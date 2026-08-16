@@ -326,3 +326,196 @@ Proof with try easy.
   now apply Mcnf.build_kt_refl_iff.
 Qed.
 
+Corollary solve_fml_complete_sat : forall phi,
+  Solution.is_sat (solve_fml phi) ->
+  Fml.satisfiable_kt phi.
+Proof with try easy.
+  intros phi Hsat.
+  destruct (solve_fml phi) eqn:Hsol_sat...
+  unfold solve_fml in Hsol_sat.
+  apply solve_mcnf_complete_force in Hsol_sat.
+  apply Nnf.equisat_kt_fml.
+  apply Mcnf.equisat_kt_nnf.
+
+  exists _, _, _, Tree.as_refl, T0.
+  exact Hsol_sat.
+Qed.
+
+
+(** * Soundness
+
+    This is a copy-paste of the proofs in [Soundness.*]. *)
+
+
+Lemma tableau_deriv_core : forall A s0 mc0 core deriv,
+  tableau A s0 mc0 = Solution.Unsat core deriv ->
+  Derivation.get_core deriv = core.
+Proof.
+  intros *. intro Hunsat.
+  funelim (tableau A s0 mc0); rewrite <- Heqcall in Hunsat.
+  - inv_clear Hunsat. reflexivity.
+  - discriminate.
+  - discriminate.
+  - destruct (tableau _ _ _).
+    + discriminate.
+    + inv_clear Hunsat. cbn. now apply H.
+Qed.
+
+Lemma jump_failed_dia : forall V l0 mc1 failed_dia core deriv,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
+  List.In failed_dia (Lclauses.dias l0).
+Proof.
+  intros *. intro Hunsat.
+  funelim (tableau_jumps V l0 mc1 (tableau $mc1));
+    cbn in *; rewrite <- Heqcall in Hunsat.
+  - discriminate.
+  - right. eapply H. exact Hunsat.
+  - left. now inv_clear Hunsat.
+  - discriminate.
+  - right. inv_clear Hunsat. eapply Hind. exact Heq.
+Qed.
+
+Lemma jump_deriv_core : forall V l0 mc1 failed_dia core deriv,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
+  Derivation.get_core deriv = core.
+Proof.
+  intros *. intros Hunsat.
+  funelim (tableau_jumps V l0 mc1 (tableau $mc1));
+    cbn in *; rewrite <- Heqcall in Hunsat.
+  - discriminate.
+  - eapply H. exact Hunsat.
+  - inv_clear Hunsat.
+    eapply tableau_deriv_core. exact Heq.
+  - discriminate.
+  - inv_clear Hunsat. eapply Hind. exact Heq.
+Qed.
+
+Lemma tableau_jumps_deriv_ind : forall V l0 mc1 failed_dia core deriv,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
+  (forall A' core deriv,
+    tableau $mc1 A' = Solution.Unsat core deriv ->
+    Derivation.conds mc1 A' deriv) ->
+  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+Proof.
+  intros * Hunsat IHnt.
+  funelim (tableau_jumps V l0 mc1 (tableau $mc1)); rewrite <- Heqcall in Hunsat.
+  - discriminate.
+  - eapply H.
+    + exact Hunsat.
+    + exact IHnt.
+  - inv_clear Hunsat. cbn.
+    eapply IHnt. exact Heq.
+  - discriminate.
+  - inv_clear Hunsat. eapply Hind.
+    + exact Heq.
+    + exact IHnt.
+Qed.
+
+Lemma tableau_deriv : forall mc0 A core deriv,
+  tableau $mc0 A = Solution.Unsat core deriv ->
+  Derivation.conds mc0 A deriv.
+Proof with auto.
+  intros *. intros Hunsat. funelim (tableau $mc0 A).
+  - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hderiv. subst.
+    apply Derivation.LocalCond. now unfold cpl_solve.
+  - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
+  - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
+  - clear H0 H1. rewrite <- Heqcall in Hunsat.
+    destruct (tableau _ _ _) eqn:Htab_cs; try discriminate.
+    inv_clear Hunsat.
+    apply Derivation.JumpRestartCond.
+    + auto.
+    + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
+    + cbn. eauto using jump_c_forced.
+    + apply tableau_jumps_deriv_ind with (core := jump_core).
+      * apply Hj_eq.
+      * apply Hind.
+    + cbn [fst]. erewrite jump_deriv_core.
+      2: { exact Hj_eq. }
+      apply H with (core := core)...
+Qed.
+
+
+Corollary tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
+  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+Proof with try easy.
+  intros * Hunsat.
+  apply tableau_jumps_deriv_ind with (core := core)...
+  intros A' core' deriv' Hnext_tableau.
+  apply tableau_deriv with (core := core')...
+Qed.
+
+Corollary solve_mcnf_deriv : forall phi core deriv,
+  solve_mcnf phi = Solution.Unsat core deriv ->
+  Derivation.conds (Mcnf.build_kt phi) [] deriv.
+Proof.
+  intros * Hunsat. eapply tableau_deriv. exact Hunsat.
+Qed.
+
+Corollary solve_fml_deriv : forall phi core deriv,
+  solve_fml phi = Solution.Unsat core deriv ->
+  Derivation.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mcnf.build_kt) [] deriv.
+Proof.
+  intros. eapply solve_mcnf_deriv. exact H.
+Qed.
+
+
+
+Corollary solve_mcnf_sound : forall mc0,
+  negb (Solution.is_sat (solve_mcnf mc0)) ->
+  Mcnf.unsatisfiable (Mcnf.build_kt mc0).
+Proof with try easy.
+  intros mc0 Hunsat. destruct (solve_mcnf mc0) eqn:Hsolve...
+  clear Hunsat.
+  pose proof (solve_mcnf_deriv mc0 core deriv Hsolve) as Hconds.
+  pose proof (Soundness.deriv_sound (Mcnf.build_kt mc0) [] deriv Hconds) as Hunsat.
+  assert (Derivation.get_core deriv = []) as Hderiv. {
+    apply incl_l_nil. apply Soundness.deriv_core_incl_A with (mc0 := Mcnf.build_kt mc0)...
+  }
+  rewrite Hderiv in Hunsat.
+  unfold Mcnf.unsatisfiable in *.
+  now rewrite <- sat_add_no_assumptions.
+Qed.
+
+Corollary solve_mcnf_sound_kt : forall mc0,
+  negb (Solution.is_sat (solve_mcnf mc0)) ->
+  Mcnf.unsatisfiable_kt mc0.
+Proof with try easy.
+  intros mc0 Hunsat. unfold Mcnf.unsatisfiable_kt.
+  rewrite Mcnf.build_kt_sound_complete.
+  apply solve_mcnf_sound...
+Qed.
+
+Corollary solve_fml_sound : forall phi,
+  negb (Solution.is_sat (solve_fml phi)) ->
+  Fml.unsatisfiable_kt phi.
+Proof.
+  intros phi Hunsat Hsat.
+  rewrite Nnf.equisat_kt_fml in Hsat.
+  rewrite Mcnf.equisat_kt_nnf in Hsat.
+  eapply solve_mcnf_sound.
+  - exact Hunsat.
+  - rewrite <- Mcnf.build_kt_sound_complete. exact Hsat.
+Qed.
+
+
+Corollary solve_mcnf_sound_contrapos : forall mc0,
+  Mcnf.satisfiable_kt mc0 ->
+  Solution.is_sat (solve_mcnf mc0).
+Proof with try easy.
+  intros mc0 Hsat.
+  destruct (solve_mcnf mc0) eqn:Hunsat...
+  exfalso. apply (solve_mcnf_sound_kt mc0)...
+  now rewrite Hunsat.
+Qed.
+
+
+Corollary solve_fml_sound_contrapos : forall phi,
+  Fml.satisfiable_kt phi ->
+  Solution.is_sat (solve_fml phi).
+Proof with try easy.
+  intros phi. unfold solve_fml.
+  rewrite Nnf.equisat_kt_fml, Mcnf.equisat_kt_nnf.
+  apply solve_mcnf_sound_contrapos.
+Qed.

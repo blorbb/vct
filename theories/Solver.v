@@ -1,4 +1,4 @@
-From Vct.Solver Require Spec TailRec NoModel Cached FiredBoxes Derivation Soundness Completeness.
+From Vct.Solver Require Spec TailRec NoModel Cached FiredBoxes Derivation Soundness Completeness Kt.
 From Vct.Solver Require Import McnfExt.
 From Vct Require Import ImportStd.
 
@@ -49,6 +49,15 @@ Proof.
   unfold FiredBoxes.solve_fml, FiredBoxes.solve_mcnf.
   rewrite <- FiredBoxes.tableau_cached.
   apply cached_solve_fml_sound_complete.
+Qed.
+
+
+Theorem kt_spec_solve_fml_sound_complete : forall phi,
+  Kt.Solution.is_sat (Kt.solve_fml phi) <-> Fml.satisfiable_kt phi.
+Proof.
+  intros mc0. split.
+  - apply Kt.solve_fml_complete_sat.
+  - apply Kt.solve_fml_sound_contrapos.
 Qed.
 
 

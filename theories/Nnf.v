@@ -29,6 +29,14 @@ Definition unsatisfiable (phi : t) : Prop :=
   forall W R (M : @Kripke.t W R) (w0 : W), ~ force M w0 phi.
 
 
+Definition satisfiable_kt (phi : t) : Prop :=
+  exists W R `(Reflexive W R) (M : @Kripke.t W R) (w0 : W), force M w0 phi.
+
+
+Definition unsatisfiable_kt (phi : t) : Prop :=
+  ~ satisfiable_kt phi.
+
+
 Definition as_lit (phi : t) : option Lit.t :=
   match phi with
   | Lit l => Some l
@@ -214,9 +222,20 @@ Section Correctness.
     forall (phi : Fml.t), Fml.satisfiable phi <-> Nnf.satisfiable (from_fml phi).
   Proof.
     intro phi. split.
-    - intros [W [M [R [w0 Hforce]]]]. exists W, M, R, w0. 
+    - intros [W [R [M [w0 Hforce]]]]. exists W, R, M, w0.
       now apply equiv_fml.
-    - intros [W [M [R [w0 Hforce]]]]. exists W, M, R, w0. 
+    - intros [W [R [M [w0 Hforce]]]]. exists W, R, M, w0.
+      now apply equiv_fml.
+  Qed.
+
+
+  Corollary equisat_kt_fml :
+    forall (phi : Fml.t), Fml.satisfiable_kt phi <-> Nnf.satisfiable_kt (from_fml phi).
+  Proof.
+    intro phi. split.
+    - intros [W [R [Hrefl [M [w0 Hforce]]]]]. exists W, R, Hrefl, M, w0.
+      now apply equiv_fml.
+    - intros [W [R [Hrefl [M [w0 Hforce]]]]]. exists W, R, Hrefl, M, w0.
       now apply equiv_fml.
   Qed.
 End Correctness.

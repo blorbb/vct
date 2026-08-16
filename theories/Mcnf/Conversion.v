@@ -1188,3 +1188,23 @@ Proof.
   - apply (sat_nnf_to_mcnf phi).
   - apply (sat_mcnf_to_nnf phi).
 Qed.
+
+
+Corollary equisat_kt_nnf :
+  forall (phi : Nnf.t), Nnf.satisfiable_kt phi <-> Mcnf.satisfiable_kt (from_nnf phi).
+Proof with try lia; auto.
+  intro phi. split.
+  - intros Hphi_sat.
+    destruct Hphi_sat as [W [R [Hrefl [M [w0 HM_force_phi]]]]].
+    unfold Mcnf.satisfiable_kt.
+    set (n := Atom.succ (Nnf.max_atm phi)).
+    exists W, R, Hrefl, (named_model M n phi (Atom.succ n)), w0.
+    apply nnf_to_mcnf_forces...
+
+  - intros Hmcnf_sat.
+    destruct Hmcnf_sat as [W [R [Hrefl [M [w0 Hforce_mcnf]]]]].
+    unfold Nnf.satisfiable_kt.
+    exists W, R, Hrefl, M, w0.
+    set (n := Atom.succ (Nnf.max_atm phi)).
+    apply mcnf_to_nnf_forces with (n:=n) (k:=Atom.succ n)...
+Qed.
