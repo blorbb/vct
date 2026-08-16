@@ -1,5 +1,6 @@
 open Atom
 open Datatypes
+open Valuation
 
 module Coq__1 = struct
  type t =
@@ -52,6 +53,12 @@ let compare x y =
   | Neg p -> (match y with
               | Pos _ -> Gt
               | Neg q -> compare p q)
+
+(** val cpl_forceb : Valuation.t -> t -> bool **)
+
+let cpl_forceb v = function
+| Pos p -> forces_atm v p
+| Neg p -> negb (forces_atm v p)
 
 module Ordered =
  struct

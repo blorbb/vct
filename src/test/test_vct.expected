@@ -5,8 +5,8 @@ MCNF:
   { cpls = [[-5; -2; +3]]; boxes = []; dias = [] }]
 
 UNSAT:
-Jr {v = [4]; dia = (4, -3); jump = Id {a = [+2; +5; -3]};
-  restart = Id {a = []}}
+Jr {v = [4]; dia = (4, -3); jump = Local {a = [+2; +5; -3]};
+  restart = Local {a = []}}
 
 
 FORMULA: ~([](p1 -> p2) -> ([]p1 -> []p3))
@@ -35,7 +35,8 @@ MCNF:
 [{ cpls = [[+3]]; boxes = [(3, +2)]; dias = [(3, -2)] }]
 
 UNSAT:
-Jr {v = [3]; dia = (3, -2); jump = Id {a = [+2; -2]}; restart = Id {a = []}}
+Jr {v = [3]; dia = (3, -2); jump = Local {a = [+2; -2]};
+  restart = Local {a = []}}
 
 
 FORMULA: <>p1 & <>~p1
@@ -55,11 +56,53 @@ MCNF:
   { cpls = [[-7; +2; +3]; [-10; -2]; [-10; -3]]; boxes = []; dias = [] }]
 
 UNSAT:
-Jr {v = [4; 5]; dia = (5, +7); jump = Id {a = [-3; -2; +7]};
+Jr {v = [4; 5]; dia = (5, +7); jump = Local {a = [-3; -2; +7]};
   restart =
-  Jr {v = [4; 6; 8]; dia = (8, +2); jump = Id {a = [+10; +2]};
+  Jr {v = [4; 6; 8]; dia = (8, +2); jump = Local {a = [+10; +2]};
     restart =
-    Jr {v = [4; 6; 9]; dia = (9, +3); jump = Id {a = [+10; +3]};
-      restart = Id {a = []}}}}
+    Jr {v = [4; 6; 9]; dia = (9, +3); jump = Local {a = [+10; +3]};
+      restart = Local {a = []}}}}
+
+
+FORMULA: ~([]p1 -> p1)
+
+MCNF:
+[{ cpls = [[+3]; [-3; -2]]; boxes = [(3, +2)]; dias = [] }]
+
+SAT:
+{ v = [3]; c = [] }
+
+
+FORMULA: ~([]p1 -> p1)
+
+MCNF:
+[{ cpls = [[+3]; [-3; -2]]; boxes = [(3, +2)]; dias = [] }]
+
+MCNF + KT:
+[{ cpls = [[+3]; [-3; -2]; [-3; +2]]; boxes = [(3, +2)]; dias = [] }]
+
+UNSAT:
+Local {a = []}
+
+
+FORMULA: p1 & <>p1
+
+MCNF:
+[{ cpls = [[+3]; [-3; +2]]; boxes = []; dias = [(3, +2)] }]
+
+SAT:
+{ v = [2; 3]; c = [{ v = [2]; c = [] }] }
+
+
+FORMULA: p1 & <>p1
+
+MCNF:
+[{ cpls = [[+3]; [-3; +2]]; boxes = []; dias = [(3, +2)] }]
+
+MCNF + KT:
+[{ cpls = [[+3]; [-3; +2]]; boxes = []; dias = [(3, +2)] }]
+
+SAT:
+{ v = [2; 3]; c = [] }
 
 

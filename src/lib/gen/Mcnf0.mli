@@ -23,6 +23,8 @@ val with_fst_cpls :
 
 val add_cs : t -> int list -> Lclauses.t list
 
+val build_kt : t -> t
+
 val from_n_nnf : int -> Nnf.t -> int -> Mcnf.t * int
 
 val from_nnf_with_sur : int -> Nnf.t -> int -> Mcnf.t

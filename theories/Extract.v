@@ -53,4 +53,6 @@ Separate Extraction
   Solver.Cached.solve_fml
   Solver.Cached.Solution.is_sat
   Solver.FiredBoxes.solve_fml
-  Solver.FiredBoxes.Solution.is_sat.
+  Solver.FiredBoxes.Solution.is_sat
+  Solver.Kt.solve_fml
+  Solver.Kt.Solution.is_sat.

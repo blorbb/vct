@@ -1,3 +1,5 @@
+(* TODO: support printing model from CLI *)
+
 let parse_file path =
   let file_text = open_in path in
   let lexbuf = Lexing.from_channel file_text in
@@ -11,19 +13,18 @@ let check fml =
   | false -> print_endline "UNSAT"
 ;;
 
-(* TODO: print out the model *)
-let check_with_model fml =
-  let result = Vct.TailRec.solve_fml fml in
-  match Vct.TailRec.Solution.is_sat result with
+let check_kt fml =
+  let result = Vct.Kt.solve_fml fml in
+  match Vct.Kt.Solution.is_sat result with
   | true -> print_endline "SAT"
   | false -> print_endline "UNSAT"
 ;;
 
 let () =
   match Sys.argv with
-  | [| _; "--model"; f |] -> check_with_model (parse_file f)
+  | [| _; "--kt"; f |] -> check (parse_file f)
   | [| _; f |] -> check (parse_file f)
   | _ ->
-    Printf.eprintf "Usage: %s [--model] <input_file>\n" Sys.argv.(0);
+    Printf.eprintf "Usage: %s [--kt] <input_file>\n" Sys.argv.(0);
     exit 1
 ;;

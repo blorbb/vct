@@ -1,5 +1,6 @@
 open Atom
 open Datatypes
+open Valuation
 
 module Coq__1 : sig
  type t =
@@ -17,6 +18,8 @@ val eqb : t -> t -> bool
 val eq_dec : t -> t -> bool
 
 val compare : t -> t -> comparison
+
+val cpl_forceb : Valuation.t -> t -> bool
 
 module Ordered :
  sig

@@ -45,6 +45,19 @@ let with_fst_cpls mc0 f =
 let add_cs mc0 cs =
   with_fst_cpls mc0 (fun x -> (map (fun x0 -> Neg x0) cs) :: x)
 
+(** val build_kt : t -> t **)
+
+let rec build_kt = function
+| [] -> []
+| t0 :: mc1 ->
+  let { cpls = cpls0; boxes = boxes0; dias = dias0 } = t0 in
+  let unboxed =
+    map (fun pat -> let (a, b) = pat in (Neg a) :: (b :: [])) boxes0
+  in
+  let mc1_kt = build_kt mc1 in
+  (merge { cpls = (app cpls0 unboxed); boxes = boxes0; dias = dias0 }
+    (fst_mc mc1_kt)) :: mc1_kt
+
 (** val from_n_nnf : int -> Nnf.t -> int -> Mcnf.t * int **)
 
 let rec from_n_nnf n phi k =

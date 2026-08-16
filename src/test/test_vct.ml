@@ -27,7 +27,7 @@ end
 
 module Deriv = struct
   type t =
-    | Id of { a : Lit.t list }
+    | Local of { a : Lit.t list }
     | Jr of
         { v : int list
         ; dia : int * Lit.t
@@ -38,7 +38,7 @@ module Deriv = struct
 
   let rec of_vct_deriv (t : Vct.Derivation.t) =
     match t with
-    | Id a -> Id { a }
+    | Local a -> Local { a }
     | JumpRestart (v, dia, jump, restart) ->
       Jr { v; dia; jump = of_vct_deriv jump; restart = of_vct_deriv restart }
   ;;
@@ -57,7 +57,7 @@ module Mcnf = struct
   type t = Lclauses.t list [@@deriving show { with_path = false }]
 end
 
-let parse_str str =
+let parse_fml str =
   let intohylo =
     str
     |> Str.global_replace (Str.regexp_string "[]") "[r1]"
@@ -68,15 +68,29 @@ let parse_str str =
   Vct.Parser.file Vct.Lexer.next_token lexbuf
 ;;
 
-let convert fml = fml |> Vct.Nnf.from_fml |> Vct.Mcnf0.from_nnf
-(* |> Vct.Mcnf.simplify *)
+let fml_to_mcnf fml = fml |> Vct.Nnf.from_fml |> Vct.Mcnf0.from_nnf
+
+let parse_print_mcnf str =
+  Printf.printf "FORMULA: %s\n\n" str;
+  let fml = parse_fml str in
+  let mc0 = fml_to_mcnf fml in
+  Printf.printf "MCNF:\n%s\n\n" (Mcnf.show mc0);
+  mc0
+;;
 
 let print_solution str =
-  Printf.printf "FORMULA: %s\n\n" str;
-  let fml = parse_str str in
-  let mc0 = convert fml in
-  Printf.printf "MCNF:\n%s\n\n" (Mcnf.show mc0);
+  let mc0 = parse_print_mcnf str in
   (match Vct.TailRec.solve_mcnf mc0 with
+   | Sat t -> Printf.printf "SAT:\n%s\n\n" (t |> RTree.of_vct_tree |> RTree.show)
+   | Unsat (_a, d) ->
+     Printf.printf "UNSAT:\n%s\n\n" (d |> Deriv.of_vct_deriv |> Deriv.show));
+  print_newline ()
+;;
+
+let print_solution_kt str =
+  let mc0 = parse_print_mcnf str in
+  Printf.printf "MCNF + KT:\n%s\n\n" (Mcnf.show (Vct.Mcnf0.build_kt mc0));
+  (match Vct.Kt.solve_mcnf mc0 with
    | Sat t -> Printf.printf "SAT:\n%s\n\n" (t |> RTree.of_vct_tree |> RTree.show)
    | Unsat (_a, d) ->
      Printf.printf "UNSAT:\n%s\n\n" (d |> Deriv.of_vct_deriv |> Deriv.show));
@@ -89,5 +103,9 @@ let () =
   print_solution "[]false";
   print_solution "[]p1 & <>~p1";
   print_solution "<>p1 & <>~p1";
-  print_solution "~(<>(p1 | p2) <-> (<>p1 | <>p2))"
+  print_solution "~(<>(p1 | p2) <-> (<>p1 | <>p2))";
+  print_solution "~([]p1 -> p1)";
+  print_solution_kt "~([]p1 -> p1)";
+  print_solution "p1 & <>p1";
+  print_solution_kt "p1 & <>p1"
 ;;
