@@ -8,7 +8,7 @@
 From Vct Require CplSolver Lit Mcnf Assumptions Valuation Tree.
 From Vct Require Export ImportStd.
 From Vct.Solver Require Export McnfExt.
-From Vct.Solver Require Derivation.
+From Vct.Solver Require Cct.
 
 
 (** Default auto-solver simplifies a bit too much. *)

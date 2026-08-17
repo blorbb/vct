@@ -26,14 +26,14 @@ Definition valuation (tree : t) (atm : Atom.t) : Prop :=
   end.
 
 
-Definition relation (w0 w1 : t) : Prop :=
+Definition R (w0 w1 : t) : Prop :=
   match w0 with
   | make _ children => List.In w1 children
   end.
 
-Definition relation_refl := refl_closure relation.
+Definition R_kt := refl_closure R.
 
-Global Instance relation_refl_refl : Reflexive relation_refl := _.
+Global Instance R_kt_refl : Reflexive R_kt := _.
 
-Definition as_kripke : @Kripke.t t relation := Kripke.make t relation valuation.
-Definition as_refl : @Kripke.t t relation_refl := Kripke.to_kt as_kripke.
+Definition as_k : @Kripke.t t R := Kripke.make t R valuation.
+Definition as_kt : @Kripke.t t R_kt := Kripke.to_kt as_k.

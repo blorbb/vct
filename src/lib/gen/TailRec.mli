@@ -1,8 +1,8 @@
 open Assumptions
+open Cct
 open CplSolution
 open CplSolver
 open Datatypes
-open Derivation
 open DiaClause
 open Fml
 open Lclauses
@@ -20,13 +20,11 @@ module Solution :
  sig
   type t = Solution.t =
   | Sat of Tree.t
-  | Unsat of Assumptions.t * Derivation.t
+  | Unsat of Assumptions.t * Cct.t
 
-  val t_rect :
-    (Tree.t -> 'a1) -> (Assumptions.t -> Derivation.t -> 'a1) -> t -> 'a1
+  val t_rect : (Tree.t -> 'a1) -> (Assumptions.t -> Cct.t -> 'a1) -> t -> 'a1
 
-  val t_rec :
-    (Tree.t -> 'a1) -> (Assumptions.t -> Derivation.t -> 'a1) -> t -> 'a1
+  val t_rec : (Tree.t -> 'a1) -> (Assumptions.t -> Cct.t -> 'a1) -> t -> 'a1
 
   val is_sat : t -> bool
  end
@@ -35,15 +33,15 @@ module JumpSolution :
  sig
   type t = JumpSolution.t =
   | Sat of Tree.t list
-  | Unsat of DiaClause.t * Assumptions.t * Derivation.t
+  | Unsat of DiaClause.t * Assumptions.t * Cct.t
 
   val t_rect :
-    (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Derivation.t ->
-    'a1) -> t -> 'a1
+    (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Cct.t -> 'a1) ->
+    t -> 'a1
 
   val t_rec :
-    (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Derivation.t ->
-    'a1) -> t -> 'a1
+    (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Cct.t -> 'a1) ->
+    t -> 'a1
  end
 
 val tableau_jumps :

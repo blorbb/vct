@@ -11,14 +11,14 @@ Module JumpSolution.
   Inductive t :=
   (* Assumptions need to be a set of literals because atoms not in there are treated as unset. *)
   | Sat (T1s : list Tree.t)
-  | Unsat (failed_dia : DiaClause.t) (core : Assumptions.t) (deriv : Derivation.t).
+  | Unsat (failed_dia : DiaClause.t) (core : Assumptions.t) (deriv : Cct.t).
 End JumpSolution.
 
 (** A tableau sat/unsat solution. *)
 Module Solution.
   Inductive t :=
     | Sat (T0 : Tree.t)
-    | Unsat (core : Assumptions.t) (deriv : Derivation.t).
+    | Unsat (core : Assumptions.t) (deriv : Cct.t).
 
   Definition is_sat t : bool :=
     match t with
@@ -95,7 +95,7 @@ Equations tableau
 :=
 tableau mc0 s0 A
 with inspect (CplSolver.solve_with_assumptions s0 A) =>
-  | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Local A')
+  | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Cct.Local A')
   | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
     | [] => Solution.Sat (Tree.make V [])
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
@@ -115,7 +115,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
         | Solution.Sat T0 => Solution.Sat T0
         | Solution.Unsat rs_core rs_deriv =>
           Solution.Unsat rs_core
-            (Derivation.JumpRestart V (c,d) jump_deriv rs_deriv)
+            (Cct.JumpRestart V (c,d) jump_deriv rs_deriv)
         end
 .
 Next Obligation.

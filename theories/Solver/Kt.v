@@ -65,7 +65,7 @@ Equations tableau
 :=
 tableau mc0 s0 A
 with inspect (CplSolver.solve_with_assumptions s0 A) =>
-  | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Derivation.Local A')
+  | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A' (Cct.Local A')
   | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
     | [] => Solution.Sat (Tree.make V [])
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
@@ -78,7 +78,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
         | Solution.Sat T0 => Solution.Sat T0
         | Solution.Unsat rs_core rs_deriv =>
           Solution.Unsat rs_core
-            (Derivation.JumpRestart V (c,d) jump_deriv rs_deriv)
+            (Cct.JumpRestart V (c,d) jump_deriv rs_deriv)
         end
 .
 Next Obligation.
@@ -196,9 +196,9 @@ Lemma tableau_jumps_completeness_weak : forall A V l0 mc1 T1s,
   tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Sat T1s ->
   (forall A' T0,
     Solution.Sat T0 = tableau $mc1 A' ->
-    weak_force Tree.as_kripke T0 (Mcnf.add_A mc1 A')) ->
+    weak_force Tree.as_k T0 (Mcnf.add_A mc1 A')) ->
   CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
-  weak_force Tree.as_kripke (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
+  weak_force Tree.as_k (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
 Proof with try easy; try congruence; try auto with ct datatypes.
   intros * Hsat IHnt Hcpl_sat.
 
@@ -276,7 +276,7 @@ Qed.
 (** A copy of [Completeness.tableau_completeness_force] with minor modifications. *)
 Theorem tableau_completeness_force_weak : forall mc0 A T,
   tableau mc0 (cplsolver_mcnf mc0) A = Solution.Sat T ->
-  weak_force Tree.as_kripke T (Mcnf.add_A mc0 A).
+  weak_force Tree.as_k T (Mcnf.add_A mc0 A).
 Proof with try easy; auto with datatypes ct.
   intros mc0 A T Hsat.
 
@@ -303,11 +303,11 @@ Qed.
 
 Theorem tableau_completeness_force : forall mc0 A T,
   tableau $(Mcnf.build_kt mc0) A = Solution.Sat T ->
-  Mcnf.force Tree.as_refl T (Mcnf.add_A (Mcnf.build_kt mc0) A).
+  Mcnf.force Tree.as_kt T (Mcnf.add_A (Mcnf.build_kt mc0) A).
 Proof with try easy; auto with datatypes ct.
   intros * Hsat.
 
-  unfold Tree.as_refl.
+  unfold Tree.as_kt.
   rewrite Mcnf.add_A_build_kt_comm.
   apply kt_forces_weak.
   rewrite <- Mcnf.add_A_build_kt_comm.
@@ -317,7 +317,7 @@ Qed.
 
 Corollary solve_mcnf_complete_force : forall mc0 T,
   solve_mcnf mc0 = Solution.Sat T ->
-  Mcnf.force Tree.as_refl T mc0.
+  Mcnf.force Tree.as_kt T mc0.
 Proof with try easy.
   intros mc0 T Hsat.
   unfold solve_mcnf in Hsat.
@@ -337,7 +337,7 @@ Proof with try easy.
   apply Nnf.equisat_kt_fml.
   apply Mcnf.equisat_kt_nnf.
 
-  exists _, _, _, Tree.as_refl, T0.
+  exists _, _, _, Tree.as_kt, T0.
   exact Hsol_sat.
 Qed.
 
@@ -349,7 +349,7 @@ Qed.
 
 Lemma tableau_deriv_core : forall A s0 mc0 core deriv,
   tableau A s0 mc0 = Solution.Unsat core deriv ->
-  Derivation.get_core deriv = core.
+  Cct.get_core deriv = core.
 Proof.
   intros *. intro Hunsat.
   funelim (tableau A s0 mc0); rewrite <- Heqcall in Hunsat.
@@ -377,7 +377,7 @@ Qed.
 
 Lemma jump_deriv_core : forall V l0 mc1 failed_dia core deriv,
   tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
-  Derivation.get_core deriv = core.
+  Cct.get_core deriv = core.
 Proof.
   intros *. intros Hunsat.
   funelim (tableau_jumps V l0 mc1 (tableau $mc1));
@@ -394,8 +394,8 @@ Lemma tableau_jumps_deriv_ind : forall V l0 mc1 failed_dia core deriv,
   tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
   (forall A' core deriv,
     tableau $mc1 A' = Solution.Unsat core deriv ->
-    Derivation.conds mc1 A' deriv) ->
-  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+    Cct.conds mc1 A' deriv) ->
+  Cct.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof.
   intros * Hunsat IHnt.
   funelim (tableau_jumps V l0 mc1 (tableau $mc1)); rewrite <- Heqcall in Hunsat.
@@ -413,17 +413,17 @@ Qed.
 
 Lemma tableau_deriv : forall mc0 A core deriv,
   tableau $mc0 A = Solution.Unsat core deriv ->
-  Derivation.conds mc0 A deriv.
+  Cct.conds mc0 A deriv.
 Proof with auto.
   intros *. intros Hunsat. funelim (tableau $mc0 A).
   - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hderiv. subst.
-    apply Derivation.LocalCond. now unfold cpl_solve.
+    apply Cct.LocalCond. now unfold cpl_solve.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - clear H0 H1. rewrite <- Heqcall in Hunsat.
     destruct (tableau _ _ _) eqn:Htab_cs; try discriminate.
     inv_clear Hunsat.
-    apply Derivation.JumpRestartCond.
+    apply Cct.JumpRestartCond.
     + auto.
     + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using jump_c_forced.
@@ -438,7 +438,7 @@ Qed.
 
 Corollary tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
   tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
-  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+  Cct.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof with try easy.
   intros * Hunsat.
   apply tableau_jumps_deriv_ind with (core := core)...
@@ -448,14 +448,14 @@ Qed.
 
 Corollary solve_mcnf_deriv : forall phi core deriv,
   solve_mcnf phi = Solution.Unsat core deriv ->
-  Derivation.conds (Mcnf.build_kt phi) [] deriv.
+  Cct.conds (Mcnf.build_kt phi) [] deriv.
 Proof.
   intros * Hunsat. eapply tableau_deriv. exact Hunsat.
 Qed.
 
 Corollary solve_fml_deriv : forall phi core deriv,
   solve_fml phi = Solution.Unsat core deriv ->
-  Derivation.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mcnf.build_kt) [] deriv.
+  Cct.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mcnf.build_kt) [] deriv.
 Proof.
   intros. eapply solve_mcnf_deriv. exact H.
 Qed.
@@ -470,7 +470,7 @@ Proof with try easy.
   clear Hunsat.
   pose proof (solve_mcnf_deriv mc0 core deriv Hsolve) as Hconds.
   pose proof (Soundness.deriv_sound (Mcnf.build_kt mc0) [] deriv Hconds) as Hunsat.
-  assert (Derivation.get_core deriv = []) as Hderiv. {
+  assert (Cct.get_core deriv = []) as Hderiv. {
     apply incl_l_nil. apply Soundness.deriv_core_incl_A with (mc0 := Mcnf.build_kt mc0)...
   }
   rewrite Hderiv in Hunsat.

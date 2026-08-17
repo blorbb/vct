@@ -1,4 +1,4 @@
-(** A concrete derivation of unsatisfiability. *)
+(** A closed CEGAR-Tableau derivation of unsatisfiability. *)
 
 From Vct Require Mcnf Assumptions CplSolver Lclauses.
 From Vct Require Import ImportStd.

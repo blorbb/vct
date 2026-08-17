@@ -1,8 +1,8 @@
 open Assumptions
+open Cct
 open CplSolution
 open CplSolver
 open Datatypes
-open Derivation
 open DiaClause
 open Fml
 open Lclauses

@@ -1,13 +1,13 @@
 From Vct Require Import ImportStd.
 From Vct.Solver Require Import McnfExt SearchBasics.
-From Vct.Solver Require Derivation Spec.
+From Vct.Solver Require Cct Spec.
 
 (** Completeness of the [Spec] implementation. *)
 
 Lemma singleton_tree_force : forall s0 A V cpls boxes mc1,
   CplSolver.solve_with_assumptions s0 A = CplSolution.Sat V ->
   CplSolver.clauses_of s0 = cpls ->
-  Mcnf.force Tree.as_kripke (Tree.make V [])
+  Mcnf.force Tree.as_k (Tree.make V [])
     (Mcnf.add_A (Lclauses.make cpls boxes [] :: mc1) A).
 Proof with try easy; auto with datatypes ct.
   intros * Hsat Hcpls.
@@ -40,9 +40,9 @@ Lemma tableau_jumps_completeness : forall A V l0 mc1 T1s,
   Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Sat T1s ->
   (forall A' T0,
     Spec.Solution.Sat T0 = Spec.tableau $mc1 A' ->
-    Mcnf.force Tree.as_kripke T0 (Mcnf.add_A mc1 A')) ->
+    Mcnf.force Tree.as_k T0 (Mcnf.add_A mc1 A')) ->
   CplSolver.solve_with_assumptions (cpl_from_lclauses l0) A = CplSolution.Sat V ->
-  Mcnf.force Tree.as_kripke (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
+  Mcnf.force Tree.as_k (Tree.make V T1s) (Mcnf.add_A (l0::mc1) A).
 Proof with try solve [ cbn in *; try easy; auto with ct datatypes ].
   intros * Hsat IHnt Hcpl_sat.
 
@@ -114,7 +114,7 @@ Qed.
 
 Theorem tableau_completeness_force : forall mc0 A T,
   Spec.tableau mc0 (cplsolver_mcnf mc0) A = Spec.Solution.Sat T ->
-  Mcnf.force Tree.as_kripke T (Mcnf.add_A mc0 A).
+  Mcnf.force Tree.as_k T (Mcnf.add_A mc0 A).
 Proof with try easy; auto with datatypes ct.
   intros mc0 A T Hsat.
 
@@ -144,7 +144,7 @@ Qed.
 
 Corollary solve_mcnf_complete_force : forall mc0 T,
   Spec.solve_mcnf mc0 = Spec.Solution.Sat T ->
-  Mcnf.force Tree.as_kripke T mc0.
+  Mcnf.force Tree.as_k T mc0.
 Proof.
   intros mc0 T Hsat.
   unfold Spec.solve_mcnf in Hsat.
@@ -157,7 +157,7 @@ Qed.
     fresh atoms introduced by [Mcnf.from_nnf], but it is still a satisfying model. *)
 Corollary solve_fml_complete_force : forall phi T,
   Spec.solve_fml phi = Spec.Solution.Sat T ->
-  Fml.force Tree.as_kripke T phi.
+  Fml.force Tree.as_k T phi.
 Proof.
   intros phi T Hsat.
   apply solve_mcnf_complete_force in Hsat.
@@ -175,7 +175,7 @@ Proof with try easy.
   intros mc0 A Hsat.
   destruct (Spec.tableau _ _ _) eqn:H...
   apply tableau_completeness_force in H...
-  exists _, _, Tree.as_kripke, T0. exact H.
+  exists _, _, Tree.as_k, T0. exact H.
 Qed.
 
 
@@ -187,7 +187,7 @@ Proof with try easy.
   unfold Spec.Solution.is_sat in Hsat.
   destruct (Spec.solve_mcnf mc0) eqn:Hsol_sat...
   apply solve_mcnf_complete_force in Hsol_sat.
-  exists _, _, Tree.as_kripke, T0. exact Hsol_sat.
+  exists _, _, Tree.as_k, T0. exact Hsol_sat.
 Qed.
 
 
@@ -199,5 +199,5 @@ Proof with try easy.
   unfold Spec.Solution.is_sat in Hsat.
   destruct (Spec.solve_fml phi) eqn:Hsol_sat...
   apply solve_fml_complete_force in Hsol_sat.
-  exists _, _, Tree.as_kripke, T0. exact Hsol_sat.
+  exists _, _, Tree.as_k, T0. exact Hsol_sat.
 Qed.

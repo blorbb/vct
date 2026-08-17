@@ -1,13 +1,13 @@
 From Vct Require Import ImportStd.
 From Vct.Solver Require Import McnfExt SearchBasics.
-From Vct.Solver Require Derivation Spec.
+From Vct.Solver Require Cct Spec.
 From Vct Require Cnf.
 
 (** Some basic properties about the solutions returned by [tableau] and [tableau_jumps].  *)
 
 Lemma tableau_deriv_core : forall A s0 mc0 core deriv,
   Spec.tableau A s0 mc0 = Spec.Solution.Unsat core deriv ->
-  Derivation.get_core deriv = core.
+  Cct.get_core deriv = core.
 Proof.
   intros *. intro Hunsat.
   funelim (Spec.tableau A s0 mc0); rewrite <- Heqcall in Hunsat.
@@ -35,7 +35,7 @@ Qed.
 
 Lemma jump_deriv_core : forall V l0 mc1 failed_dia core deriv,
   Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
-  Derivation.get_core deriv = core.
+  Cct.get_core deriv = core.
 Proof.
   intros *. intros Hunsat.
   funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1));
@@ -48,14 +48,14 @@ Proof.
   - inv_clear Hunsat. eapply Hind. exact Heq.
 Qed.
 
-(** * [Derivation.conds] proofs *)
+(** * [Cct.conds] proofs *)
 
 Lemma tableau_jumps_deriv_ind : forall V l0 mc1 failed_dia core deriv,
   Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
   (forall A' core deriv,
     Spec.tableau $mc1 A' = Spec.Solution.Unsat core deriv ->
-    Derivation.conds mc1 A' deriv) ->
-  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+    Cct.conds mc1 A' deriv) ->
+  Cct.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof.
   intros * Hunsat IHnt.
   funelim (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)); rewrite <- Heqcall in Hunsat.
@@ -73,17 +73,17 @@ Qed.
 
 Lemma tableau_deriv : forall mc0 A core deriv,
   Spec.tableau $mc0 A = Spec.Solution.Unsat core deriv ->
-  Derivation.conds mc0 A deriv.
+  Cct.conds mc0 A deriv.
 Proof with auto.
   intros *. intros Hunsat. funelim (Spec.tableau $mc0 A).
   - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hderiv. subst.
-    apply Derivation.LocalCond. now unfold cpl_solve.
+    apply Cct.LocalCond. now unfold cpl_solve.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - clear H0 H1. rewrite <- Heqcall in Hunsat.
     destruct (Spec.tableau _ _ _) eqn:Htab_cs; try discriminate.
     inv_clear Hunsat.
-    apply Derivation.JumpRestartCond.
+    apply Cct.JumpRestartCond.
     + auto.
     + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using Spec.jump_c_forced.
@@ -98,7 +98,7 @@ Qed.
 
 Corollary tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
   Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1) = Spec.JumpSolution.Unsat failed_dia core deriv ->
-  Derivation.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+  Cct.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
 Proof with try easy.
   intros * Hunsat.
   apply tableau_jumps_deriv_ind with (core := core)...
@@ -111,14 +111,14 @@ Qed.
 (** The derivation conditions are held for the [solve_*] functions. *)
 Corollary solve_mcnf_deriv : forall phi core deriv,
   Spec.solve_mcnf phi = Spec.Solution.Unsat core deriv ->
-  Derivation.conds phi [] deriv.
+  Cct.conds phi [] deriv.
 Proof.
   intros * Hunsat. eapply tableau_deriv. exact Hunsat.
 Qed.
 
 Corollary solve_fml_deriv : forall phi core deriv,
   Spec.solve_fml phi = Spec.Solution.Unsat core deriv ->
-  Derivation.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf) [] deriv.
+  Cct.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf) [] deriv.
 Proof.
   intros. eapply solve_mcnf_deriv. exact H.
 Qed.
@@ -126,7 +126,7 @@ Qed.
 
 (** * Soundness *)
 
-(** A derivation that satisfies [Derivation.conds] is sound. *)
+(** A derivation that satisfies [Cct.conds] is sound. *)
 
 (** Some helpers to simplify unsat goals. *)
 
@@ -274,8 +274,8 @@ Proof.
 Qed.
 
 Lemma deriv_core_incl_A : forall mc0 A deriv,
-  Derivation.conds mc0 A deriv ->
-  List.incl (Derivation.get_core deriv) A.
+  Cct.conds mc0 A deriv ->
+  List.incl (Cct.get_core deriv) A.
 Proof.
   intros * Hconds.
   induction Hconds as
@@ -378,8 +378,8 @@ Qed.
 
 
 Theorem deriv_sound : forall mc0 A deriv,
-  Derivation.conds mc0 A deriv ->
-  Mcnf.unsatisfiable (Mcnf.add_A mc0 (Derivation.get_core deriv)).
+  Cct.conds mc0 A deriv ->
+  Mcnf.unsatisfiable (Mcnf.add_A mc0 (Cct.get_core deriv)).
 Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   intros mc0 A deriv Hconds.
   induction Hconds as
@@ -397,8 +397,8 @@ Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
      mc0 /\ cs is from IHjump, but need to go up a modal context.
      mc0 /\ ~cs is from IHrs. *)
   - destruct failed_dia as [c d]; cbn [fst snd] in *.
-    cbn [Derivation.get_core].
-    set (cs := c :: box_culprits mc0 V (Derivation.get_core jump_deriv)) in *.
+    cbn [Cct.get_core].
+    set (cs := c :: box_culprits mc0 V (Cct.get_core jump_deriv)) in *.
     apply mcnf_resolution_cs with (cs := cs).
     (* mc0 /\ ~cs *)
     + clear -IHrs.
@@ -451,7 +451,7 @@ Proof with try easy.
   clear Hunsat.
   pose proof (solve_mcnf_deriv mc0 core deriv Hsolve) as Hconds.
   pose proof (deriv_sound mc0 [] deriv Hconds) as Hunsat.
-  assert (Derivation.get_core deriv = []) as Hderiv. {
+  assert (Cct.get_core deriv = []) as Hderiv. {
     apply incl_l_nil. apply deriv_core_incl_A with (mc0 := mc0)...
   }
   rewrite Hderiv in Hunsat.

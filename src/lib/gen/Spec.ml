@@ -1,8 +1,8 @@
 open Assumptions
+open Cct
 open CplSolution
 open CplSolver
 open Datatypes
-open Derivation
 open DiaClause
 open Fml
 open Lclauses
@@ -21,19 +21,19 @@ module JumpSolution =
  struct
   type t =
   | Sat of Tree.t list
-  | Unsat of DiaClause.t * Assumptions.t * Derivation.t
+  | Unsat of DiaClause.t * Assumptions.t * Cct.t
 
   (** val t_rect :
-      (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Derivation.t
-      -> 'a1) -> t -> 'a1 **)
+      (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Cct.t -> 'a1)
+      -> t -> 'a1 **)
 
   let t_rect sat unsat = function
   | Sat t1s -> sat t1s
   | Unsat (failed_dia, core, deriv) -> unsat failed_dia core deriv
 
   (** val t_rec :
-      (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Derivation.t
-      -> 'a1) -> t -> 'a1 **)
+      (Tree.t list -> 'a1) -> (DiaClause.t -> Assumptions.t -> Cct.t -> 'a1)
+      -> t -> 'a1 **)
 
   let t_rec sat unsat = function
   | Sat t1s -> sat t1s
@@ -44,17 +44,17 @@ module Solution =
  struct
   type t =
   | Sat of Tree.t
-  | Unsat of Assumptions.t * Derivation.t
+  | Unsat of Assumptions.t * Cct.t
 
   (** val t_rect :
-      (Tree.t -> 'a1) -> (Assumptions.t -> Derivation.t -> 'a1) -> t -> 'a1 **)
+      (Tree.t -> 'a1) -> (Assumptions.t -> Cct.t -> 'a1) -> t -> 'a1 **)
 
   let t_rect sat unsat = function
   | Sat t1 -> sat t1
   | Unsat (core, deriv) -> unsat core deriv
 
   (** val t_rec :
-      (Tree.t -> 'a1) -> (Assumptions.t -> Derivation.t -> 'a1) -> t -> 'a1 **)
+      (Tree.t -> 'a1) -> (Assumptions.t -> Cct.t -> 'a1) -> t -> 'a1 **)
 
   let t_rec sat unsat = function
   | Sat t1 -> sat t1
