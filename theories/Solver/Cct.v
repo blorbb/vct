@@ -9,7 +9,7 @@ From Vct.Solver Require Import McnfExt.
 
     There are no constraints the values provided, so the inhabitance of this
     type is _not_ a proof of unsatisfiability. The necessary properties are
-    described externally with [conds]. It is proven that these conditions are
+    described externally with [wf]. It is proven that these conditions are
     held by the solver and that having such conditions _is_ a proof of
     unsatisfiability. *)
 Inductive t : Type :=
@@ -19,9 +19,9 @@ Inductive t : Type :=
   (V : Valuation.t)
   (** Failed jump. *)
   (failed_dia : DiaClause.t)
-  (jump_deriv : t)
+  (jump_cct : t)
   (** Failed restart *)
-  (rs_deriv : t).
+  (rs_cct : t).
 
 
 (* In the jump restart case, gets the core of the restart tableau.
@@ -30,18 +30,19 @@ Inductive t : Type :=
 Fixpoint get_core (t : t) :=
   match t with
   | Local core => core
-  | JumpRestart _ _ _ rs_deriv => get_core rs_deriv
+  | JumpRestart _ _ _ rs_cct => get_core rs_cct
   end.
 
 
-Inductive conds : Mcnf.t -> Assumptions.t -> t -> Prop :=
-| LocalCond : forall mc0 A core, cpl_solve mc0 A = CplSolution.Unsat core -> conds mc0 A (Local core)
-| JumpRestartCond : forall mc0 A V failed_dia jump_deriv rs_deriv,
+(** Conditions for a well-formed cct. *)
+Inductive wf : t -> Mcnf.t -> Assumptions.t -> Prop :=
+| LocalCond : forall mc0 A core, cpl_solve mc0 A = CplSolution.Unsat core -> wf (Local core) mc0 A
+| JumpRestartCond : forall mc0 A V failed_dia jump_cct rs_cct,
   cpl_solve mc0 A = CplSolution.Sat V ->
   List.In failed_dia (Mcnf.fst_dias mc0) ->
   Valuation.forces_atm V (fst failed_dia) ->
-  (* Jump tableau also satisfies conds. *)
-  conds (Mcnf.next_mc mc0) (snd failed_dia :: fired_boxes mc0 V) jump_deriv ->
-  (* Restart tableau also satisfies conds. *)
-  conds (Mcnf.add_cs mc0 ((fst failed_dia) :: box_culprits mc0 V (get_core jump_deriv))) A rs_deriv ->
-  conds mc0 A (JumpRestart V failed_dia jump_deriv rs_deriv).
+  (* Jump tableau also satisfies wf. *)
+  wf jump_cct (Mcnf.next_mc mc0) (snd failed_dia :: fired_boxes mc0 V) ->
+  (* Restart tableau also satisfies wf. *)
+  wf rs_cct (Mcnf.add_cs mc0 ((fst failed_dia) :: box_culprits mc0 V (get_core jump_cct))) A ->
+  wf (JumpRestart V failed_dia jump_cct rs_cct) mc0 A.

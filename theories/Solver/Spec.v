@@ -11,14 +11,14 @@ Module JumpSolution.
   Inductive t :=
   (* Assumptions need to be a set of literals because atoms not in there are treated as unset. *)
   | Sat (T1s : list Tree.t)
-  | Unsat (failed_dia : DiaClause.t) (core : Assumptions.t) (deriv : Cct.t).
+  | Unsat (failed_dia : DiaClause.t) (core : Assumptions.t) (cct : Cct.t).
 End JumpSolution.
 
 (** A tableau sat/unsat solution. *)
 Module Solution.
   Inductive t :=
     | Sat (T0 : Tree.t)
-    | Unsat (core : Assumptions.t) (deriv : Cct.t).
+    | Unsat (core : Assumptions.t) (cct : Cct.t).
 
   Definition is_sat t : bool :=
     match t with
@@ -53,22 +53,22 @@ with Valuation.forces_atm V c =>
       |> List.map snd
     in next_tableau (d::fired_boxes) =>
       (* unsat jump, will restart. *)
-      | Solution.Unsat core deriv =>
-        JumpSolution.Unsat (c,d) core deriv
+      | Solution.Unsat core cct =>
+        JumpSolution.Unsat (c,d) core cct
       (* sat jump, next child. *)
       | Solution.Sat T1 with tableau_jumps V (Lclauses.make cpls boxes dias') mc1 next_tableau =>
         (* T1 is added on the 'opposite' end to match the behaviour of the 
           accumulator in [TailRec.tableau_jumps]. *)
         | JumpSolution.Sat T1s =>
           JumpSolution.Sat (T1s++[T1])
-        | JumpSolution.Unsat failed_dia core deriv =>
-          JumpSolution.Unsat failed_dia core deriv
+        | JumpSolution.Unsat failed_dia core cct =>
+          JumpSolution.Unsat failed_dia core cct
 .
 Fail Next Obligation.
 
 
-Lemma jump_c_forced : forall V l0 mc1 next_tableau c d core deriv,
-  tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat (c,d) core deriv ->
+Lemma jump_c_forced : forall V l0 mc1 next_tableau c d core cct,
+  tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat (c,d) core cct ->
   Valuation.forces_atm V c.
 Proof.
   intros * Hunsat. funelim (tableau_jumps V l0 mc1 next_tableau); rewrite <- Heqcall in Hunsat.
@@ -101,7 +101,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
       (* Every child was sat -> done! *)
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
-      | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
+      | JumpSolution.Unsat (c,d) jump_core jump_cct eqn:Hj_eq =>
         (* all names that fired some literal in the core + the antecedent of the unsat dia clause *)
         let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
         (* conflict_set is interpreted as a conjunction *)
@@ -113,9 +113,9 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
         let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         match tableau mc0' s0' A with (* recursion: RESTART *)
         | Solution.Sat T0 => Solution.Sat T0
-        | Solution.Unsat rs_core rs_deriv =>
+        | Solution.Unsat rs_core rs_cct =>
           Solution.Unsat rs_core
-            (Cct.JumpRestart V (c,d) jump_deriv rs_deriv)
+            (Cct.JumpRestart V (c,d) jump_cct rs_cct)
         end
 .
 Next Obligation.

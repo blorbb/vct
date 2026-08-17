@@ -56,10 +56,10 @@ let tableau_jumps a a0 a1 b =
                       in
                       fix_F y with
                 | JumpSolution.Sat t1s -> JumpSolution.Sat (t3 :: t1s)
-                | JumpSolution.Unsat (failed_dia, core, deriv) ->
-                  JumpSolution.Unsat (failed_dia, core, deriv))
-             | Solution.Unsat (core, deriv) ->
-               JumpSolution.Unsat ((t1, t2), core, deriv))
+                | JumpSolution.Unsat (failed_dia, core, cct) ->
+                  JumpSolution.Unsat (failed_dia, core, cct))
+             | Solution.Unsat (core, cct) ->
+               JumpSolution.Unsat ((t1, t2), core, cct))
        else let y = v,({ cpls = cpls0; boxes = boxes0; dias =
               l },((let pr1,_ = let _,pr2 = let _,pr2 = x in pr2 in pr2 in pr1),next_tableau))
             in
@@ -82,16 +82,16 @@ let tableau a a0 b =
                    (tableau_jumps v t0 l (fun a' ->
                      tableau0 l (cplsolver_mcnf l) a' __)) with
            | JumpSolution.Sat t1s -> Solution.Sat (Coq_make (v, t1s))
-           | JumpSolution.Unsat (failed_dia, core, deriv) ->
+           | JumpSolution.Unsat (failed_dia, core, cct) ->
              let (t1, t2) = failed_dia in
              let conflict_set = t1 :: (box_culprits (t0 :: l) v core) in
              let s0' = add_conflict_set s0 conflict_set in
              let mc0' = add_cs (t0 :: l) conflict_set in
              (match tableau0 mc0' s0' a1 __ with
               | Solution.Sat t3 -> Solution.Sat t3
-              | Solution.Unsat (rs_core, rs_deriv) ->
-                Solution.Unsat (rs_core, (JumpRestart (v, (t1, t2), deriv,
-                  rs_deriv))))))
+              | Solution.Unsat (rs_core, rs_cct) ->
+                Solution.Unsat (rs_core, (JumpRestart (v, (t1, t2), cct,
+                  rs_cct))))))
      | Unsat core -> Solution.Unsat (core, (Local core)))
   in fix_F (a,(a0,b))
 

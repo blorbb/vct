@@ -28,20 +28,20 @@ with Valuation.forces_atm V c && negb (Lit.cpl_forceb V d) =>
       |> List.filter (fun '(a,b) => Valuation.forces_atm V a)
       |> List.map snd
     in next_tableau (d::fired_boxes) =>
-      | Solution.Unsat core deriv =>
-        JumpSolution.Unsat (c,d) core deriv
+      | Solution.Unsat core cct =>
+        JumpSolution.Unsat (c,d) core cct
       | Solution.Sat T1 with tableau_jumps V (Lclauses.make cpls boxes dias') mc1 next_tableau =>
         (* NOTE: if making a tail-rec version of this, compose as T1s++[T1] instead. *)
         | JumpSolution.Sat T1s =>
           JumpSolution.Sat (T1::T1s)
-        | JumpSolution.Unsat failed_dia core deriv =>
-          JumpSolution.Unsat failed_dia core deriv
+        | JumpSolution.Unsat failed_dia core cct =>
+          JumpSolution.Unsat failed_dia core cct
 .
 Fail Next Obligation.
 
 
-Lemma jump_c_forced : forall V l0 mc1 next_tableau c d core deriv,
-  tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat (c,d) core deriv ->
+Lemma jump_c_forced : forall V l0 mc1 next_tableau c d core cct,
+  tableau_jumps V l0 mc1 next_tableau = JumpSolution.Unsat (c,d) core cct ->
   Valuation.forces_atm V c.
 Proof.
   intros * Hunsat. funelim (tableau_jumps V l0 mc1 next_tableau); rewrite <- Heqcall in Hunsat.
@@ -70,15 +70,15 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
     | [] => Solution.Sat (Tree.make V [])
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
-      | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
+      | JumpSolution.Unsat (c,d) jump_core jump_cct eqn:Hj_eq =>
         let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
         let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         match tableau mc0' s0' A with
         | Solution.Sat T0 => Solution.Sat T0
-        | Solution.Unsat rs_core rs_deriv =>
+        | Solution.Unsat rs_core rs_cct =>
           Solution.Unsat rs_core
-            (Cct.JumpRestart V (c,d) jump_deriv rs_deriv)
+            (Cct.JumpRestart V (c,d) jump_cct rs_cct)
         end
 .
 Next Obligation.
@@ -347,9 +347,9 @@ Qed.
     This is a copy-paste of the proofs in [Soundness.*]. *)
 
 
-Lemma tableau_deriv_core : forall A s0 mc0 core deriv,
-  tableau A s0 mc0 = Solution.Unsat core deriv ->
-  Cct.get_core deriv = core.
+Lemma tableau_cct_core : forall A s0 mc0 core cct,
+  tableau A s0 mc0 = Solution.Unsat core cct ->
+  Cct.get_core cct = core.
 Proof.
   intros *. intro Hunsat.
   funelim (tableau A s0 mc0); rewrite <- Heqcall in Hunsat.
@@ -361,8 +361,8 @@ Proof.
     + inv_clear Hunsat. cbn. now apply H.
 Qed.
 
-Lemma jump_failed_dia : forall V l0 mc1 failed_dia core deriv,
-  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
+Lemma jump_failed_dia : forall V l0 mc1 failed_dia core cct,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core cct ->
   List.In failed_dia (Lclauses.dias l0).
 Proof.
   intros *. intro Hunsat.
@@ -375,9 +375,9 @@ Proof.
   - right. inv_clear Hunsat. eapply Hind. exact Heq.
 Qed.
 
-Lemma jump_deriv_core : forall V l0 mc1 failed_dia core deriv,
-  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
-  Cct.get_core deriv = core.
+Lemma jump_cct_core : forall V l0 mc1 failed_dia core cct,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core cct ->
+  Cct.get_core cct = core.
 Proof.
   intros *. intros Hunsat.
   funelim (tableau_jumps V l0 mc1 (tableau $mc1));
@@ -385,17 +385,17 @@ Proof.
   - discriminate.
   - eapply H. exact Hunsat.
   - inv_clear Hunsat.
-    eapply tableau_deriv_core. exact Heq.
+    eapply tableau_cct_core. exact Heq.
   - discriminate.
   - inv_clear Hunsat. eapply Hind. exact Heq.
 Qed.
 
-Lemma tableau_jumps_deriv_ind : forall V l0 mc1 failed_dia core deriv,
-  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
-  (forall A' core deriv,
-    tableau $mc1 A' = Solution.Unsat core deriv ->
-    Cct.conds mc1 A' deriv) ->
-  Cct.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+Lemma tableau_jumps_cct_ind : forall V l0 mc1 failed_dia core cct,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core cct ->
+  (forall A' core cct,
+    tableau $mc1 A' = Solution.Unsat core cct ->
+    Cct.wf cct mc1 A') ->
+  Cct.wf cct mc1 (snd failed_dia :: fired_boxes (l0::mc1) V).
 Proof.
   intros * Hunsat IHnt.
   funelim (tableau_jumps V l0 mc1 (tableau $mc1)); rewrite <- Heqcall in Hunsat.
@@ -411,12 +411,12 @@ Proof.
     + exact IHnt.
 Qed.
 
-Lemma tableau_deriv : forall mc0 A core deriv,
-  tableau $mc0 A = Solution.Unsat core deriv ->
-  Cct.conds mc0 A deriv.
+Lemma tableau_cct : forall mc0 A core cct,
+  tableau $mc0 A = Solution.Unsat core cct ->
+  Cct.wf cct mc0 A.
 Proof with auto.
   intros *. intros Hunsat. funelim (tableau $mc0 A).
-  - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hderiv. subst.
+  - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hcct. subst.
     apply Cct.LocalCond. now unfold cpl_solve.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
@@ -427,37 +427,37 @@ Proof with auto.
     + auto.
     + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using jump_c_forced.
-    + apply tableau_jumps_deriv_ind with (core := jump_core).
+    + apply tableau_jumps_cct_ind with (core := jump_core).
       * apply Hj_eq.
       * apply Hind.
-    + cbn [fst]. erewrite jump_deriv_core.
+    + cbn [fst]. erewrite jump_cct_core.
       2: { exact Hj_eq. }
       apply H with (core := core)...
 Qed.
 
 
-Corollary tableau_jumps_deriv : forall V l0 mc1 failed_dia core deriv,
-  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core deriv ->
-  Cct.conds mc1 (snd failed_dia :: fired_boxes (l0::mc1) V) deriv.
+Corollary tableau_jumps_cct : forall V l0 mc1 failed_dia core cct,
+  tableau_jumps V l0 mc1 (tableau $mc1) = JumpSolution.Unsat failed_dia core cct ->
+  Cct.wf cct mc1 (snd failed_dia :: fired_boxes (l0::mc1) V).
 Proof with try easy.
   intros * Hunsat.
-  apply tableau_jumps_deriv_ind with (core := core)...
-  intros A' core' deriv' Hnext_tableau.
-  apply tableau_deriv with (core := core')...
+  apply tableau_jumps_cct_ind with (core := core)...
+  intros A' core' cct' Hnext_tableau.
+  apply tableau_cct with (core := core')...
 Qed.
 
-Corollary solve_mcnf_deriv : forall phi core deriv,
-  solve_mcnf phi = Solution.Unsat core deriv ->
-  Cct.conds (Mcnf.build_kt phi) [] deriv.
+Corollary solve_mcnf_cct : forall phi core cct,
+  solve_mcnf phi = Solution.Unsat core cct ->
+  Cct.wf cct (Mcnf.build_kt phi) [].
 Proof.
-  intros * Hunsat. eapply tableau_deriv. exact Hunsat.
+  intros * Hunsat. eapply tableau_cct. exact Hunsat.
 Qed.
 
-Corollary solve_fml_deriv : forall phi core deriv,
-  solve_fml phi = Solution.Unsat core deriv ->
-  Cct.conds (phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mcnf.build_kt) [] deriv.
+Corollary solve_fml_cct : forall phi core cct,
+  solve_fml phi = Solution.Unsat core cct ->
+  Cct.wf cct (phi |> Nnf.from_fml |> Mcnf.from_nnf |> Mcnf.build_kt) [].
 Proof.
-  intros. eapply solve_mcnf_deriv. exact H.
+  intros. eapply solve_mcnf_cct. exact H.
 Qed.
 
 
@@ -468,12 +468,12 @@ Corollary solve_mcnf_sound : forall mc0,
 Proof with try easy.
   intros mc0 Hunsat. destruct (solve_mcnf mc0) eqn:Hsolve...
   clear Hunsat.
-  pose proof (solve_mcnf_deriv mc0 core deriv Hsolve) as Hconds.
-  pose proof (Soundness.deriv_sound (Mcnf.build_kt mc0) [] deriv Hconds) as Hunsat.
-  assert (Cct.get_core deriv = []) as Hderiv. {
-    apply incl_l_nil. apply Soundness.deriv_core_incl_A with (mc0 := Mcnf.build_kt mc0)...
+  pose proof (solve_mcnf_cct mc0 core cct Hsolve) as Hwf.
+  pose proof (Soundness.cct_sound (Mcnf.build_kt mc0) [] cct Hwf) as Hunsat.
+  assert (Cct.get_core cct = []) as Hcct. {
+    apply incl_l_nil. apply Soundness.cct_core_incl_A with (mc0 := Mcnf.build_kt mc0)...
   }
-  rewrite Hderiv in Hunsat.
+  rewrite Hcct in Hunsat.
   unfold Mcnf.unsatisfiable in *.
   now rewrite <- sat_add_no_assumptions.
 Qed.

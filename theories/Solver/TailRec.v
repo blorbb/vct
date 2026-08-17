@@ -34,8 +34,8 @@ with Valuation.forces_atm V c =>
       |> List.map snd
     in
     match next_tableau (d::fired_boxes) with
-    | Solution.Unsat core deriv =>
-      JumpSolution.Unsat (c,d) core deriv
+    | Solution.Unsat core cct =>
+      JumpSolution.Unsat (c,d) core cct
     | Solution.Sat T1 =>
       tableau_jumps V (Lclauses.make cpls boxes dias') mc1 (T1 :: T1s) next_tableau
     end
@@ -88,15 +88,15 @@ with inspect (CplSolver.solve_with_assumptions s0 A) =>
     | [] => Solution.Sat (Tree.make V [])
     | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 [] (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) =>
       | JumpSolution.Sat T1s eqn:Hj_eq => Solution.Sat (Tree.make V T1s)
-      | JumpSolution.Unsat (c,d) jump_core jump_deriv eqn:Hj_eq =>
+      | JumpSolution.Unsat (c,d) jump_core jump_cct eqn:Hj_eq =>
         let conflict_set := c :: box_culprits (l0::mc1) V jump_core in
         let s0' := CplSolver.add_conflict_set s0 conflict_set in
         let mc0' := Mcnf.add_cs (l0::mc1) conflict_set in
         match tableau mc0' s0' A with
         | Solution.Sat T0 => Solution.Sat T0
-        | Solution.Unsat rs_core rs_deriv =>
+        | Solution.Unsat rs_core rs_cct =>
           Solution.Unsat rs_core
-            (Cct.JumpRestart V (c,d) jump_deriv rs_deriv)
+            (Cct.JumpRestart V (c,d) jump_cct rs_cct)
         end
 .
 Next Obligation.

@@ -325,11 +325,11 @@ Proof with try easy; auto with datatypes ct.
   destruct (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)) eqn:Hspec...
   cbn in Hunsat. inv_clear Hunsat.
   destruct failed_dia as [c d]. cbn [fst] in cs.
-  apply Soundness.tableau_jumps_deriv in Hspec as Hconds.
-  apply Soundness.deriv_sound in Hconds as Hunsat.
+  apply Soundness.tableau_jumps_cct in Hspec as Hwf.
+  apply Soundness.cct_sound in Hwf as Hunsat.
   apply Soundness.jump_failed_dia in Hspec as Hfailed_dia.
   apply Spec.jump_c_forced in Hspec as Hforce_c.
-  apply Soundness.jump_deriv_core in Hspec as Hjump_core.
+  apply Soundness.jump_cct_core in Hspec as Hjump_core.
 
   (* destruct l0 as [cpls boxes dias] eqn:Hl0. rewrite <- Hl0 in *. *)
   apply sat_caches_cons_iff in Hsat_caches as [Hsat_cache0 Hsat_caches1].
@@ -354,7 +354,7 @@ Proof with try easy; auto with datatypes ct.
 
   apply Soundness.unsat_pos_cs_jump with (d := d).
   - exact Hfailed_dia.
-  - rewrite <- Hjump_core. eapply Soundness.deriv_core_incl_A. exact Hconds.
+  - rewrite <- Hjump_core. eapply Soundness.cct_core_incl_A. exact Hwf.
   - now rewrite Hjump_core in Hunsat.
 Qed.
 
