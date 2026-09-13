@@ -12,7 +12,7 @@ open Logic
 open Mcnf0
 open McnfExt
 open Nnf
-open NoModel
+open NoWit
 open Valuation
 
 let __ = let rec f _ = Obj.repr f in Obj.repr f

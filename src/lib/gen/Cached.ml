@@ -11,7 +11,7 @@ open Logic
 open Mcnf0
 open McnfExt
 open Nnf
-open NoModel
+open NoWit
 open Trie
 open Valuation
 

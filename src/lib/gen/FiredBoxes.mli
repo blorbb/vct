@@ -12,7 +12,7 @@ open Logic
 open Mcnf0
 open McnfExt
 open Nnf
-open NoModel
+open NoWit
 open Valuation
 
 module Cache :

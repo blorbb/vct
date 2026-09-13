@@ -1,4 +1,4 @@
-From Vct.Solver Require Spec TailRec NoModel Cached FiredBoxes Cct Soundness Completeness Kt.
+From Vct.Solver Require Spec TailRec NoWit Cached FiredBoxes Cct Soundness Completeness Kt.
 From Vct.Solver Require Import McnfExt.
 From Vct Require Import ImportStd.
 
@@ -24,10 +24,10 @@ Proof.
 Qed.
 
 
-Theorem nomodel_solve_fml_sound_complete : forall phi,
-  NoModel.Solution.is_sat (NoModel.solve_fml phi) <-> Fml.satisfiable phi.
+Theorem nowit_solve_fml_sound_complete : forall phi,
+  NoWit.Solution.is_sat (NoWit.solve_fml phi) <-> Fml.satisfiable phi.
 Proof.
-  setoid_rewrite NoModel.is_sat_spec. exact spec_solve_fml_sound_complete.
+  setoid_rewrite NoWit.is_sat_spec. exact spec_solve_fml_sound_complete.
 Qed.
 
 

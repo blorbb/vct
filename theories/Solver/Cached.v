@@ -2,7 +2,7 @@
 
 From Vct Require Trie.
 From Vct.Solver Require Import SearchBasics.
-From Vct.Solver Require NoModel.
+From Vct.Solver Require NoWit.
 From Stdlib.Structures Require Import Orders.
 
 
@@ -47,7 +47,7 @@ Module Caches.
 End Caches.
 
 
-(** NOTE: I could make these [NoModel.Solution.t * Caches.t], but putting the
+(** NOTE: I could make these [NoWit.Solution.t * Caches.t], but putting the
     cache within the variants make the function calls easier to [destruct]. *)
 Module JumpSolution.
   Inductive t :=
@@ -61,10 +61,10 @@ Module JumpSolution.
     | Unsat _ _ caches => caches
     end.
 
-  Definition without_caches (s : t) : NoModel.JumpSolution.t :=
+  Definition without_caches (s : t) : NoWit.JumpSolution.t :=
     match s with
-    | Sat _ => NoModel.JumpSolution.Sat
-    | Unsat c core _ => NoModel.JumpSolution.Unsat c core
+    | Sat _ => NoWit.JumpSolution.Sat
+    | Unsat c core _ => NoWit.JumpSolution.Unsat c core
     end.
 
   
@@ -109,15 +109,15 @@ Module Solution.
     get_caches s = caches.
   Proof. intros * Hs. subst s. reflexivity. Qed.
 
-  Definition without_caches (s : t) : NoModel.Solution.t :=
+  Definition without_caches (s : t) : NoWit.Solution.t :=
     match s with
-    | Sat _ => NoModel.Solution.Sat
-    | Unsat core _ => NoModel.Solution.Unsat core
+    | Sat _ => NoWit.Solution.Sat
+    | Unsat core _ => NoWit.Solution.Unsat core
     end.
 
   Lemma without_caches_sat : forall (s : t),
     is_sat s <->
-    NoModel.Solution.is_sat (without_caches s).
+    NoWit.Solution.is_sat (without_caches s).
   Proof. intros s. destruct s; tauto. Qed.
 End Solution.
 
@@ -225,7 +225,7 @@ Definition solve_fml (phi : Fml.t) : Solution.t :=
   phi |> Nnf.from_fml |> Mcnf.from_nnf |> solve_mcnf.
 
 
-(** * Equivalence to [NoModel] *)
+(** * Equivalence to [NoWit] *)
 
 
 Definition sat_cache (cache : Cache.t) (mc0 : Mcnf.t) : Prop :=
@@ -315,12 +315,12 @@ Qed.
 
 Lemma cs_preserve_sat : forall caches l0 mc1 V c jump_core,
   let cs := c :: box_culprits (l0::mc1) V jump_core in
-  NoModel.tableau_jumps V l0 mc1 (NoModel.tableau $mc1) = NoModel.JumpSolution.Unsat c jump_core ->
+  NoWit.tableau_jumps V l0 mc1 (NoWit.tableau $mc1) = NoWit.JumpSolution.Unsat c jump_core ->
   sat_caches caches (l0::mc1) ->
   sat_caches caches (Mcnf.add_cs (l0::mc1) cs).
 Proof with try easy; auto with datatypes ct.
   intros * Hunsat Hsat_caches.
-  rewrite <- NoModel.tableau_jumps_spec in Hunsat.
+  rewrite <- NoWit.tableau_jumps_spec in Hunsat.
 
   destruct (Spec.tableau_jumps V l0 mc1 (Spec.tableau $mc1)) eqn:Hspec...
   cbn in Hunsat. inv_clear Hunsat.
@@ -376,23 +376,23 @@ Qed.
 
 
 Definition tableau_jumps_correct V l0 mc1 caches1 :=
-  JumpSolution.without_caches (tableau_jumps V l0 mc1 (tableau mc1 (cplsolver_mcnf mc1)) caches1) =
-  NoModel.tableau_jumps V l0 mc1 (NoModel.tableau $mc1) /\
-  sat_caches (JumpSolution.get_caches (tableau_jumps V l0 mc1 (tableau mc1 (cplsolver_mcnf mc1)) caches1)) mc1.
+  JumpSolution.without_caches (tableau_jumps V l0 mc1 (tableau $mc1) caches1) =
+  NoWit.tableau_jumps V l0 mc1 (NoWit.tableau $mc1) /\
+  sat_caches (JumpSolution.get_caches (tableau_jumps V l0 mc1 (tableau $mc1) caches1)) mc1.
 
 
 Definition tableau_correct mc0 A caches :=
-  Solution.without_caches (tableau mc0 (cplsolver_mcnf mc0) A caches) = NoModel.tableau mc0 (cplsolver_mcnf mc0) A /\
-  sat_caches (Solution.get_caches (tableau mc0 (cplsolver_mcnf mc0) A caches)) mc0.
+  Solution.without_caches (tableau $mc0 A caches) = NoWit.tableau $mc0 A /\
+  sat_caches (Solution.get_caches (tableau $mc0 A caches)) mc0.
 
 
-Lemma tableau_jumps_nomodel_sat_caches : forall V l0 mc1 caches1,
+Lemma tableau_jumps_nowit_sat_caches : forall V l0 mc1 caches1,
   sat_caches caches1 mc1 ->
   (forall A caches, sat_caches caches mc1 -> tableau_correct mc1 A caches) ->
   tableau_jumps_correct V l0 mc1 caches1.
 Proof with try easy; try congruence; auto with datatypes ct.
   intros * Hsat_caches1 Hnt_ind. unfold tableau_jumps_correct.
-  funelim (NoModel.tableau_jumps V l0 mc1 (NoModel.tableau $mc1)).
+  funelim (NoWit.tableau_jumps V l0 mc1 (NoWit.tableau $mc1)).
   - simp tableau_jumps. cbn. easy.
   - simp tableau_jumps.
     unfold tableau_jumps_unfold_clause_2.
@@ -405,10 +405,10 @@ Proof with try easy; try congruence; auto with datatypes ct.
     set (A := d :: boxes |> filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     unfold tableau_jumps_unfold_clause_2_clause_2.
 
-    pose proof (Hnt_ind A caches1 Hsat_caches1) as [Hnt_nomodel Hnt_caches]...
+    pose proof (Hnt_ind A caches1 Hsat_caches1) as [Hnt_nowit Hnt_caches]...
     (* Solution.Sat branch *)
     destruct (tableau $mc1 A caches1) eqn:Hnt.
-    2: { rewrite Heq in Hnt_nomodel. discriminate. }
+    2: { rewrite Heq in Hnt_nowit. discriminate. }
 
     rename caches into caches1'.
     apply H...
@@ -419,33 +419,33 @@ Proof with try easy; try congruence; auto with datatypes ct.
     set (A := d :: boxes |> filter (fun '(a, _) => Valuation.forces_atm V a) |> map snd) in *.
     unfold tableau_jumps_unfold_clause_2_clause_2.
 
-    pose proof (Hnt_ind A caches1 Hsat_caches1) as [Hnt_nomodel Hnt_caches]...
+    pose proof (Hnt_ind A caches1 Hsat_caches1) as [Hnt_nowit Hnt_caches]...
     (* Solution.Unsat branch *)
     destruct (tableau $mc1 A caches1) eqn:Hnt.
-    1: { rewrite Heq in Hnt_nomodel. discriminate. }
+    1: { rewrite Heq in Hnt_nowit. discriminate. }
 
     rename caches into caches1'. cbn.
-    rewrite Heq in Hnt_nomodel.
-    cbn in Hnt_nomodel.
-    inv_clear Hnt_nomodel.
+    rewrite Heq in Hnt_nowit.
+    cbn in Hnt_nowit.
+    inv_clear Hnt_nowit.
     tauto.
 Qed.
 
 
-Lemma tableau_nomodel_sat_caches : forall mc0 A caches,
+Lemma tableau_nowit_sat_caches : forall mc0 A caches,
   sat_caches caches mc0 ->
   tableau_correct mc0 A caches.
 Proof with try easy; try congruence; auto with datatypes ct.
   intros * Hcaches. unfold tableau_correct.
 
-  funelim (NoModel.tableau mc0 (cplsolver_mcnf mc0) A).
+  funelim (NoWit.tableau mc0 (cplsolver_mcnf mc0) A).
   - clear H.
     simp tableau. unfold tableau_unfold_clause_1.
     destruct (Caches.contains caches A) eqn:Hcached. {
       exfalso.
       pose proof (sat_caches_contains_sat caches mc0 A Hcaches Hcached) as Hsat.
-      rewrite <- NoModel.tableau_sound_complete in Hsat.
-      rewrite NoModel.Solution.is_sat_eq in Hsat.
+      rewrite <- NoWit.tableau_sound_complete in Hsat.
+      rewrite NoWit.Solution.is_sat_eq in Hsat.
       rewrite Hsat in Heqcall. discriminate.
     }
 
@@ -480,10 +480,10 @@ Proof with try easy; try congruence; auto with datatypes ct.
       (* Hj_eq and Hj contradict *)
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
 
-      unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
+      unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
       }
-      rewrite Hj in Hjumps_nomodel. cbn in Hjumps_nomodel. congruence.
+      rewrite Hj in Hjumps_nowit. cbn in Hjumps_nowit. congruence.
 
     + dep_destruct (CplSolver.solve_with_assumptions (cplsolver_mcnf (l0::mc1)) A) as Hs...
       rewrite Hs in Hcsol_eq. inv_clear Hcsol_eq.
@@ -494,7 +494,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       unfold tableau_unfold_clause_1_clause_2_clause_2_clause_2_clause_1.
       cbn. eta.
 
-      unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
+      unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
       }
 
@@ -502,15 +502,15 @@ Proof with try easy; try congruence; auto with datatypes ct.
       * rename caches0 into caches1'. rewrite Hj in Hjumps_sat_caches. cbn in *.
         apply sat_caches_cons...
         apply sat_cache_add...
-        rewrite <- NoModel.tableau_sound_complete.
-        rewrite NoModel.Solution.is_sat_eq. exact (eq_sym Heqcall).
-      * rewrite Hj in Hjumps_nomodel. rewrite Hj_eq in Hjumps_nomodel.
-        cbn in Hjumps_nomodel. discriminate.
+        rewrite <- NoWit.tableau_sound_complete.
+        rewrite NoWit.Solution.is_sat_eq. exact (eq_sym Heqcall).
+      * rewrite Hj in Hjumps_nowit. rewrite Hj_eq in Hjumps_nowit.
+        cbn in Hjumps_nowit. discriminate.
 
   (* conflict set branch *)
   - clear H0 H1.
     set (cs := c :: box_culprits (l0::mc1) V jump_core) in *.
-    set (nomodel_call := NoModel.tableau _ _ _) in *.
+    set (nowit_call := NoWit.tableau _ _ _) in *.
     set (s0 := cplsolver_mcnf (l0::mc1)) in *.
     set (mc0_cs := Mcnf.add_cs (l0::mc1) cs) in *.
     assert (CplSolver.add_conflict_set s0 cs = CplSolver.make_with_clauses (Mcnf.fst_cpls mc0_cs)) as Hs0_cs by reflexivity.
@@ -519,9 +519,9 @@ Proof with try easy; try congruence; auto with datatypes ct.
     destruct (Caches.contains caches A) eqn:Hcached; split...
     (* cached - adding conflict set does not invalidate this cache *)
     + cbn.
-      unfold nomodel_call.
-      symmetry. rewrite <- NoModel.Solution.is_sat_eq.
-      rewrite Hs0_cs. rewrite NoModel.tableau_sound_complete.
+      unfold nowit_call.
+      symmetry. rewrite <- NoWit.Solution.is_sat_eq.
+      rewrite Hs0_cs. rewrite NoWit.tableau_sound_complete.
       apply sat_caches_contains_sat with (caches := caches)...
       apply cs_preserve_sat...
 
@@ -534,14 +534,14 @@ Proof with try easy; try congruence; auto with datatypes ct.
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
       cbn. eta.
 
-      unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
+      unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
       }
-      rewrite Hj_eq in Hjumps_nomodel.
+      rewrite Hj_eq in Hjumps_nowit.
 
       dep_destruct (tableau_jumps V l0 mc1 (tableau $mc1) caches1) as Hj; rewrite Hj in *...
 
-      cbn in Hjumps_nomodel. inv_clear Hjumps_nomodel.
+      cbn in Hjumps_nowit. inv_clear Hjumps_nowit.
       fold cs. rename caches0 into caches1'.
       apply H...
       apply cs_preserve_sat...
@@ -555,14 +555,14 @@ Proof with try easy; try congruence; auto with datatypes ct.
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
       cbn -[Mcnf.add_cs]. eta.
 
-      unshelve epose proof (tableau_jumps_nomodel_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nomodel Hjumps_sat_caches]. {
+      unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
         intros A' caches1' Hsat_caches1'. apply Hind...
       }
-      rewrite Hj_eq in Hjumps_nomodel.
+      rewrite Hj_eq in Hjumps_nowit.
 
       dep_destruct (tableau_jumps V l0 mc1 (tableau $mc1) caches1) as Hj; rewrite Hj in *...
 
-      cbn in Hjumps_nomodel. inv_clear Hjumps_nomodel.
+      cbn in Hjumps_nowit. inv_clear Hjumps_nowit.
       cbn in Hjumps_sat_caches.
       fold cs. fold mc0_cs. rename caches0 into caches1'.
 
@@ -570,7 +570,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       forward H. { apply cs_preserve_sat... }
       forward H by reflexivity.
       forward H by reflexivity.
-      destruct H as [Hcs_nomodel Hcs_sat_caches].
+      destruct H as [Hcs_nowit Hcs_sat_caches].
       apply remove_cs_preserve_sat in Hcs_sat_caches.
       apply Hcs_sat_caches.
 Qed.
@@ -582,8 +582,8 @@ Theorem tableau_sound_complete : forall mc0 A caches,
   Mcnf.satisfiable (Mcnf.add_A mc0 A).
 Proof.
   intros mc0 A caches Hsat_caches.
-  pose proof (tableau_nomodel_sat_caches mc0 A caches Hsat_caches) as [Htableau_nomodel _].
+  pose proof (tableau_nowit_sat_caches mc0 A caches Hsat_caches) as [Htableau_nowit _].
   rewrite Solution.without_caches_sat.
-  rewrite Htableau_nomodel.
-  apply NoModel.tableau_sound_complete.
+  rewrite Htableau_nowit.
+  apply NoWit.tableau_sound_complete.
 Qed.

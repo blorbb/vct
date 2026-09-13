@@ -1,7 +1,7 @@
 (** CEGARBox decision procedure.
 
     The algorithm and variants are implemented in the modules [Spec], [TailRec],
-    [NoModel], [Cached]. This module contains some basic lemmas required for
+    [NoWit], [Cached]. This module contains some basic lemmas required for
     their definition (i.e. their termination). *)
 
 

@@ -48,8 +48,8 @@ Separate Extraction
   Solver.Spec.Solution.is_sat
   Solver.TailRec.solve_fml
   Solver.TailRec.Solution.is_sat
-  Solver.NoModel.solve_fml
-  Solver.NoModel.Solution.is_sat
+  Solver.NoWit.solve_fml
+  Solver.NoWit.Solution.is_sat
   Solver.Cached.solve_fml
   Solver.Cached.Solution.is_sat
   Solver.FiredBoxes.solve_fml
