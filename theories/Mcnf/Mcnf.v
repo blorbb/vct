@@ -368,7 +368,7 @@ Proof with try easy.
   repeat rewrite and_assoc in Hfadd_mc0.
   destruct Hfadd_mc0 as [Hf_cpls0 [Hf_unboxed [Hf_boxes0 [Hf_dias0 [Hfadd_l1 Hfadd_mc1]]]]].
 
-  cbn. repeat split.
+  cbn. repeat split; cbn.
   - apply (Cnf.force_local M' M)...
 
   - cbn.

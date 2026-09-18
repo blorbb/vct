@@ -414,18 +414,20 @@ Qed.
 Lemma tableau_cct : forall mc0 A core cct,
   tableau $mc0 A = Solution.Unsat core cct ->
   Cct.wf cct mc0 A.
-Proof with auto.
+Proof with try easy; auto.
   intros *. intros Hunsat. funelim (tableau $mc0 A).
   - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hcct. subst.
-    apply Cct.LocalCond. now unfold cpl_solve.
+    apply Cct.LocalCond.
+    + eapply CplSolver.core_subset_assumptions. exact Hcsol_eq.
+    + eapply mcnf_solve_unsat. exact Hcsol_eq.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - clear H0 H1. rewrite <- Heqcall in Hunsat.
     destruct (tableau _ _ _) eqn:Htab_cs; try discriminate.
     inv_clear Hunsat.
     apply Cct.JumpRestartCond.
-    + auto.
-    + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
+    + apply mcnf_solve_sat...
+    + unfold Mcnf.fst_dias. cbn. eauto 10 using jump_failed_dia.
     + cbn. eauto using jump_c_forced.
     + apply tableau_jumps_cct_ind with (core := jump_core).
       * apply Hj_eq.

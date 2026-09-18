@@ -74,17 +74,19 @@ Qed.
 Lemma tableau_cct : forall mc0 A core cct,
   Spec.tableau $mc0 A = Spec.Solution.Unsat core cct ->
   Cct.wf cct mc0 A.
-Proof with auto.
+Proof with try easy; auto.
   intros *. intros Hunsat. funelim (Spec.tableau $mc0 A).
   - rewrite <- Heqcall in Hunsat. injection Hunsat as _ Hcct. subst.
-    apply Cct.LocalCond. now unfold cpl_solve.
+    apply Cct.LocalCond.
+    + eapply CplSolver.core_subset_assumptions. exact Hcsol_eq.
+    + eapply mcnf_solve_unsat. exact Hcsol_eq.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - cbn in *. rewrite <- Heqcall in Hunsat. discriminate.
   - clear H0 H1. rewrite <- Heqcall in Hunsat.
     destruct (Spec.tableau _ _ _) eqn:Htab_cs; try discriminate.
     inv_clear Hunsat.
     apply Cct.JumpRestartCond.
-    + auto.
+    + apply mcnf_solve_sat...
     + unfold Mcnf.fst_dias. cbn. eauto using jump_failed_dia.
     + cbn. eauto using Spec.jump_c_forced.
     + apply tableau_jumps_cct_ind with (core := jump_core).
@@ -108,7 +110,7 @@ Qed.
 
 
 
-(** The cctation conditions are held for the [solve_*] functions. *)
+(** The wf conditions are held for the [solve_*] functions. *)
 Corollary solve_mcnf_cct : forall phi core cct,
   Spec.solve_mcnf phi = Spec.Solution.Unsat core cct ->
   Cct.wf cct phi [].
@@ -126,7 +128,7 @@ Qed.
 
 (** * Soundness *)
 
-(** A cctation that satisfies [Cct.wf] is sound. *)
+(** A cct that satisfies [Cct.wf] is sound. *)
 
 (** Some helpers to simplify unsat goals. *)
 
@@ -263,7 +265,7 @@ Proof with try easy.
 Qed.
 
 
-(** ** Soundness of cctation *)
+(** ** Soundness of cct *)
 
 Lemma cpls_of_add_assumptions : forall mc0 A,
   Mcnf.fst_cpls (Mcnf.add_A mc0 A) = Cnf.from_assumptions A ++ Mcnf.fst_cpls mc0.
@@ -279,9 +281,9 @@ Lemma cct_core_incl_A : forall mc0 A cct,
 Proof.
   intros * Hwf.
   induction Hwf as
-    [mc0 A core Hunsat
+    [mc0 A core Hincl Hunsat
     | mc0 A V failed_dia jump_cct rs_cct Hsat Hdia_in Hforce_c Hjump IHjump Hrs IHrs].
-  - cbn. eapply CplSolver.core_subset_assumptions. exact Hunsat.
+  - cbn. exact Hincl.
   - cbn. exact IHrs.
 Qed.
 
@@ -383,15 +385,10 @@ Theorem cct_sound : forall mc0 A cct,
 Proof with cbn in *; try easy; auto with datatypes ct typeclass_instances.
   intros mc0 A cct Hwf.
   induction Hwf as
-    [mc0 A core Hunsat
+    [mc0 A core Hincl Hunsat
     | mc0 A V failed_dia jump_cct rs_cct Hsat Hdia_in Hforce_c Hjump IHjump Hrs IHrs].
   (* CNF subset is unsatisfiable. *)
-  - apply cnf_unsat_subset.
-
-    rewrite cpls_of_add_assumptions.
-    rewrite <- (CplSolver.clauses_of_make_with_clauses (Mcnf.fst_cpls mc0)).
-    unfold cpl_solve in Hunsat. set (s0 := CplSolver.make_with_clauses (Mcnf.fst_cpls mc0)) in *.
-    apply (CplSolver.solution_soundness s0 A core)...
+  - cbn [Cct.get_core]. apply cnf_unsat_subset. apply Hunsat.
 
   (* mc0 /\ cs and mc0 /\ ~cs are both unsatisfiable.
      mc0 /\ cs is from IHjump, but need to go up a modal context.

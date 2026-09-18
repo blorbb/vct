@@ -36,9 +36,12 @@ Fixpoint get_core (t : t) :=
 
 (** Conditions for a well-formed cct. *)
 Inductive wf : t -> Mcnf.t -> Assumptions.t -> Prop :=
-| LocalCond : forall mc0 A core, cpl_solve mc0 A = CplSolution.Unsat core -> wf (Local core) mc0 A
+| LocalCond : forall mc0 A core,
+  List.incl core A ->
+  Cnf.unsatisfiable (Cnf.from_assumptions core ++ Mcnf.fst_cpls mc0) ->
+  wf (Local core) mc0 A
 | JumpRestartCond : forall mc0 A V failed_dia jump_cct rs_cct,
-  cpl_solve mc0 A = CplSolution.Sat V ->
+  Cnf.cpl_forceb V (Cnf.from_assumptions A ++ Mcnf.fst_cpls mc0) ->
   List.In failed_dia (Mcnf.fst_dias mc0) ->
   Valuation.forces_atm V (fst failed_dia) ->
   (* Jump tableau also satisfies wf. *)
@@ -46,3 +49,42 @@ Inductive wf : t -> Mcnf.t -> Assumptions.t -> Prop :=
   (* Restart tableau also satisfies wf. *)
   wf rs_cct (Mcnf.add_cs mc0 ((fst failed_dia) :: box_culprits mc0 V (get_core jump_cct))) A ->
   wf (JumpRestart V failed_dia jump_cct rs_cct) mc0 A.
+
+
+(** Example well-formed cct for the negation of the K axiom. *)
+Section NegKEx.
+  Local Definition p := Atom.one.
+  Local Definition q := Atom.succ p.
+  Local Definition n := Atom.succ q.
+  Local Definition m := Atom.succ n.
+  Local Notation "- p" := (Lit.Neg p) (at level 35).
+  Local Notation "+ p" := (Lit.Pos p) (at level 35).
+
+  Local Example wf_cct_neg_k :
+    wf
+      (JumpRestart [n] (n, -q)
+        (Local [-q; +m; +p])
+        (Local []))
+      [ Lclauses.make [[+n]] [(n, +m); (n, +p)] [(n, -q)]
+      ; Lclauses.make [[-m; -p; +q]] [] []]
+      [].
+  Proof.
+    constructor; cbn.
+    - auto.
+    - now left.
+    - auto.
+    - constructor; cbn.
+      + change (Valuation.forces_atm [n] n) with true. cbn. easy.
+      + intros Hsat. unfold Cnf.satisfiable in Hsat. deex.
+        autorewrite with ct prop in Hsat.
+        intuition.
+    - constructor.
+      + easy.
+      + unfold box_culprits. cbn.
+        change (Valuation.forces_atm [n] n) with true. cbn.
+        repeat rewrite Atom.eqb_refl, Bool.orb_true_r. cbn.
+        intros Hsat. unfold Cnf.satisfiable in Hsat. deex.
+        autorewrite with ct prop in Hsat.
+        intuition.
+  Qed.
+End NegKEx.

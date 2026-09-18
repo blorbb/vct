@@ -160,3 +160,26 @@ Lemma sat_add_no_assumptions : forall mc0,
   Mcnf.satisfiable (Mcnf.add_A mc0 []) <-> Mcnf.satisfiable mc0.
 Proof. unfold Mcnf.satisfiable. setoid_rewrite force_add_no_assumptions. tauto. Qed.
 Global Hint Resolve sat_add_no_assumptions : ct.
+
+
+Lemma mcnf_solve_unsat : forall mc0 A core,
+  CplSolver.solve_with_assumptions (cplsolver_mcnf mc0) A = CplSolution.Unsat core ->
+  Cnf.unsatisfiable (Cnf.from_assumptions core ++ Mcnf.fst_cpls mc0).
+Proof.
+  intros * Hunsat.
+  apply CplSolver.solution_soundness in Hunsat.
+  unfold CplSolver.solved_clauses, cplsolver_mcnf in Hunsat.
+  rewrite CplSolver.clauses_of_make_with_clauses in Hunsat.
+  exact Hunsat.
+Qed.
+
+Lemma mcnf_solve_sat : forall mc0 A V,
+  CplSolver.solve_with_assumptions (cplsolver_mcnf mc0) A = CplSolution.Sat V ->
+  Cnf.cpl_forceb V (Cnf.from_assumptions A ++ Mcnf.fst_cpls mc0).
+Proof.
+  intros * Hsat.
+  apply CplSolver.solution_completeness in Hsat.
+  unfold CplSolver.solved_clauses, cplsolver_mcnf in Hsat.
+  rewrite CplSolver.clauses_of_make_with_clauses in Hsat.
+  exact Hsat.
+Qed.
