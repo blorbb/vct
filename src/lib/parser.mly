@@ -27,8 +27,8 @@ file :
 | BEGIN; f = formula; END; EOF { f }
 
 formula:
-| TRUE { Fml.Or (Fml.Var 0, Fml.Neg (Fml.Var 0)) }
-| FALSE { Fml.And (Fml.Var 0, Fml.Neg (Fml.Var 0)) }
+| TRUE { Fml.Or (Fml.Var 1, Fml.Neg (Fml.Var 1)) }
+| FALSE { Fml.And (Fml.Var 1, Fml.Neg (Fml.Var 1)) }
 | p = Prop { Fml.Var p }
 | LPAR; f = formula; RPAR { f }
 | Not; f = formula { Fml.Neg f }

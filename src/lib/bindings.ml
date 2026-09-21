@@ -14,14 +14,10 @@ module Mut_solver = struct
     }
 end
 
-(** Minisat prefers to make atoms with no set value to true.
-    The algorithm works better with fewer atoms set to true though.
-    So, we negate every literal to make unset atoms false. *)
-
 let rocq_lit_to_minisat (l : Lit.t) : Minisat.Lit.t =
   match l with
-  | Lit.Pos p -> Minisat.Lit.make (p + 1) |> Minisat.Lit.neg
-  | Lit.Neg p -> Minisat.Lit.make (p + 1)
+  | Lit.Pos p -> Minisat.Lit.make (p + 1)
+  | Lit.Neg p -> Minisat.Lit.make (p + 1) |> Minisat.Lit.neg
 ;;
 
 let rocq_clause_to_minisat = List.map rocq_lit_to_minisat
@@ -29,7 +25,7 @@ let rocq_clause_to_minisat = List.map rocq_lit_to_minisat
 let minisat_lit_to_rocq l =
   (* this atom is 1-indexed, return 0-indexed *)
   let p = Minisat.Lit.abs l |> Minisat.Lit.to_int in
-  if Minisat.Lit.sign l then Lit.Neg (p - 1) else Lit.Pos (p - 1)
+  if Minisat.Lit.sign l then Lit.Pos (p - 1) else Lit.Neg (p - 1)
 ;;
 
 let minisat_clause_to_rocq = Array.map minisat_lit_to_rocq
@@ -37,8 +33,8 @@ let minisat_clause_to_rocq = Array.map minisat_lit_to_rocq
 let rocq_atm_value minisat p =
   (* check the 1-indexed atom, but return the 0-indexed one *)
   match Minisat.value minisat (Minisat.Lit.make (p + 1)) with
-  | Minisat.V_true -> Lit.Neg p
-  | Minisat.V_false -> Lit.Pos p
+  | Minisat.V_true -> Lit.Pos p
+  | Minisat.V_false -> Lit.Neg p
   | Minisat.V_undef -> raise (Failure "unknown atom")
 ;;
 
