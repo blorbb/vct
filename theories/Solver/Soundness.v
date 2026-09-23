@@ -91,7 +91,8 @@ Proof with try easy; auto.
     + cbn. eauto using Spec.jump_c_forced.
     + apply tableau_jumps_cct_ind with (core := jump_core).
       * apply Hj_eq.
-      * apply Hind.
+      * intros A' core' cct' Heq. symmetry in Heq.
+        apply (Hind A' mc1 A' core')...
     + cbn [fst]. erewrite jump_cct_core.
       2: { exact Hj_eq. }
       apply H with (core := core)...

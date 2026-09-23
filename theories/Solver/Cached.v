@@ -481,7 +481,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       apply sat_caches_cons_iff in Hcaches as [Hsat_cache0 Hsat_caches1]. fold cache0 caches1 in Hsat_cache0, Hsat_caches1.
 
       unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
-        intros A' caches1' Hsat_caches1'. apply Hind...
+        intros A' caches1' Hsat_caches1'. apply (Hind A')...
       }
       rewrite Hj in Hjumps_nowit. cbn in Hjumps_nowit. congruence.
 
@@ -495,7 +495,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       cbn. eta.
 
       unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
-        intros A' caches1' Hsat_caches1'. apply Hind...
+        intros A' caches1' Hsat_caches1'. apply (Hind A')...
       }
 
       dep_destruct (tableau_jumps V l0 mc1 (tableau $mc1) caches1) as Hj.
@@ -535,7 +535,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       cbn. eta.
 
       unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
-        intros A' caches1' Hsat_caches1'. apply Hind...
+        intros A' caches1' Hsat_caches1'. apply (Hind A')...
       }
       rewrite Hj_eq in Hjumps_nowit.
 
@@ -556,7 +556,7 @@ Proof with try easy; try congruence; auto with datatypes ct.
       cbn -[Mcnf.add_cs]. eta.
 
       unshelve epose proof (tableau_jumps_nowit_sat_caches V l0 mc1 caches1 Hsat_caches1 _) as [Hjumps_nowit Hjumps_sat_caches]. {
-        intros A' caches1' Hsat_caches1'. apply Hind...
+        intros A' caches1' Hsat_caches1'. apply (Hind A')...
       }
       rewrite Hj_eq in Hjumps_nowit.
 
