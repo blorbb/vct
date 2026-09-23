@@ -5,8 +5,8 @@ let parse_file path =
 ;;
 
 let check fml =
-  let result = Vct.Solver.NoModel.solve_fml fml in
-  match Vct.Solver.NoModel.Solution.is_sat result with
+  let result = Vct.Solver.Spec.solve_fml fml in
+  match Vct.Solver.Spec.Solution.is_sat result with
   | true -> print_endline "SAT"
   | false -> print_endline "UNSAT"
 ;;
