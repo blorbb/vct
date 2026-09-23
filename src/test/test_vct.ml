@@ -25,7 +25,7 @@ module Lit = struct
   (* let show t = Format.asprintf "%a" pp t *)
 end
 
-module Deriv = struct
+module Cct = struct
   type t =
     | Local of { a : Lit.t list }
     | Jr of
@@ -36,7 +36,7 @@ module Deriv = struct
         }
   [@@deriving show { with_path = false }]
 
-  let rec of_vct_deriv (t : Vct.Derivation.t) =
+  let rec of_vct_deriv (t : Vct.Cct.t) =
     match t with
     | Local a -> Local { a }
     | JumpRestart (v, dia, jump, restart) ->
@@ -82,8 +82,7 @@ let print_solution str =
   let mc0 = parse_print_mcnf str in
   (match Vct.TailRec.solve_mcnf mc0 with
    | Sat t -> Printf.printf "SAT:\n%s\n\n" (t |> RTree.of_vct_tree |> RTree.show)
-   | Unsat (_a, d) ->
-     Printf.printf "UNSAT:\n%s\n\n" (d |> Deriv.of_vct_deriv |> Deriv.show));
+   | Unsat (_a, d) -> Printf.printf "UNSAT:\n%s\n\n" (d |> Cct.of_vct_deriv |> Cct.show));
   print_newline ()
 ;;
 
@@ -92,8 +91,7 @@ let print_solution_kt str =
   Printf.printf "MCNF + KT:\n%s\n\n" (Mcnf.show (Vct.Mcnf0.build_kt mc0));
   (match Vct.Kt.solve_mcnf mc0 with
    | Sat t -> Printf.printf "SAT:\n%s\n\n" (t |> RTree.of_vct_tree |> RTree.show)
-   | Unsat (_a, d) ->
-     Printf.printf "UNSAT:\n%s\n\n" (d |> Deriv.of_vct_deriv |> Deriv.show));
+   | Unsat (_a, d) -> Printf.printf "UNSAT:\n%s\n\n" (d |> Cct.of_vct_deriv |> Cct.show));
   print_newline ()
 ;;
 
