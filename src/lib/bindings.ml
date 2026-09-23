@@ -16,8 +16,8 @@ module Atom_set = Set.Make (Int)
 
 let rocq_lit_to_minisat (l : Lit.t) : Minisat.Lit.t =
   match l with
-  | Lit.Pos p -> Minisat.Lit.make (p + 1) |> Minisat.Lit.neg
-  | Lit.Neg p -> Minisat.Lit.make (p + 1)
+  | Lit.Pos p -> Minisat.Lit.make p |> Minisat.Lit.neg
+  | Lit.Neg p -> Minisat.Lit.make p
 ;;
 
 let rocq_clause_to_minisat (cl : clause) : minisat_clause =
@@ -26,7 +26,7 @@ let rocq_clause_to_minisat (cl : clause) : minisat_clause =
 
 let minisat_lit_to_rocq (l : Minisat.Lit.t) : Lit.t =
   let p = Minisat.Lit.abs l |> Minisat.Lit.to_int in
-  if Minisat.Lit.sign l then Lit.Neg (p - 1) else Lit.Pos (p - 1)
+  if Minisat.Lit.sign l then Lit.Neg p else Lit.Pos p
 ;;
 
 let minisat_clause_to_rocq (cl : minisat_clause) : clause =
@@ -34,7 +34,7 @@ let minisat_clause_to_rocq (cl : minisat_clause) : clause =
 ;;
 
 let rocq_atm_value (minisat : Minisat.t) (p : int) : Lit.t =
-  match Minisat.value minisat (Minisat.Lit.make (p + 1)) with
+  match Minisat.value minisat (Minisat.Lit.make p) with
   | Minisat.V_true -> Lit.Neg p
   | Minisat.V_false -> Lit.Pos p
   | Minisat.V_undef -> raise (Failure "unknown atom")

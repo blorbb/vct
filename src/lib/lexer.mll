@@ -38,7 +38,8 @@ rule next_token = parse
 | "begin" { BEGIN }
 | "end" { END }
 | eof { EOF }
-| "p" (ident as p) { Prop (int_of_string p) }
+(* We require atoms to be strictly positive, but some benchmarks use p0. *)
+| "p" (ident as p) { Prop (int_of_string p + 1) }
 | _ as s { raise (SyntaxError ("illegal character: " ^ (String.make 1 s))) }
 
 and comment = parse
