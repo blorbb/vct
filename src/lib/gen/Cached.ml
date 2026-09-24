@@ -191,10 +191,9 @@ let tableau a a0 a1 b =
              | [] -> Solution.Sat (Caches.add caches a2)
              | t0 :: l ->
                let (t1, t2) = Caches.destruct caches in
-               (match let s1 = cplsolver_mcnf l in
-                      inspect
+               (match inspect
                         (tableau_jumps v t0 l (fun a' caches1' ->
-                          tableau0 l s1 a' caches1' __) t2) with
+                          tableau0 l (cplsolver_mcnf l) a' caches1' __) t2) with
                 | JumpSolution.Sat caches0 ->
                   Solution.Sat ((Cache.add t1 a2) :: caches0)
                 | JumpSolution.Unsat (c, core, caches0) ->
