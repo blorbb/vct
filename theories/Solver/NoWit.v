@@ -99,9 +99,7 @@ with inspect (CplSolver.solve_with_assumptions s0 A) := {
   | CplSolution.Unsat A' eqn:Hcsol_eq => Solution.Unsat A'
   | CplSolution.Sat V eqn:Hcsol_eq with mc0 =>
     | [] => Solution.Sat
-    | (l0 :: mc1) with
-      let s1 := cplsolver_mcnf mc1 in
-      inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 s1 A')) := {
+    | (l0 :: mc1) with inspect (tableau_jumps V l0 mc1 (fun A' => tableau mc1 (cplsolver_mcnf mc1) A')) := {
       | JumpSolution.Sat eqn:Hj_eq => Solution.Sat
       | JumpSolution.Unsat c jump_core eqn:Hj_eq =>
         let conflict_set := c :: box_culprits (l0::mc1) V jump_core in

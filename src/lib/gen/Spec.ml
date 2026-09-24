@@ -123,9 +123,9 @@ let tableau a a0 b =
        (match let pr1,_ = x in pr1 with
         | [] -> Solution.Sat (Coq_make (v, []))
         | t0 :: l ->
-          (match let s1 = cplsolver_mcnf l in
-                 inspect
-                   (tableau_jumps v t0 l (fun a' -> tableau0 l s1 a' __)) with
+          (match inspect
+                   (tableau_jumps v t0 l (fun a' ->
+                     tableau0 l (cplsolver_mcnf l) a' __)) with
            | JumpSolution.Sat t1s -> Solution.Sat (Coq_make (v, t1s))
            | JumpSolution.Unsat (failed_dia, core, cct) ->
              let (t1, t2) = failed_dia in

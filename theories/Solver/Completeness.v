@@ -133,8 +133,6 @@ Proof with try easy; auto with datatypes ct.
     rewrite <- app_nil_r. exact Hclause_in.
   - clear H H0. inversion_clear Hsat.
     eapply tableau_jumps_completeness...
-    intros A' T' HA'T'. symmetry in HA'T'.
-    apply (Hind A' mc1 A' T' HA'T')...
   - clear H0 H1.
     destruct (Spec.tableau _ _ _) eqn:Htab_cs... inv_clear Hsat.
     (* H assumes that T forces an over constrained formula. *)
