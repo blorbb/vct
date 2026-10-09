@@ -1,0 +1,387 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <link href="coqdoc.css" rel="stylesheet" type="text/css" />
+  <link href="coqdocjs.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="config.js"></script>
+  <script type="text/javascript" src="coqdocjs.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename">
+        <script> document.write(document.title) </script>
+      </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+  </div>
+  <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Vct.Trie</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+A trie that can only check if a string is a <i>prefix</i>
+    of a previously added string.
+
+<div class="paragraph"> </div>
+
+    Inspired by https://github.com/xavierleroy/canonical-binary-tries/blob/main/CharTrie.v.
+    We likewise implement the trie assuming that the items in the trie are
+    sorted according to the provided order. However, we do not need a <span class="inlinecode"><span class="id" title="keyword">wf</span></span> constraint,
+    as the lemmas we need work fine without it (<span class="inlinecode"><a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a></span> and <span class="inlinecode"><a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a></span> follow the same
+    'path' for each given string, and we only interact with the trie through
+    <span class="inlinecode"><a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a></span>/<span class="inlinecode"><a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a></span>, never manually building a trie from the type constructor).
+
+<div class="paragraph"> </div>
+
+    In case the <span class="inlinecode"><span class="id" title="keyword">wf</span></span> constraint is required again in the future, proofs of it
+    can be found in the diff of commit 67549035066024664d04c7ec236c8d283bd94046
+    or the commit with message 'finish proving trie lemmas, remove sorted'.
+    (We call the constraint <span class="inlinecode"><span class="id" title="var">sorted</span></span> instead of <span class="inlinecode"><span class="id" title="keyword">wf</span></span>) 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Vct.ImportStd.html#"><span class="id" title="library">ImportStd</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Structures</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Orders</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The ordered type must also be <span class="inlinecode"><span class="id" title="var">Usual</span></span> so that its <span class="inlinecode"><a class="idref" href="Vct.Valuation.html#eq"><span class="id" title="definition">eq</span></a></span> matches Leibniz equality.
+
+<div class="paragraph"> </div>
+
+    This could in theory support any equivalence class <span class="inlinecode"><a class="idref" href="Vct.Valuation.html#eq"><span class="id" title="definition">eq</span></a></span>, but we don't need this
+    and would complicate the definition of <span class="inlinecode"><a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Make" class="idref" href="#Make"><span class="id" title="module">Make</span></a> (<span class="id" title="var">K</span> : <span class="id" title="module">UsualOrderedTypeFull</span>).<br/>
+</div>
+
+<div class="doc">
+Trying <span class="inlinecode"><span class="id" title="var">K'</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">K</span></span> reaches a compiler bug :( 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Make.K'" class="idref" href="#Make.K'"><span class="id" title="module">K'</span></a> &lt;: <span class="id" title="module">OrderedTypeFull</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.t" class="idref" href="#Make.K'.t"><span class="id" title="definition">t</span></a> := <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.eq" class="idref" href="#Make.K'.eq"><span class="id" title="definition">eq</span></a> := <a class="idref" href="Vct.Trie.html#K.eq"><span class="id" title="definition">K.eq</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.eq_equiv" class="idref" href="#Make.K'.eq_equiv"><span class="id" title="definition">eq_equiv</span></a> := <a class="idref" href="Vct.Trie.html#K.eq_equiv"><span class="id" title="definition">K.eq_equiv</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.lt" class="idref" href="#Make.K'.lt"><span class="id" title="definition">lt</span></a> := <a class="idref" href="Vct.Trie.html#K.lt"><span class="id" title="axiom">K.lt</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.lt_strorder" class="idref" href="#Make.K'.lt_strorder"><span class="id" title="definition">lt_strorder</span></a> := <a class="idref" href="Vct.Trie.html#K.lt_strorder"><span class="id" title="axiom">K.lt_strorder</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.lt_compat" class="idref" href="#Make.K'.lt_compat"><span class="id" title="definition">lt_compat</span></a> := <a class="idref" href="Vct.Trie.html#K.lt_compat"><span class="id" title="axiom">K.lt_compat</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.compare" class="idref" href="#Make.K'.compare"><span class="id" title="definition">compare</span></a> := <a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.compare_spec" class="idref" href="#Make.K'.compare_spec"><span class="id" title="definition">compare_spec</span></a> := <a class="idref" href="Vct.Trie.html#K.compare_spec"><span class="id" title="axiom">K.compare_spec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.eq_dec" class="idref" href="#Make.K'.eq_dec"><span class="id" title="definition">eq_dec</span></a> := <a class="idref" href="Vct.Trie.html#K.eq_dec"><span class="id" title="axiom">K.eq_dec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.le" class="idref" href="#Make.K'.le"><span class="id" title="definition">le</span></a> := <a class="idref" href="Vct.Trie.html#K.le"><span class="id" title="axiom">K.le</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.K'.le_lteq" class="idref" href="#Make.K'.le_lteq"><span class="id" title="definition">le_lteq</span></a> := <a class="idref" href="Vct.Trie.html#K.le_lteq"><span class="id" title="axiom">K.le_lteq</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="Vct.Trie.html#Make.K'"><span class="id" title="module">K'</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Make.KFacts" class="idref" href="#Make.KFacts"><span class="id" title="module">KFacts</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <span class="id" title="module">Structures.OrdersFacts.OrderedTypeFacts</span> <a class="idref" href="Vct.Trie.html#Make.K'"><span class="id" title="module">K'</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.KFacts.compare_eq_iff'" class="idref" href="#Make.KFacts.compare_eq_iff'"><span class="id" title="lemma">compare_eq_iff'</span></a> : <span class="id" title="keyword">forall</span> <a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> <a id="y:2" class="idref" href="#y:2"><span class="id" title="binder">y</span></a>, <a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <a class="idref" href="Vct.Trie.html#x:1"><span class="id" title="variable">x</span></a> <a class="idref" href="Vct.Trie.html#y:2"><span class="id" title="variable">y</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Eq"><span class="id" title="constructor">Eq</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.Trie.html#x:1"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Vct.Trie.html#y:2"><span class="id" title="variable">y</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">setoid_rewrite</span> <a class="idref" href="Vct.Trie.html#Make.KFacts.compare_eq_iff"><span class="id" title="lemma">compare_eq_iff</span></a>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="Vct.Trie.html#Make.KFacts"><span class="id" title="module">KFacts</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Same as a <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a></span> <span class="inlinecode">(<span class="id" title="var">K.t</span></span> <span class="inlinecode">*</span> <span class="inlinecode"><a class="idref" href="Vct.Valuation.html#t"><span class="id" title="definition">t</span></a>)</span>, but easier to do induction on. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="Make.forest" class="idref" href="#Make.forest"><span class="id" title="definition, inductive"><span id="Make.forest_rect" class="id"><span id="Make.forest_ind" class="id"><span id="Make.forest_rec" class="id"><span id="Make.forest_sind" class="id">forest</span></span></span></span></span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="Make.Nil" class="idref" href="#Make.Nil"><span class="id" title="constructor">Nil</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="Make.Cons" class="idref" href="#Make.Cons"><span class="id" title="constructor">Cons</span></a> (<a id="key:5" class="idref" href="#key:5"><span class="id" title="binder">key</span></a> : <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>) (<a id="child:6" class="idref" href="#child:6"><span class="id" title="binder">child</span></a> : <a class="idref" href="Vct.Trie.html#forest:3"><span class="id" title="inductive">forest</span></a>) (<a id="next:7" class="idref" href="#next:7"><span class="id" title="binder">next</span></a> : <a class="idref" href="Vct.Trie.html#forest:3"><span class="id" title="inductive">forest</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Empty contains nothing, Root contains at least the empty prefix <span class="inlinecode">[]</span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="Make.t" class="idref" href="#Make.t"><span class="id" title="definition, inductive"><span id="Make.t_rect" class="id"><span id="Make.t_ind" class="id"><span id="Make.t_rec" class="id"><span id="Make.t_sind" class="id">t</span></span></span></span></span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="Make.Empty" class="idref" href="#Make.Empty"><span class="id" title="constructor">Empty</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="Make.Root" class="idref" href="#Make.Root"><span class="id" title="constructor">Root</span></a> (<a id="f:10" class="idref" href="#f:10"><span class="id" title="binder">f</span></a> : <a class="idref" href="Vct.Trie.html#Make.forest"><span class="id" title="inductive">forest</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.empty" class="idref" href="#Make.empty"><span class="id" title="definition">empty</span></a> := <a class="idref" href="Vct.Trie.html#Make.Empty"><span class="id" title="constructor">Empty</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Conventions: kt = k in the trie, kn = new k (from the input list). 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Fixpoint</span> <a id="Make.containsf" class="idref" href="#Make.containsf"><span class="id" title="definition">containsf</span></a> (<a id="f:11" class="idref" href="#f:11"><span class="id" title="binder">f</span></a> : <a class="idref" href="Vct.Trie.html#Make.forest"><span class="id" title="inductive">forest</span></a>) (<a id="ks:12" class="idref" href="#ks:12"><span class="id" title="binder">ks</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#ks:12"><span class="id" title="variable">ks</span></a>, <a class="idref" href="Vct.Trie.html#f:11"><span class="id" title="variable">f</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="notation">[]</span>, <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">kn</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a><span class="id" title="var">ks'</span>, <a class="idref" href="Vct.Trie.html#Make.Nil"><span class="id" title="constructor">Nil</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">kn</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a><span class="id" title="var">ks'</span>, <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">kt</span> <span class="id" title="var">child</span> <span class="id" title="var">next</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn</span> <span class="id" title="var">kt</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Lt"><span class="id" title="constructor">Lt</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Eq"><span class="id" title="constructor">Eq</span></a> =&gt; <a class="idref" href="Vct.Trie.html#containsf:13"><span class="id" title="definition">containsf</span></a> <span class="id" title="var">child</span> <span class="id" title="var">ks'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Gt"><span class="id" title="constructor">Gt</span></a> =&gt; <a class="idref" href="Vct.Trie.html#containsf:13"><span class="id" title="definition">containsf</span></a> <span class="id" title="var">next</span> (<span class="id" title="var">kn</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a><span class="id" title="var">ks'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.contains" class="idref" href="#Make.contains"><span class="id" title="definition">contains</span></a> (<a id="trie:16" class="idref" href="#trie:16"><span class="id" title="binder">trie</span></a> : <a class="idref" href="Vct.Trie.html#Make.t"><span class="id" title="inductive">t</span></a>) (<a id="ks:17" class="idref" href="#ks:17"><span class="id" title="binder">ks</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#trie:16"><span class="id" title="variable">trie</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Empty"><span class="id" title="constructor">Empty</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Root"><span class="id" title="constructor">Root</span></a> <span class="id" title="var">f</span> =&gt; <a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> <span class="id" title="var">f</span> <a class="idref" href="Vct.Trie.html#ks:17"><span class="id" title="variable">ks</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Fixpoint</span> <a id="Make.singletonf" class="idref" href="#Make.singletonf"><span class="id" title="definition">singletonf</span></a> (<a id="ks:19" class="idref" href="#ks:19"><span class="id" title="binder">ks</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>) : <a class="idref" href="Vct.Trie.html#Make.forest"><span class="id" title="inductive">forest</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#ks:19"><span class="id" title="variable">ks</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="notation">[]</span> =&gt; <a class="idref" href="Vct.Trie.html#Make.Nil"><span class="id" title="constructor">Nil</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">kn</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a><span class="id" title="var">ks'</span> =&gt; <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">kn</span> (<a class="idref" href="Vct.Trie.html#singletonf:20"><span class="id" title="definition">singletonf</span></a> <span class="id" title="var">ks'</span>) <a class="idref" href="Vct.Trie.html#Make.Nil"><span class="id" title="constructor">Nil</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Fixpoint</span> <a id="Make.addf" class="idref" href="#Make.addf"><span class="id" title="definition">addf</span></a> (<a id="f:22" class="idref" href="#f:22"><span class="id" title="binder">f</span></a> : <a class="idref" href="Vct.Trie.html#Make.forest"><span class="id" title="inductive">forest</span></a>) (<a id="ks:23" class="idref" href="#ks:23"><span class="id" title="binder">ks</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>) : <a class="idref" href="Vct.Trie.html#Make.forest"><span class="id" title="inductive">forest</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#f:22"><span class="id" title="variable">f</span></a>, <a class="idref" href="Vct.Trie.html#ks:23"><span class="id" title="variable">ks</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Nil"><span class="id" title="constructor">Nil</span></a>, <span class="id" title="var">_</span> =&gt; <a class="idref" href="Vct.Trie.html#Make.singletonf"><span class="id" title="definition">singletonf</span></a> <a class="idref" href="Vct.Trie.html#ks:23"><span class="id" title="variable">ks</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>, <span class="id" title="notation">[]</span> =&gt; <a class="idref" href="Vct.Trie.html#f:22"><span class="id" title="variable">f</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">kt</span> <span class="id" title="var">child</span> <span class="id" title="var">next</span>, <span class="id" title="var">kn</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a><span class="id" title="var">ks'</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn</span> <span class="id" title="var">kt</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Lt"><span class="id" title="constructor">Lt</span></a> =&gt; <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">kn</span> (<a class="idref" href="Vct.Trie.html#Make.singletonf"><span class="id" title="definition">singletonf</span></a> <span class="id" title="var">ks'</span>) <a class="idref" href="Vct.Trie.html#f:22"><span class="id" title="variable">f</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Eq"><span class="id" title="constructor">Eq</span></a> =&gt; <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">kt</span> (<a class="idref" href="Vct.Trie.html#addf:24"><span class="id" title="definition">addf</span></a> <span class="id" title="var">child</span> <span class="id" title="var">ks'</span>) <span class="id" title="var">next</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Gt"><span class="id" title="constructor">Gt</span></a> =&gt; <a class="idref" href="Vct.Trie.html#Make.Cons"><span class="id" title="constructor">Cons</span></a> <span class="id" title="var">kt</span> <span class="id" title="var">child</span> (<a class="idref" href="Vct.Trie.html#addf:24"><span class="id" title="definition">addf</span></a> <span class="id" title="var">next</span> (<span class="id" title="var">kn</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a><span class="id" title="var">ks'</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.add" class="idref" href="#Make.add"><span class="id" title="definition">add</span></a> (<a id="trie:27" class="idref" href="#trie:27"><span class="id" title="binder">trie</span></a> : <a class="idref" href="Vct.Trie.html#Make.t"><span class="id" title="inductive">t</span></a>) (<a id="ks:28" class="idref" href="#ks:28"><span class="id" title="binder">ks</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Vct.Trie.html#K.t"><span class="id" title="axiom">K.t</span></a>) : <a class="idref" href="Vct.Trie.html#Make.t"><span class="id" title="inductive">t</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Trie.html#trie:27"><span class="id" title="variable">trie</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Empty"><span class="id" title="constructor">Empty</span></a> =&gt; <a class="idref" href="Vct.Trie.html#Make.Root"><span class="id" title="constructor">Root</span></a> (<a class="idref" href="Vct.Trie.html#Make.singletonf"><span class="id" title="definition">singletonf</span></a> <a class="idref" href="Vct.Trie.html#ks:28"><span class="id" title="variable">ks</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Vct.Trie.html#Make.Root"><span class="id" title="constructor">Root</span></a> <span class="id" title="var">f</span> =&gt; <a class="idref" href="Vct.Trie.html#Make.Root"><span class="id" title="constructor">Root</span></a> (<a class="idref" href="Vct.Trie.html#Make.addf"><span class="id" title="definition">addf</span></a> <span class="id" title="var">f</span> <a class="idref" href="Vct.Trie.html#ks:28"><span class="id" title="variable">ks</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Make.singleton" class="idref" href="#Make.singleton"><span class="id" title="definition">singleton</span></a> := <a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a> <a class="idref" href="Vct.Trie.html#Make.Empty"><span class="id" title="constructor">Empty</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_singletonf" class="idref" href="#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a> : <span class="id" title="keyword">forall</span> <a id="prefix:30" class="idref" href="#prefix:30"><span class="id" title="binder">prefix</span></a> <a id="ks:31" class="idref" href="#ks:31"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:30"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:31"><span class="id" title="variable">ks</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> (<a class="idref" href="Vct.Trie.html#Make.singletonf"><span class="id" title="definition">singletonf</span></a> <a class="idref" href="Vct.Trie.html#ks:31"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:30"><span class="id" title="variable">prefix</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">datatypes</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">prefix</span> <span class="id" title="var">ks</span>. <span class="id" title="var">revert</span> <span class="id" title="var">prefix</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">ks</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">kn</span> <span class="id" title="var">ks'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span> <span class="id" title="var">prefix</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.ListExt.html#prefix_of_empty"><span class="id" title="lemma">prefix_of_empty</span></a>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intro</span> <span class="id" title="var">Hprefix</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">subst</span> <span class="id" title="var">prefix</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intro</span> <span class="id" title="var">Hcontains_prefix</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcontains_prefix</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span> <span class="id" title="var">prefix</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span> <span class="id" title="var">Hprefix</span>. <span class="id" title="var">cbn</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">p0</span> <span class="id" title="var">p1s</span>]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hprefix</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Hp0</span> <span class="id" title="var">Hprefix</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">subst</span> <span class="id" title="var">p0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_refl"><span class="id" title="lemma">KFacts.compare_refl</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">IHks'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span> <span class="id" title="var">Hcontains</span>. <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">p0</span> <span class="id" title="var">p1s</span>] <span class="id" title="var">eqn</span>:<span class="id" title="var">H</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">p0</span> <span class="id" title="var">kn</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_eq_iff'"><span class="id" title="lemma">KFacts.compare_eq_iff'</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">IHks'</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">tauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">sortedf</span></span> <span class="inlinecode"><span class="id" title="var">f</span></span> is not needed as <span class="inlinecode"><a class="idref" href="Vct.Trie.html#Make.addf"><span class="id" title="definition">addf</span></a></span> and <span class="inlinecode"><a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a></span> follow the
+      same path. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_addf" class="idref" href="#Make.contains_addf"><span class="id" title="lemma">contains_addf</span></a> : <span class="id" title="keyword">forall</span> <a id="f:32" class="idref" href="#f:32"><span class="id" title="binder">f</span></a> <a id="prefix:33" class="idref" href="#prefix:33"><span class="id" title="binder">prefix</span></a> <a id="ks:34" class="idref" href="#ks:34"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:33"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:34"><span class="id" title="variable">ks</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> (<a class="idref" href="Vct.Trie.html#Make.addf"><span class="id" title="definition">addf</span></a> <a class="idref" href="Vct.Trie.html#f:32"><span class="id" title="variable">f</span></a> <a class="idref" href="Vct.Trie.html#ks:34"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:33"><span class="id" title="variable">prefix</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">datatypes</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">f</span> <span class="id" title="keyword">as</span> [| <span class="id" title="var">kt</span> <span class="id" title="var">child</span> <span class="id" title="var">IHchild</span> <span class="id" title="var">next</span> <span class="id" title="var">IHnext</span>]; <span class="id" title="tactic">intros</span> <span class="id" title="var">prefix</span> <span class="id" title="var">ks</span> <span class="id" title="var">Hprefix</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">cbn</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>. }<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ks</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">kn</span> <span class="id" title="var">ks'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.ListExt.html#prefix_of_empty"><span class="id" title="lemma">prefix_of_empty</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hprefix</span>. <span class="id" title="tactic">subst</span> <span class="id" title="var">prefix</span>... }<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">p0</span> <span class="id" title="var">p1s</span>]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hprefix</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Heq</span> <span class="id" title="var">Hprefix</span>]. <span class="id" title="tactic">subst</span> <span class="id" title="var">p0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">IHchild</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">p0</span> <span class="id" title="var">p1s</span>]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hprefix</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Heq</span> <span class="id" title="var">Hprefix</span>]. <span class="id" title="tactic">subst</span> <span class="id" title="var">p0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_refl"><span class="id" title="lemma">KFacts.compare_refl</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">p0</span> <span class="id" title="var">p1s</span>]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hprefix</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Heq</span> <span class="id" title="var">Hprefix</span>]. <span class="id" title="tactic">subst</span> <span class="id" title="var">p0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">IHnext</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a>...<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_add" class="idref" href="#Make.contains_add"><span class="id" title="lemma">contains_add</span></a> : <span class="id" title="keyword">forall</span> <a id="trie:35" class="idref" href="#trie:35"><span class="id" title="binder">trie</span></a> <a id="prefix:36" class="idref" href="#prefix:36"><span class="id" title="binder">prefix</span></a> <a id="ks:37" class="idref" href="#ks:37"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:36"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:37"><span class="id" title="variable">ks</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> (<a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a> <a class="idref" href="Vct.Trie.html#trie:35"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#ks:37"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:36"><span class="id" title="variable">prefix</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> * <span class="id" title="var">Hprefix</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">trie</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_addf"><span class="id" title="lemma">contains_addf</span></a>...<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_addf_inv" class="idref" href="#Make.contains_addf_inv"><span class="id" title="lemma">contains_addf_inv</span></a> : <span class="id" title="keyword">forall</span> <a id="f:38" class="idref" href="#f:38"><span class="id" title="binder">f</span></a> <a id="prefix:39" class="idref" href="#prefix:39"><span class="id" title="binder">prefix</span></a> <a id="ks:40" class="idref" href="#ks:40"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> (<a class="idref" href="Vct.Trie.html#Make.addf"><span class="id" title="definition">addf</span></a> <a class="idref" href="Vct.Trie.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Vct.Trie.html#ks:40"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:39"><span class="id" title="variable">prefix</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> <a class="idref" href="Vct.Trie.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Vct.Trie.html#prefix:39"><span class="id" title="variable">prefix</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:39"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:40"><span class="id" title="variable">ks</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">datatypes</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">f</span> <span class="id" title="keyword">as</span> [| <span class="id" title="var">kt</span> <span class="id" title="var">child</span> <span class="id" title="var">IHchild</span> <span class="id" title="var">next</span> <span class="id" title="var">IHnext</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">prefix</span> <span class="id" title="var">ks</span> <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcontains</span>. <span class="id" title="tactic">right</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>. }<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">prefix</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">p0</span> <span class="id" title="var">p1s</span>]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ks</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">kn</span> <span class="id" title="var">ks'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="var">now</span> <span class="id" title="tactic">left</span>. }<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_kn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">p0</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_p0</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_eq_iff'"><span class="id" title="lemma">KFacts.compare_eq_iff'</span></a> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">subst</span> <span class="id" title="var">kn</span> <span class="id" title="var">p0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a>. <span class="id" title="tactic">autorewrite</span> <span class="id" title="keyword">with</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">IHchild</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">p0</span> <span class="id" title="var">kn</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_p0</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_eq_iff'"><span class="id" title="lemma">KFacts.compare_eq_iff'</span></a> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">subst</span> <span class="id" title="var">p0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn</span>. <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#prefix_cons"><span class="id" title="lemma">prefix_cons</span></a>. <span class="id" title="tactic">split</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">p0</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_p0</span>...<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_add_inv" class="idref" href="#Make.contains_add_inv"><span class="id" title="lemma">contains_add_inv</span></a> : <span class="id" title="keyword">forall</span> <a id="trie:41" class="idref" href="#trie:41"><span class="id" title="binder">trie</span></a> <a id="prefix:42" class="idref" href="#prefix:42"><span class="id" title="binder">prefix</span></a> <a id="ks:43" class="idref" href="#ks:43"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> (<a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a> <a class="idref" href="Vct.Trie.html#trie:41"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#ks:43"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:42"><span class="id" title="variable">prefix</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> <a class="idref" href="Vct.Trie.html#trie:41"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#prefix:42"><span class="id" title="variable">prefix</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:42"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:43"><span class="id" title="variable">ks</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">datatypes</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> * <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">trie</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">right</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_addf_inv"><span class="id" title="lemma">contains_addf_inv</span></a>...<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_addf_other" class="idref" href="#Make.contains_addf_other"><span class="id" title="lemma">contains_addf_other</span></a> : <span class="id" title="keyword">forall</span> <a id="f:44" class="idref" href="#f:44"><span class="id" title="binder">f</span></a> <a id="ks1:45" class="idref" href="#ks1:45"><span class="id" title="binder">ks1</span></a> <a id="ks2:46" class="idref" href="#ks2:46"><span class="id" title="binder">ks2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> <a class="idref" href="Vct.Trie.html#f:44"><span class="id" title="variable">f</span></a> <a class="idref" href="Vct.Trie.html#ks1:45"><span class="id" title="variable">ks1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> (<a class="idref" href="Vct.Trie.html#Make.addf"><span class="id" title="definition">addf</span></a> <a class="idref" href="Vct.Trie.html#f:44"><span class="id" title="variable">f</span></a> <a class="idref" href="Vct.Trie.html#ks2:46"><span class="id" title="variable">ks2</span></a>) <a class="idref" href="Vct.Trie.html#ks1:45"><span class="id" title="variable">ks1</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">datatypes</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">f</span> <span class="id" title="keyword">as</span> [| <span class="id" title="var">kt</span> <span class="id" title="var">child</span> <span class="id" title="var">IHchild</span> <span class="id" title="var">next</span> <span class="id" title="var">IHnext</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">ks1</span> <span class="id" title="var">ks2</span> <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">destruct</span> <span class="id" title="var">ks1</span>... <span class="id" title="var">cbn</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>... }<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ks1</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">kn1</span> <span class="id" title="var">ks1'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_addf"><span class="id" title="lemma">contains_addf</span></a>... }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ks2</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">kn2</span> <span class="id" title="var">ks2'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">exact</span> <span class="id" title="var">Hcontains</span>. }<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn1</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_kn1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn2</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_kn2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn1</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.compare_eq_iff'"><span class="id" title="lemma">KFacts.compare_eq_iff'</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcmp_kn1</span>. <span class="id" title="tactic">subst</span> <span class="id" title="var">kn1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_antisym"><span class="id" title="lemma">KFacts.compare_antisym</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcmp_kn2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kt</span> <span class="id" title="var">kn2</span>)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn1</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn2</span> <span class="id" title="var">kt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_kn2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn1</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Vct.Trie.html#K.compare"><span class="id" title="axiom">K.compare</span></a> <span class="id" title="var">kn1</span> <span class="id" title="var">kn2</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Hcmp_kn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_eq_iff'"><span class="id" title="lemma">KFacts.compare_eq_iff'</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hcmp_kn</span>. <span class="id" title="tactic">subst</span> <span class="id" title="var">kn1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.compare_lt_iff"><span class="id" title="lemma">KFacts.compare_lt_iff</span></a> <span class="id" title="tactic">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="Vct.Trie.html#Make.lt_trans"><span class="id" title="definition">KFacts.lt_trans</span></a> <span class="id" title="var">Hcmp_kn</span> <span class="id" title="var">Hcmp_kn2</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">Hkn1_kt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Vct.Trie.html#Make.compare_lt_iff"><span class="id" title="lemma">KFacts.compare_lt_iff</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hkn1_kt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="tactic">exact</span> <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Hcmp_kn1</span>...<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_add_other" class="idref" href="#Make.contains_add_other"><span class="id" title="lemma">contains_add_other</span></a> : <span class="id" title="keyword">forall</span> <a id="trie:47" class="idref" href="#trie:47"><span class="id" title="binder">trie</span></a> <a id="ks1:48" class="idref" href="#ks1:48"><span class="id" title="binder">ks1</span></a> <a id="ks2:49" class="idref" href="#ks2:49"><span class="id" title="binder">ks2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> <a class="idref" href="Vct.Trie.html#trie:47"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#ks1:48"><span class="id" title="variable">ks1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> (<a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a> <a class="idref" href="Vct.Trie.html#trie:47"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#ks2:49"><span class="id" title="variable">ks2</span></a>) <a class="idref" href="Vct.Trie.html#ks1:48"><span class="id" title="variable">ks1</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> * <span class="id" title="var">Hcontains</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">trie</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_addf_other"><span class="id" title="lemma">contains_addf_other</span></a>...<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.add_contains_iff" class="idref" href="#Make.add_contains_iff"><span class="id" title="lemma">add_contains_iff</span></a> : <span class="id" title="keyword">forall</span> <a id="trie:50" class="idref" href="#trie:50"><span class="id" title="binder">trie</span></a> <a id="prefix:51" class="idref" href="#prefix:51"><span class="id" title="binder">prefix</span></a> <a id="ks:52" class="idref" href="#ks:52"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> (<a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a> <a class="idref" href="Vct.Trie.html#trie:50"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#ks:52"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:51"><span class="id" title="variable">prefix</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> <a class="idref" href="Vct.Trie.html#trie:50"><span class="id" title="variable">trie</span></a> <a class="idref" href="Vct.Trie.html#prefix:51"><span class="id" title="variable">prefix</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:51"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:52"><span class="id" title="variable">ks</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> *. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_add_inv"><span class="id" title="lemma">contains_add_inv</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span> [<span class="id" title="var">Hcontains</span> | <span class="id" title="var">Hprefix</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_add_other"><span class="id" title="lemma">contains_add_other</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Trie.html#Make.contains_add"><span class="id" title="lemma">contains_add</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Make.contains_singleton" class="idref" href="#Make.contains_singleton"><span class="id" title="lemma">contains_singleton</span></a> : <span class="id" title="keyword">forall</span> <a id="prefix:53" class="idref" href="#prefix:53"><span class="id" title="binder">prefix</span></a> <a id="ks:54" class="idref" href="#ks:54"><span class="id" title="binder">ks</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.ListExt.html#is_prefix"><span class="id" title="definition">is_prefix</span></a> <a class="idref" href="Vct.Trie.html#prefix:53"><span class="id" title="variable">prefix</span></a> <a class="idref" href="Vct.Trie.html#ks:54"><span class="id" title="variable">ks</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> (<a class="idref" href="Vct.Trie.html#Make.singleton"><span class="id" title="definition">singleton</span></a> <a class="idref" href="Vct.Trie.html#ks:54"><span class="id" title="variable">ks</span></a>) <a class="idref" href="Vct.Trie.html#prefix:53"><span class="id" title="variable">prefix</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Trie.html#Make.contains_singletonf"><span class="id" title="lemma">contains_singletonf</span></a>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Don't simplify these defs, other modules should use the lemmas above. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Global Opaque</span> <a class="idref" href="Vct.Trie.html#Make.empty"><span class="id" title="definition">empty</span></a> <a class="idref" href="Vct.Trie.html#Make.contains"><span class="id" title="definition">contains</span></a> <a class="idref" href="Vct.Trie.html#Make.add"><span class="id" title="definition">add</span></a> <a class="idref" href="Vct.Trie.html#Make.containsf"><span class="id" title="definition">containsf</span></a> <a class="idref" href="Vct.Trie.html#Make.addf"><span class="id" title="definition">addf</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Vct.Trie.html#Make"><span class="id" title="module">Make</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a
+    href="https://github.com/coq-community/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

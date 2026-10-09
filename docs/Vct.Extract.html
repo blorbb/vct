@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <link href="coqdoc.css" rel="stylesheet" type="text/css" />
+  <link href="coqdocjs.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="config.js"></script>
+  <script type="text/javascript" src="coqdocjs.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename">
+        <script> document.write(document.title) </script>
+      </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+  </div>
+  <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Vct.Extract</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="library">Extraction</span> <span class="id" title="library">ExtrOcamlBasic</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <a class="idref" href="Vct.Mcnf.html#"><span class="id" title="library">Mcnf</span></a> <a class="idref" href="Vct.Tree.html#"><span class="id" title="library">Tree</span></a> <a class="idref" href="Vct.Solver.html#"><span class="id" title="library">Solver</span></a> <a class="idref" href="Vct.CplSolver.html#"><span class="id" title="library">CplSolver</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Extraction</span> <span class="id" title="var">Language</span> <span class="id" title="var">OCaml</span>.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Extraction</span> <span class="id" title="var">Output</span> <span class="id" title="var">Directory</span> "src/lib/gen".<br/>
+<span class="id" title="keyword">Extraction</span> <span class="id" title="var">Blacklist</span> <span class="id" title="var">Bindings</span> <span class="id" title="var">Lexer</span> <span class="id" title="var">Parser</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The axioms depend on a module named <span class="inlinecode"><span class="id" title="var">Bindings</span></span> being accessible with
+    the correct implementation. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">CplSolver.t</span> =&gt; "Bindings.t".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">CplSolver.make</span> =&gt; "Bindings.make".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">CplSolver.add_clause</span> =&gt; "Bindings.add_clause".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">CplSolver.solve_with_assumptions</span> =&gt; "Bindings.solve_with_assumptions".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Extract <span class="inlinecode"><span class="id" title="var">Atom.t</span></span> to OCaml <span class="inlinecode"><span class="id" title="var">int</span></span>.
+
+<div class="paragraph"> </div>
+
+    This is adapted from <span class="inlinecode"><span class="id" title="var">ExtrOcamlZInt</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="keyword">Inductive</span> <a class="idref" href="Vct.Atom.html#t"><span class="id" title="record">Atom.t</span></a> =&gt; "int"<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Construct&nbsp;int&nbsp;from&nbsp;positive&nbsp;*)</span><br/>
+&nbsp;&nbsp;[ "(let rec int_of_pos = function
+        | Coq_xH -&gt; 1
+        | Coq_xO p -&gt; 2 * int_of_pos p
+        | Coq_xI p -&gt; 2 * int_of_pos p + 1
+      in int_of_pos)"<br/>
+&nbsp;&nbsp;]<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Construct&nbsp;positive&nbsp;from&nbsp;int.&nbsp;*)</span><br/>
+&nbsp;&nbsp;"(fun f n -&gt;
+      let rec pos_of_int x =
+        if x &lt;= 1 then Coq_xH
+        else if x mod 2 = 0 then Coq_xO (pos_of_int (x / 2))
+        else Coq_xI (pos_of_int (x / 2))
+      in f (pos_of_int n))".<br/>
+
+<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.one</span> =&gt; "1".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.succ</span> =&gt; "Stdlib.Int.succ".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.max</span> =&gt; "Stdlib.Int.max".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.ltb</span> =&gt; "(&lt;)".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.leb</span> =&gt; "(&lt;=)".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.eqb</span> =&gt; "Stdlib.Int.equal".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.eq_dec</span> =&gt; "Stdlib.Int.equal".<br/>
+<span class="id" title="keyword">Extract</span> <span class="id" title="var">Constant</span> <span class="id" title="var">Atom.compare</span> =&gt;<br/>
+&nbsp;&nbsp;"fun x y -&gt; if x=y then Eq else if x&lt;y then Lt else Gt".<br/>
+
+<br/>
+<span class="id" title="var">Separate</span> <span class="id" title="keyword">Extraction</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.Spec.solve_fml</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.Spec.Solution.is_sat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.TailRec.solve_fml</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.TailRec.Solution.is_sat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.NoWit.solve_fml</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.NoWit.Solution.is_sat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.Cached.solve_fml</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.Cached.Solution.is_sat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.FiredBoxes.solve_fml</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.FiredBoxes.Solution.is_sat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.Kt.solve_fml</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Solver.Kt.Solution.is_sat</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a
+    href="https://github.com/coq-community/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

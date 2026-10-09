@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <link href="coqdoc.css" rel="stylesheet" type="text/css" />
+  <link href="coqdocjs.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="config.js"></script>
+  <script type="text/javascript" src="coqdocjs.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename">
+        <script> document.write(document.title) </script>
+      </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+  </div>
+  <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Vct.ImportStd</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+Common standard library imports. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="library">List</span>.<br/>
+<span class="id" title="keyword">Export</span> <span class="id" title="module">List.ListNotations</span>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">list_scope</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<span class="id" title="library">Relations</span> <span class="id" title="library">Program</span> <span class="id" title="library">Wellfounded</span><br/>
+&nbsp;&nbsp;<span class="id" title="library">Lia</span> <span class="id" title="library">RelationClasses</span> <span class="id" title="library">SetoidList</span> <span class="id" title="library">Permutation</span> <span class="id" title="library">SetoidPermutation</span><br/>
+&nbsp;&nbsp;<span class="id" title="library">FunInd</span> <span class="id" title="library">Recdef</span> <span class="id" title="library">PeanoNat</span> <span class="id" title="library">Nat</span> <span class="id" title="library">Program.Wf</span> <span class="id" title="library">Classical</span> <span class="id" title="library">Zify</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="keyword">Equations</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">Equations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">Equations.Prop.Logic</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Use booleans as Prop 
+</div>
+<div class="code">
+<span class="id" title="keyword">Coercion</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">is_true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">:</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">bool</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">&gt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">Sortclass</span></a>.<br/>
+</div>
+
+<div class="doc">
+Add <span class="inlinecode">=</span> before a tactic to unfold <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">is_true</span></a></span>, sometimes needed to work with
+    stdlib lemmas that usually use <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a></span> instead. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Tactic Notation</span> "=" <span class="id" title="var">tactic</span>(<span class="id" title="var">H</span>) := <span class="id" title="tactic">unfold</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#is_true"><span class="id" title="definition">is_true</span></a> <span class="id" title="tactic">in</span> *; <span class="id" title="var">H</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Create HintDb</span> <span class="id" title="var">ct</span>.<br/>
+<span class="id" title="var">Create</span> <span class="id" title="keyword">Rewrite</span> <span class="id" title="var">HintDb</span> <span class="id" title="var">ct</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <a class="idref" href="Vct.Atom.html#"><span class="id" title="library">Atom</span></a>.<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="Vct.Atom.html#Notations"><span class="id" title="module">Atom.Notations</span></a>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">atom_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="Vct.Tactics.html#"><span class="id" title="library">Tactics</span></a> <a class="idref" href="Vct.ListExt.html#"><span class="id" title="library">ListExt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Rewrite</span><br/>
+&nbsp;&nbsp;<span class="id" title="lemma">Exists_cons</span> <span class="id" title="lemma">Forall_cons_iff</span><br/>
+&nbsp;&nbsp;<span class="id" title="lemma">Exists_app</span> <span class="id" title="lemma">Forall_app</span><br/>
+&nbsp;&nbsp;<span class="id" title="lemma">Exists_nil</span> <span class="id" title="lemma">Forall_nil_iff</span> : <span class="id" title="var">list</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="or_false_l" class="idref" href="#or_false_l"><span class="id" title="lemma">or_false_l</span></a> : <span class="id" title="keyword">forall</span> <a id="P:1" class="idref" href="#P:1"><span class="id" title="binder">P</span></a>, <a class="idref" href="Vct.ImportStd.html#P:1"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#False"><span class="id" title="inductive">False</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:1"><span class="id" title="variable">P</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="or_false_r" class="idref" href="#or_false_r"><span class="id" title="lemma">or_false_r</span></a> : <span class="id" title="keyword">forall</span> <a id="P:2" class="idref" href="#P:2"><span class="id" title="binder">P</span></a>, <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#False"><span class="id" title="inductive">False</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Vct.ImportStd.html#P:2"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:2"><span class="id" title="variable">P</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="and_true_l" class="idref" href="#and_true_l"><span class="id" title="lemma">and_true_l</span></a> : <span class="id" title="keyword">forall</span> <a id="P:3" class="idref" href="#P:3"><span class="id" title="binder">P</span></a>, <a class="idref" href="Vct.ImportStd.html#P:3"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:3"><span class="id" title="variable">P</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="and_true_r" class="idref" href="#and_true_r"><span class="id" title="lemma">and_true_r</span></a> : <span class="id" title="keyword">forall</span> <a id="P:4" class="idref" href="#P:4"><span class="id" title="binder">P</span></a>, <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="Vct.ImportStd.html#P:4"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:4"><span class="id" title="variable">P</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="imp_false_r" class="idref" href="#imp_false_r"><span class="id" title="lemma">imp_false_r</span></a> : <span class="id" title="keyword">forall</span> <a id="P:5" class="idref" href="#P:5"><span class="id" title="binder">P</span></a>, <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#False"><span class="id" title="inductive">False</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:5"><span class="id" title="variable">P</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="imp_true_r" class="idref" href="#imp_true_r"><span class="id" title="lemma">imp_true_r</span></a> : <span class="id" title="keyword">forall</span> <a id="P:6" class="idref" href="#P:6"><span class="id" title="binder">P</span></a>, <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:6"><span class="id" title="variable">P</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="Vct.ImportStd.html#P:6"><span class="id" title="variable">P</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="imp_true_l" class="idref" href="#imp_true_l"><span class="id" title="lemma">imp_true_l</span></a> : <span class="id" title="keyword">forall</span> <a id="P:7" class="idref" href="#P:7"><span class="id" title="binder">P</span></a>, <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Vct.ImportStd.html#P:7"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="imp_true_l_forall" class="idref" href="#imp_true_l_forall"><span class="id" title="lemma">imp_true_l_forall</span></a> : <span class="id" title="keyword">forall</span> {<a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a>} <a id="P:9" class="idref" href="#P:9"><span class="id" title="binder">P</span></a>, <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">forall</span> (<a id="a:10" class="idref" href="#a:10"><span class="id" title="binder">a</span></a> : <a class="idref" href="Vct.ImportStd.html#A:8"><span class="id" title="variable">A</span></a>), <a class="idref" href="Vct.ImportStd.html#P:9"><span class="id" title="variable">P</span></a> <a class="idref" href="Vct.ImportStd.html#a:10"><span class="id" title="variable">a</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>. <span class="comment">(*&nbsp;common&nbsp;*)</span><br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="not_false" class="idref" href="#not_false"><span class="id" title="lemma">not_false</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#False"><span class="id" title="inductive">False</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="not_true" class="idref" href="#not_true"><span class="id" title="lemma">not_true</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#False"><span class="id" title="inductive">False</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="eq_true" class="idref" href="#eq_true"><span class="id" title="lemma">eq_true</span></a> : <span class="id" title="keyword">forall</span> {<a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a>} (<a id="a:12" class="idref" href="#a:12"><span class="id" title="binder">a</span></a> : <a class="idref" href="Vct.ImportStd.html#A:11"><span class="id" title="variable">A</span></a>), <a class="idref" href="Vct.ImportStd.html#a:12"><span class="id" title="variable">a</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Vct.ImportStd.html#a:12"><span class="id" title="variable">a</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">tauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="var">Create</span> <span class="id" title="keyword">Rewrite</span> <span class="id" title="var">HintDb</span> <span class="id" title="var">prop</span>.<br/>
+<span class="id" title="keyword">Hint Rewrite</span> <a class="idref" href="Vct.ImportStd.html#or_false_l"><span class="id" title="lemma">or_false_l</span></a> <a class="idref" href="Vct.ImportStd.html#or_false_r"><span class="id" title="lemma">or_false_r</span></a> <a class="idref" href="Vct.ImportStd.html#and_true_l"><span class="id" title="lemma">and_true_l</span></a> <a class="idref" href="Vct.ImportStd.html#and_true_r"><span class="id" title="lemma">and_true_r</span></a> <a class="idref" href="Vct.ImportStd.html#imp_false_r"><span class="id" title="lemma">imp_false_r</span></a> <a class="idref" href="Vct.ImportStd.html#imp_true_r"><span class="id" title="lemma">imp_true_r</span></a> <a class="idref" href="Vct.ImportStd.html#imp_true_l"><span class="id" title="lemma">imp_true_l</span></a> @<a class="idref" href="Vct.ImportStd.html#imp_true_l_forall"><span class="id" title="lemma">imp_true_l_forall</span></a> <a class="idref" href="Vct.ImportStd.html#not_false"><span class="id" title="lemma">not_false</span></a> <a class="idref" href="Vct.ImportStd.html#not_true"><span class="id" title="lemma">not_true</span></a> @<a class="idref" href="Vct.ImportStd.html#eq_true"><span class="id" title="lemma">eq_true</span></a> : <span class="id" title="var">prop</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Rewriting&nbsp;bool&nbsp;expressions&nbsp;to&nbsp;props&nbsp;*)</span><br/>
+<span class="id" title="var">Create</span> <span class="id" title="keyword">Rewrite</span> <span class="id" title="var">HintDb</span> <span class="id" title="var">bool</span>.<br/>
+<span class="id" title="keyword">Hint Rewrite</span><br/>
+&nbsp;&nbsp;<span class="id" title="lemma">Bool.andb_true_iff</span> <span class="id" title="lemma">Bool.andb_false_iff</span><br/>
+&nbsp;&nbsp;<span class="id" title="lemma">Bool.orb_true_iff</span> <span class="id" title="lemma">Bool.orb_false_iff</span><br/>
+&nbsp;&nbsp;<span class="id" title="lemma">Bool.negb_true_iff</span> <span class="id" title="lemma">Bool.negb_false_iff</span><br/>
+&nbsp;&nbsp;: <span class="id" title="var">bool</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Function pipeline operator 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> <a id="53407782e708e33cf564f4172e0ae9a0" class="idref" href="#53407782e708e33cf564f4172e0ae9a0"><span class="id" title="notation">&quot;</span></a>x |&gt; f" := (<span class="id" title="var">f</span> <span class="id" title="var">x</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 51, <span class="id" title="tactic">left</span> <span class="id" title="keyword">associativity</span>, <span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="refl_closure" class="idref" href="#refl_closure"><span class="id" title="definition">refl_closure</span></a> {<a id="W:13" class="idref" href="#W:13"><span class="id" title="binder">W</span></a>} (<a id="R:14" class="idref" href="#R:14"><span class="id" title="binder">R</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Relations.Relation_Definitions.html#relation"><span class="id" title="definition">relation</span></a> <a class="idref" href="Vct.ImportStd.html#W:13"><span class="id" title="variable">W</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Relations.Relation_Definitions.html#relation"><span class="id" title="definition">relation</span></a> <a class="idref" href="Vct.ImportStd.html#W:13"><span class="id" title="variable">W</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="w0:15" class="idref" href="#w0:15"><span class="id" title="binder">w0</span></a> <a id="w1:16" class="idref" href="#w1:16"><span class="id" title="binder">w1</span></a> =&gt; <a class="idref" href="Vct.ImportStd.html#R:14"><span class="id" title="variable">R</span></a> <a class="idref" href="Vct.ImportStd.html#w0:15"><span class="id" title="variable">w0</span></a> <a class="idref" href="Vct.ImportStd.html#w1:16"><span class="id" title="variable">w1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Vct.ImportStd.html#w0:15"><span class="id" title="variable">w0</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Vct.ImportStd.html#w1:16"><span class="id" title="variable">w1</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Global Instance</span> <a id="refl_closure_refl" class="idref" href="#refl_closure_refl"><span class="id" title="instance">refl_closure_refl</span></a> : <span class="id" title="keyword">forall</span> {<a id="W:17" class="idref" href="#W:17"><span class="id" title="binder">W</span></a>} (<a id="R:18" class="idref" href="#R:18"><span class="id" title="binder">R</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Relations.Relation_Definitions.html#relation"><span class="id" title="definition">relation</span></a> <a class="idref" href="Vct.ImportStd.html#W:17"><span class="id" title="variable">W</span></a>), <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.RelationClasses.html#Reflexive"><span class="id" title="class">Reflexive</span></a> (<a class="idref" href="Vct.ImportStd.html#refl_closure"><span class="id" title="definition">refl_closure</span></a> <a class="idref" href="Vct.ImportStd.html#R:18"><span class="id" title="variable">R</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">W</span> <span class="id" title="var">R</span> <span class="id" title="var">w</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Vct.ImportStd.html#refl_closure"><span class="id" title="definition">refl_closure</span></a>. <span class="id" title="var">now</span> <span class="id" title="tactic">right</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a
+    href="https://github.com/coq-community/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

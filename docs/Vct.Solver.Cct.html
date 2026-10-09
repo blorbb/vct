@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <link href="coqdoc.css" rel="stylesheet" type="text/css" />
+  <link href="coqdocjs.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="config.js"></script>
+  <script type="text/javascript" src="coqdocjs.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename">
+        <script> document.write(document.title) </script>
+      </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+  </div>
+  <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Vct.Solver.Cct</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+A closed CEGAR-Tableau derivation of unsatisfiability. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <a class="idref" href="Vct.Mcnf.html#"><span class="id" title="library">Mcnf</span></a> <a class="idref" href="Vct.Assumptions.html#"><span class="id" title="library">Assumptions</span></a> <a class="idref" href="Vct.CplSolver.html#"><span class="id" title="library">CplSolver</span></a> <a class="idref" href="Vct.Lclauses.html#"><span class="id" title="library">Lclauses</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Vct.ImportStd.html#"><span class="id" title="library">ImportStd</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct.Solver</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Vct.Solver.McnfExt.html#"><span class="id" title="library">McnfExt</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A closed tableau derivation.
+
+<div class="paragraph"> </div>
+
+    There are no constraints the values provided, so the inhabitance of this
+    type is <i>not</i> a proof of unsatisfiability. The necessary properties are
+    described externally with <span class="inlinecode"><span class="id" title="keyword">wf</span></span>. It is proven that these conditions are
+    held by the solver and that having such conditions <i>is</i> a proof of
+    unsatisfiability. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="t" class="idref" href="#t"><span class="id" title="definition, inductive"><span id="t_rect" class="id"><span id="t_ind" class="id"><span id="t_rec" class="id"><span id="t_sind" class="id">t</span></span></span></span></span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+| <a id="Local" class="idref" href="#Local"><span class="id" title="constructor">Local</span></a> (<a id="core:3" class="idref" href="#core:3"><span class="id" title="binder">core</span></a> : <a class="idref" href="Vct.Assumptions.html#t"><span class="id" title="definition">Assumptions.t</span></a>)<br/>
+| <a id="JumpRestart" class="idref" href="#JumpRestart"><span class="id" title="constructor">JumpRestart</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+Valuation returned by a sat solver. 
+</div>
+<div class="code">
+&nbsp;&nbsp;(<a id="V:4" class="idref" href="#V:4"><span class="id" title="binder">V</span></a> : <a class="idref" href="Vct.Valuation.html#t"><span class="id" title="definition">Valuation.t</span></a>)<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+Failed jump. 
+</div>
+<div class="code">
+&nbsp;&nbsp;(<a id="failed_dia:5" class="idref" href="#failed_dia:5"><span class="id" title="binder">failed_dia</span></a> : <a class="idref" href="Vct.DiaClause.html#t"><span class="id" title="definition">DiaClause.t</span></a>)<br/>
+&nbsp;&nbsp;(<a id="jump_cct:6" class="idref" href="#jump_cct:6"><span class="id" title="binder">jump_cct</span></a> : <a class="idref" href="Vct.Solver.Cct.html#t:1"><span class="id" title="inductive">t</span></a>)<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+Failed restart 
+</div>
+<div class="code">
+&nbsp;&nbsp;(<a id="rs_cct:7" class="idref" href="#rs_cct:7"><span class="id" title="binder">rs_cct</span></a> : <a class="idref" href="Vct.Solver.Cct.html#t:1"><span class="id" title="inductive">t</span></a>).<br/>
+
+<br/>
+<span class="comment">(*&nbsp;In&nbsp;the&nbsp;jump&nbsp;restart&nbsp;case,&nbsp;gets&nbsp;the&nbsp;core&nbsp;of&nbsp;the&nbsp;restart&nbsp;tableau.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;jump&nbsp;core&nbsp;has&nbsp;already&nbsp;been&nbsp;used&nbsp;to&nbsp;do&nbsp;the&nbsp;restart&nbsp;(making&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;conflict&nbsp;set).&nbsp;The&nbsp;restart&nbsp;core&nbsp;is&nbsp;for&nbsp;the&nbsp;parent&nbsp;context&nbsp;to&nbsp;use.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="get_core" class="idref" href="#get_core"><span class="id" title="definition">get_core</span></a> (<a id="t:8" class="idref" href="#t:8"><span class="id" title="binder">t</span></a> : <a class="idref" href="Vct.Solver.Cct.html#t"><span class="id" title="inductive">t</span></a>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Solver.Cct.html#t:8"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Vct.Solver.Cct.html#Local"><span class="id" title="constructor">Local</span></a> <span class="id" title="var">core</span> =&gt; <span class="id" title="var">core</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Vct.Solver.Cct.html#JumpRestart"><span class="id" title="constructor">JumpRestart</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">rs_cct</span> =&gt; <a class="idref" href="Vct.Solver.Cct.html#get_core:9"><span class="id" title="definition">get_core</span></a> <span class="id" title="var">rs_cct</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Conditions for a well-formed cct. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="wf" class="idref" href="#wf"><span class="id" title="definition, inductive"><span id="wf_ind" class="id"><span id="wf_sind" class="id">wf</span></span></span></a> : <a class="idref" href="Vct.Solver.Cct.html#t"><span class="id" title="inductive">t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Vct.Mcnf.html#t"><span class="id" title="definition">Mcnf.t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Vct.Assumptions.html#t"><span class="id" title="definition">Assumptions.t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="LocalCond" class="idref" href="#LocalCond"><span class="id" title="constructor">LocalCond</span></a> : <span class="id" title="keyword">forall</span> <a id="mc0:13" class="idref" href="#mc0:13"><span class="id" title="binder">mc0</span></a> <a id="A:14" class="idref" href="#A:14"><span class="id" title="binder">A</span></a> <a id="core:15" class="idref" href="#core:15"><span class="id" title="binder">core</span></a>,<br/>
+&nbsp;&nbsp;<span class="id" title="definition">List.incl</span> <a class="idref" href="Vct.Solver.Cct.html#core:15"><span class="id" title="variable">core</span></a> <a class="idref" href="Vct.Solver.Cct.html#A:14"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Cnf.html#unsatisfiable"><span class="id" title="definition">Cnf.unsatisfiable</span></a> (<a class="idref" href="Vct.Cnf.html#from_assumptions"><span class="id" title="definition">Cnf.from_assumptions</span></a> <a class="idref" href="Vct.Solver.Cct.html#core:15"><span class="id" title="variable">core</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="Vct.Mcnf.html#fst_cpls"><span class="id" title="definition">Mcnf.fst_cpls</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:13"><span class="id" title="variable">mc0</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Solver.Cct.html#wf:11"><span class="id" title="inductive">wf</span></a> (<a class="idref" href="Vct.Solver.Cct.html#Local"><span class="id" title="constructor">Local</span></a> <a class="idref" href="Vct.Solver.Cct.html#core:15"><span class="id" title="variable">core</span></a>) <a class="idref" href="Vct.Solver.Cct.html#mc0:13"><span class="id" title="variable">mc0</span></a> <a class="idref" href="Vct.Solver.Cct.html#A:14"><span class="id" title="variable">A</span></a><br/>
+| <a id="JumpRestartCond" class="idref" href="#JumpRestartCond"><span class="id" title="constructor">JumpRestartCond</span></a> : <span class="id" title="keyword">forall</span> <a id="mc0:16" class="idref" href="#mc0:16"><span class="id" title="binder">mc0</span></a> <a id="A:17" class="idref" href="#A:17"><span class="id" title="binder">A</span></a> <a id="V:18" class="idref" href="#V:18"><span class="id" title="binder">V</span></a> <a id="failed_dia:19" class="idref" href="#failed_dia:19"><span class="id" title="binder">failed_dia</span></a> <a id="jump_cct:20" class="idref" href="#jump_cct:20"><span class="id" title="binder">jump_cct</span></a> <a id="rs_cct:21" class="idref" href="#rs_cct:21"><span class="id" title="binder">rs_cct</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Cnf.html#cpl_forceb"><span class="id" title="definition">Cnf.cpl_forceb</span></a> <a class="idref" href="Vct.Solver.Cct.html#V:18"><span class="id" title="variable">V</span></a> (<a class="idref" href="Vct.Cnf.html#from_assumptions"><span class="id" title="definition">Cnf.from_assumptions</span></a> <a class="idref" href="Vct.Solver.Cct.html#A:17"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="Vct.Mcnf.html#fst_cpls"><span class="id" title="definition">Mcnf.fst_cpls</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">List.In</span> <a class="idref" href="Vct.Solver.Cct.html#failed_dia:19"><span class="id" title="variable">failed_dia</span></a> (<a class="idref" href="Vct.Mcnf.html#fst_dias"><span class="id" title="definition">Mcnf.fst_dias</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Valuation.html#forces_atm"><span class="id" title="definition">Valuation.forces_atm</span></a> <a class="idref" href="Vct.Solver.Cct.html#V:18"><span class="id" title="variable">V</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="Vct.Solver.Cct.html#failed_dia:19"><span class="id" title="variable">failed_dia</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Jump&nbsp;tableau&nbsp;also&nbsp;satisfies&nbsp;wf.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Solver.Cct.html#wf:11"><span class="id" title="inductive">wf</span></a> <a class="idref" href="Vct.Solver.Cct.html#jump_cct:20"><span class="id" title="variable">jump_cct</span></a> (<a class="idref" href="Vct.Mcnf.html#next_mc"><span class="id" title="definition">Mcnf.next_mc</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a>) (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="Vct.Solver.Cct.html#failed_dia:19"><span class="id" title="variable">failed_dia</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="Vct.Solver.McnfExt.html#fired_boxes"><span class="id" title="definition">fired_boxes</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a> <a class="idref" href="Vct.Solver.Cct.html#V:18"><span class="id" title="variable">V</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Restart&nbsp;tableau&nbsp;also&nbsp;satisfies&nbsp;wf.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Solver.Cct.html#wf:11"><span class="id" title="inductive">wf</span></a> <a class="idref" href="Vct.Solver.Cct.html#rs_cct:21"><span class="id" title="variable">rs_cct</span></a> (<a class="idref" href="Vct.Mcnf.html#add_cs"><span class="id" title="definition">Mcnf.add_cs</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="Vct.Solver.Cct.html#failed_dia:19"><span class="id" title="variable">failed_dia</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="Vct.Solver.McnfExt.html#box_culprits"><span class="id" title="definition">box_culprits</span></a> <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a> <a class="idref" href="Vct.Solver.Cct.html#V:18"><span class="id" title="variable">V</span></a> (<a class="idref" href="Vct.Solver.Cct.html#get_core"><span class="id" title="definition">get_core</span></a> <a class="idref" href="Vct.Solver.Cct.html#jump_cct:20"><span class="id" title="variable">jump_cct</span></a>))) <a class="idref" href="Vct.Solver.Cct.html#A:17"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Solver.Cct.html#wf:11"><span class="id" title="inductive">wf</span></a> (<a class="idref" href="Vct.Solver.Cct.html#JumpRestart"><span class="id" title="constructor">JumpRestart</span></a> <a class="idref" href="Vct.Solver.Cct.html#V:18"><span class="id" title="variable">V</span></a> <a class="idref" href="Vct.Solver.Cct.html#failed_dia:19"><span class="id" title="variable">failed_dia</span></a> <a class="idref" href="Vct.Solver.Cct.html#jump_cct:20"><span class="id" title="variable">jump_cct</span></a> <a class="idref" href="Vct.Solver.Cct.html#rs_cct:21"><span class="id" title="variable">rs_cct</span></a>) <a class="idref" href="Vct.Solver.Cct.html#mc0:16"><span class="id" title="variable">mc0</span></a> <a class="idref" href="Vct.Solver.Cct.html#A:17"><span class="id" title="variable">A</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Example well-formed cct for the negation of the K axiom. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="NegKEx" class="idref" href="#NegKEx"><span class="id" title="section">NegKEx</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Definition</span> <a id="p" class="idref" href="#p"><span class="id" title="definition">p</span></a> := <a class="idref" href="Vct.Atom.html#one"><span class="id" title="definition">Atom.one</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Definition</span> <a id="q" class="idref" href="#q"><span class="id" title="definition">q</span></a> := <a class="idref" href="Vct.Atom.html#succ"><span class="id" title="definition">Atom.succ</span></a> <a class="idref" href="Vct.Solver.Cct.html#p"><span class="id" title="definition">p</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Definition</span> <a id="n" class="idref" href="#n"><span class="id" title="definition">n</span></a> := <a class="idref" href="Vct.Atom.html#succ"><span class="id" title="definition">Atom.succ</span></a> <a class="idref" href="Vct.Solver.Cct.html#q"><span class="id" title="definition">q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Definition</span> <a id="m" class="idref" href="#m"><span class="id" title="definition">m</span></a> := <a class="idref" href="Vct.Atom.html#succ"><span class="id" title="definition">Atom.succ</span></a> <a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Notation</span> <a id="NegKEx.:::'-'_x" class="idref" href="#NegKEx.:::'-'_x"><span class="id" title="notation">&quot;</span></a>- p" := (<a class="idref" href="Vct.Lit.html#Neg"><span class="id" title="constructor">Lit.Neg</span></a> <span class="id" title="var">p</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 35).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Notation</span> <a id="bc55246de61853d94fe00e684b5af810" class="idref" href="#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">&quot;</span></a>+ p" := (<a class="idref" href="Vct.Lit.html#Pos"><span class="id" title="constructor">Lit.Pos</span></a> <span class="id" title="var">p</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 35).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Example</span> <a id="wf_cct_neg_k" class="idref" href="#wf_cct_neg_k"><span class="id" title="definition">wf_cct_neg_k</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Vct.Solver.Cct.html#wf"><span class="id" title="inductive">wf</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="Vct.Solver.Cct.html#JumpRestart"><span class="id" title="constructor">JumpRestart</span></a> <span class="id" title="notation">[</span><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><span class="id" title="notation">]</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Vct.Solver.Cct.html#NegKEx.:::'-'_x"><span class="id" title="notation">-</span></a><a class="idref" href="Vct.Solver.Cct.html#q"><span class="id" title="definition">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="Vct.Solver.Cct.html#Local"><span class="id" title="constructor">Local</span></a> <span class="id" title="notation">[</span><a class="idref" href="Vct.Solver.Cct.html#NegKEx.:::'-'_x"><span class="id" title="notation">-</span></a><a class="idref" href="Vct.Solver.Cct.html#q"><span class="id" title="definition">q</span></a><span class="id" title="notation">;</span> <a class="idref" href="Vct.Solver.Cct.html#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">+</span></a><a class="idref" href="Vct.Solver.Cct.html#m"><span class="id" title="definition">m</span></a><span class="id" title="notation">;</span> <a class="idref" href="Vct.Solver.Cct.html#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">+</span></a><a class="idref" href="Vct.Solver.Cct.html#p"><span class="id" title="definition">p</span></a><span class="id" title="notation">]</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="Vct.Solver.Cct.html#Local"><span class="id" title="constructor">Local</span></a> <span class="id" title="notation">[]</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span> <a class="idref" href="Vct.Lclauses.html#make"><span class="id" title="constructor">Lclauses.make</span></a> <span class="id" title="notation">[[</span><a class="idref" href="Vct.Solver.Cct.html#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">+</span></a><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><span class="id" title="notation">]]</span> <span class="id" title="notation">[</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Vct.Solver.Cct.html#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">+</span></a><a class="idref" href="Vct.Solver.Cct.html#m"><span class="id" title="definition">m</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Vct.Solver.Cct.html#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">+</span></a><a class="idref" href="Vct.Solver.Cct.html#p"><span class="id" title="definition">p</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">]</span> <span class="id" title="notation">[</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Vct.Solver.Cct.html#NegKEx.:::'-'_x"><span class="id" title="notation">-</span></a><a class="idref" href="Vct.Solver.Cct.html#q"><span class="id" title="definition">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">;</span> <a class="idref" href="Vct.Lclauses.html#make"><span class="id" title="constructor">Lclauses.make</span></a> <span class="id" title="notation">[</span><span class="id" title="notation">[</span><a class="idref" href="Vct.Solver.Cct.html#NegKEx.:::'-'_x"><span class="id" title="notation">-</span></a><a class="idref" href="Vct.Solver.Cct.html#m"><span class="id" title="definition">m</span></a><span class="id" title="notation">;</span> <a class="idref" href="Vct.Solver.Cct.html#NegKEx.:::'-'_x"><span class="id" title="notation">-</span></a><a class="idref" href="Vct.Solver.Cct.html#p"><span class="id" title="definition">p</span></a><span class="id" title="notation">;</span> <a class="idref" href="Vct.Solver.Cct.html#bc55246de61853d94fe00e684b5af810"><span class="id" title="notation">+</span></a><a class="idref" href="Vct.Solver.Cct.html#q"><span class="id" title="definition">q</span></a><span class="id" title="notation">]</span><span class="id" title="notation">]</span> <span class="id" title="notation">[]</span> <span class="id" title="notation">[</span><span class="id" title="notation">]</span><span class="id" title="notation">]</span><br/>
+      <span class="id" title="notation">[]</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">constructor</span>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">change</span> (<a class="idref" href="Vct.Valuation.html#forces_atm"><span class="id" title="definition">Valuation.forces_atm</span></a> <span class="id" title="notation">[</span><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><span class="id" title="notation">]</span> <a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a>) <span class="id" title="keyword">with</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>. <span class="id" title="var">cbn</span>. <span class="id" title="var">easy</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span> <span class="id" title="var">Hsat</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Vct.Cnf.html#satisfiable"><span class="id" title="definition">Cnf.satisfiable</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hsat</span>. <span class="id" title="var">deex</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">autorewrite</span> <span class="id" title="keyword">with</span> <span class="id" title="var">ct</span> <span class="id" title="var">prop</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hsat</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">easy</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">unfold</span> <a class="idref" href="Vct.Solver.McnfExt.html#box_culprits"><span class="id" title="definition">box_culprits</span></a>. <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Vct.Valuation.html#forces_atm"><span class="id" title="definition">Valuation.forces_atm</span></a> <span class="id" title="notation">[</span><a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a><span class="id" title="notation">]</span> <a class="idref" href="Vct.Solver.Cct.html#n"><span class="id" title="definition">n</span></a>) <span class="id" title="keyword">with</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>. <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.Atom.html#eqb_refl"><span class="id" title="instance">Atom.eqb_refl</span></a>, <span class="id" title="lemma">Bool.orb_true_r</span>. <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hsat</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Vct.Cnf.html#satisfiable"><span class="id" title="definition">Cnf.satisfiable</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Hsat</span>. <span class="id" title="var">deex</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">autorewrite</span> <span class="id" title="keyword">with</span> <span class="id" title="var">ct</span> <span class="id" title="var">prop</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hsat</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Vct.Solver.Cct.html#NegKEx"><span class="id" title="section">NegKEx</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a
+    href="https://github.com/coq-community/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

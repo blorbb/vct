@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <link href="coqdoc.css" rel="stylesheet" type="text/css" />
+  <link href="coqdocjs.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="config.js"></script>
+  <script type="text/javascript" src="coqdocjs.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename">
+        <script> document.write(document.title) </script>
+      </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+  </div>
+  <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Vct.Tree</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <a class="idref" href="Vct.Kripke.html#"><span class="id" title="library">Kripke</span></a> <a class="idref" href="Vct.Valuation.html#"><span class="id" title="library">Valuation</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Vct.ImportStd.html#"><span class="id" title="library">ImportStd</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Scheme</span> <span class="id" title="keyword">All</span> <span class="id" title="keyword">for</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A Kripke model with a tree structure. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="t" class="idref" href="#t"><span class="id" title="definition, inductive"><span id="t_rect" class="id"><span id="t_ind" class="id"><span id="t_rec" class="id"><span id="t_sind" class="id">t</span></span></span></span></span></a> :=<br/>
+&nbsp;&nbsp;| <a id="make" class="idref" href="#make"><span class="id" title="constructor">make</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="V:3" class="idref" href="#V:3"><span class="id" title="binder">V</span></a> : <a class="idref" href="Vct.Valuation.html#t"><span class="id" title="definition">Valuation.t</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;A&nbsp;list&nbsp;of&nbsp;sub-trees&nbsp;reachable&nbsp;from&nbsp;here.&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="children:4" class="idref" href="#children:4"><span class="id" title="binder">children</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Vct.Tree.html#t:1"><span class="id" title="inductive">t</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="empty" class="idref" href="#empty"><span class="id" title="definition">empty</span></a> := <a class="idref" href="Vct.Tree.html#make"><span class="id" title="constructor">make</span></a> <span class="id" title="notation">[]</span> <span class="id" title="notation">[]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="cons_child" class="idref" href="#cons_child"><span class="id" title="definition">cons_child</span></a> <a id="tree:5" class="idref" href="#tree:5"><span class="id" title="binder">tree</span></a> <a id="child:6" class="idref" href="#child:6"><span class="id" title="binder">child</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Tree.html#tree:5"><span class="id" title="variable">tree</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Vct.Tree.html#make"><span class="id" title="constructor">make</span></a> <span class="id" title="var">V</span> <span class="id" title="var">children</span> =&gt; <a class="idref" href="Vct.Tree.html#make"><span class="id" title="constructor">make</span></a> <span class="id" title="var">V</span> (<a class="idref" href="Vct.Tree.html#child:6"><span class="id" title="variable">child</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">children</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;tree&nbsp;defines&nbsp;a&nbsp;Kripke&nbsp;model.&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="valuation" class="idref" href="#valuation"><span class="id" title="definition">valuation</span></a> (<a id="tree:8" class="idref" href="#tree:8"><span class="id" title="binder">tree</span></a> : <a class="idref" href="Vct.Tree.html#t"><span class="id" title="inductive">t</span></a>) (<a id="atm:9" class="idref" href="#atm:9"><span class="id" title="binder">atm</span></a> : <a class="idref" href="Vct.Atom.html#t"><span class="id" title="record">Atom.t</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Tree.html#tree:8"><span class="id" title="variable">tree</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Vct.Tree.html#make"><span class="id" title="constructor">make</span></a> <span class="id" title="var">V</span> <span class="id" title="var">_</span> =&gt; <a class="idref" href="Vct.Valuation.html#forces_atm"><span class="id" title="definition">Valuation.forces_atm</span></a> <span class="id" title="var">V</span> <a class="idref" href="Vct.Tree.html#atm:9"><span class="id" title="variable">atm</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="R" class="idref" href="#R"><span class="id" title="definition">R</span></a> (<a id="w0:11" class="idref" href="#w0:11"><span class="id" title="binder">w0</span></a> <a id="w1:12" class="idref" href="#w1:12"><span class="id" title="binder">w1</span></a> : <a class="idref" href="Vct.Tree.html#t"><span class="id" title="inductive">t</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Vct.Tree.html#w0:11"><span class="id" title="variable">w0</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Vct.Tree.html#make"><span class="id" title="constructor">make</span></a> <span class="id" title="var">_</span> <span class="id" title="var">children</span> =&gt; <span class="id" title="definition">List.In</span> <a class="idref" href="Vct.Tree.html#w1:12"><span class="id" title="variable">w1</span></a> <span class="id" title="var">children</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="R_kt" class="idref" href="#R_kt"><span class="id" title="definition">R_kt</span></a> := <a class="idref" href="Vct.ImportStd.html#refl_closure"><span class="id" title="definition">refl_closure</span></a> <a class="idref" href="Vct.Tree.html#R"><span class="id" title="definition">R</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Global Instance</span> <a id="R_kt_refl" class="idref" href="#R_kt_refl"><span class="id" title="instance">R_kt_refl</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.RelationClasses.html#Reflexive"><span class="id" title="class">Reflexive</span></a> <a class="idref" href="Vct.Tree.html#R_kt"><span class="id" title="definition">R_kt</span></a> := <span class="id" title="var">_</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="as_k" class="idref" href="#as_k"><span class="id" title="definition">as_k</span></a> : @<a class="idref" href="Vct.Kripke.html#t"><span class="id" title="record">Kripke.t</span></a> <a class="idref" href="Vct.Tree.html#t"><span class="id" title="inductive">t</span></a> <a class="idref" href="Vct.Tree.html#R"><span class="id" title="definition">R</span></a> := <a class="idref" href="Vct.Kripke.html#make"><span class="id" title="definition">Kripke.make</span></a> <a class="idref" href="Vct.Tree.html#t"><span class="id" title="inductive">t</span></a> <a class="idref" href="Vct.Tree.html#R"><span class="id" title="definition">R</span></a> <a class="idref" href="Vct.Tree.html#valuation"><span class="id" title="definition">valuation</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="as_kt" class="idref" href="#as_kt"><span class="id" title="definition">as_kt</span></a> : @<a class="idref" href="Vct.Kripke.html#t"><span class="id" title="record">Kripke.t</span></a> <a class="idref" href="Vct.Tree.html#t"><span class="id" title="inductive">t</span></a> <a class="idref" href="Vct.Tree.html#R_kt"><span class="id" title="definition">R_kt</span></a> := <a class="idref" href="Vct.Kripke.html#to_kt"><span class="id" title="definition">Kripke.to_kt</span></a> <a class="idref" href="Vct.Tree.html#as_k"><span class="id" title="definition">as_k</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a
+    href="https://github.com/coq-community/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

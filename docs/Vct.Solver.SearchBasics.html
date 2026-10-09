@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <link href="coqdoc.css" rel="stylesheet" type="text/css" />
+  <link href="coqdocjs.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="config.js"></script>
+  <script type="text/javascript" src="coqdocjs.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename">
+        <script> document.write(document.title) </script>
+      </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+  </div>
+  <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Vct.Solver.SearchBasics</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+CEGARBox decision procedure.
+
+<div class="paragraph"> </div>
+
+    The algorithm and variants are implemented in the modules <span class="inlinecode"><span class="id" title="library">Spec</span></span>, <span class="inlinecode"><span class="id" title="library">TailRec</span></span>,
+    <span class="inlinecode"><span class="id" title="library">NoWit</span></span>, <span class="inlinecode"><span class="id" title="library">Cached</span></span>. This module contains some basic lemmas required for
+    their definition (i.e. their termination). 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <a class="idref" href="Vct.CplSolver.html#"><span class="id" title="library">CplSolver</span></a> <a class="idref" href="Vct.Lit.html#"><span class="id" title="library">Lit</span></a> <a class="idref" href="Vct.Mcnf.html#"><span class="id" title="library">Mcnf</span></a> <a class="idref" href="Vct.Assumptions.html#"><span class="id" title="library">Assumptions</span></a> <a class="idref" href="Vct.Valuation.html#"><span class="id" title="library">Valuation</span></a> <a class="idref" href="Vct.Tree.html#"><span class="id" title="library">Tree</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="Vct.ImportStd.html#"><span class="id" title="library">ImportStd</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct.Solver</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="Vct.Solver.McnfExt.html#"><span class="id" title="library">McnfExt</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Vct.Solver</span> <span class="id" title="keyword">Require</span> <a class="idref" href="Vct.Solver.Cct.html#"><span class="id" title="library">Cct</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Default auto-solver simplifies a bit too much. 
+</div>
+<div class="code">
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Obligation</span> <span class="id" title="keyword">Tactic</span> := <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">solve</span> [ <span class="id" title="var">cbn</span>; <span class="id" title="tactic">auto</span> ].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+CONVENTIONS: l&lt;n&gt; means the local clauses at world n,
+    mc&lt;n&gt; means the whole modal context chain starting from n onwards. 
+<div class="paragraph"> </div>
+
+ When proving termination / obligations, Equations doesn't keep all
+    information about which specific branch is being taken. The <span class="inlinecode"><span class="id" title="definition">inspect</span></span>
+    function and <span class="inlinecode"><span class="id" title="var">eqn</span>:<span class="id" title="var">Heqn</span></span> adds hypotheses to the context about which
+    context was taken. This is only necessary for hypotheses needed
+    for the obligations, as using <span class="inlinecode"><span class="id" title="var">funelim</span></span> correctly keeps information
+    about the branches taken. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> <a id=":::x_'eqn'_':'_x" class="idref" href="#:::x_'eqn'_':'_x"><span class="id" title="notation">&quot;</span></a>x 'eqn' ':' p" := (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Specif.html#exist"><span class="id" title="constructor">exist</span></a> <span class="id" title="var">_</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span>) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>, <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab11"></a><h1 class="section">Measurement</h1>
+
+<div class="paragraph"> </div>
+
+ Lexicographic ordering of a pair of naturals. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="lexnat2_lt" class="idref" href="#lexnat2_lt"><span class="id" title="definition">lexnat2_lt</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="inductive">slexprod</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Peano.html#lt"><span class="id" title="definition">lt</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Peano.html#lt"><span class="id" title="definition">lt</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="Vct.Solver.SearchBasics.html#lexnat2_lt"><span class="id" title="definition">lexnat2_lt</span></a></span> is well-founded. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Instance</span> <a id="lexnat2_lt_wf" class="idref" href="#lexnat2_lt_wf"><span class="id" title="instance">lexnat2_lt_wf</span></a> : <span class="id" title="class">WellFounded</span> <a class="idref" href="Vct.Solver.SearchBasics.html#lexnat2_lt"><span class="id" title="definition">lexnat2_lt</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Vct.Solver.SearchBasics.html#lexnat2_lt"><span class="id" title="definition">lexnat2_lt</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="lemma">wf_slexprod</span>; <span class="id" title="tactic">apply</span> <span class="id" title="lemma">Wf_nat.lt_wf</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="decreasing_sat_vals" class="idref" href="#decreasing_sat_vals"><span class="id" title="lemma">decreasing_sat_vals</span></a> : <span class="id" title="keyword">forall</span> <a id="s0:1" class="idref" href="#s0:1"><span class="id" title="binder">s0</span></a> <a id="A:2" class="idref" href="#A:2"><span class="id" title="binder">A</span></a> <a id="mc0:3" class="idref" href="#mc0:3"><span class="id" title="binder">mc0</span></a> <a id="V:4" class="idref" href="#V:4"><span class="id" title="binder">V</span></a> <a id="jump_core:5" class="idref" href="#jump_core:5"><span class="id" title="binder">jump_core</span></a> <a id="c:6" class="idref" href="#c:6"><span class="id" title="binder">c</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.CplSolver.html#solve_with_assumptions"><span class="id" title="axiom">CplSolver.solve_with_assumptions</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#s0:1"><span class="id" title="variable">s0</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#A:2"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Vct.CplSolution.html#Sat"><span class="id" title="constructor">CplSolution.Sat</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#V:4"><span class="id" title="variable">V</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Vct.Valuation.html#forces_atm"><span class="id" title="definition">Valuation.forces_atm</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#V:4"><span class="id" title="variable">V</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#c:6"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="cs:7" class="idref" href="#cs:7"><span class="id" title="binder">cs</span></a> := <a class="idref" href="Vct.Solver.SearchBasics.html#c:6"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="Vct.Solver.McnfExt.html#box_culprits"><span class="id" title="definition">box_culprits</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#mc0:3"><span class="id" title="variable">mc0</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#V:4"><span class="id" title="variable">V</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#jump_core:5"><span class="id" title="variable">jump_core</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="s0':8" class="idref" href="#s0':8"><span class="id" title="binder">s0'</span></a> := <a class="idref" href="Vct.CplSolver.html#add_conflict_set"><span class="id" title="definition">CplSolver.add_conflict_set</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#s0:1"><span class="id" title="variable">s0</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#cs:7"><span class="id" title="variable">cs</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;(<span class="id" title="abbreviation">List.length</span> (<a class="idref" href="Vct.CplSolver.html#every_sat_valuation"><span class="id" title="definition">CplSolver.every_sat_valuation</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#s0':8"><span class="id" title="variable">s0'</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#A:2"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">List.length</span> (<a class="idref" href="Vct.CplSolver.html#every_sat_valuation"><span class="id" title="definition">CplSolver.every_sat_valuation</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#s0:1"><span class="id" title="variable">s0</span></a> <a class="idref" href="Vct.Solver.SearchBasics.html#A:2"><span class="id" title="variable">A</span></a>))%<span class="id" title="var">nat</span>.<br/>
+<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">with</span> <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">typeclass_instances</span> <span class="id" title="var">datatypes</span> <span class="id" title="var">ct</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> * <span class="id" title="var">HV_sat</span> <span class="id" title="var">Hforce_c</span> <span class="id" title="var">cs</span> <span class="id" title="var">s0'</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">set</span> (<span class="id" title="var">s0'_sats</span> := <a class="idref" href="Vct.CplSolver.html#every_sat_valuation"><span class="id" title="definition">CplSolver.every_sat_valuation</span></a> <span class="id" title="var">s0'</span> <span class="id" title="var">A</span>) <span class="id" title="tactic">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">set</span> (<span class="id" title="var">s0_sats</span> := <a class="idref" href="Vct.CplSolver.html#every_sat_valuation"><span class="id" title="definition">CplSolver.every_sat_valuation</span></a> <span class="id" title="var">s0</span> <span class="id" title="var">A</span>) <span class="id" title="tactic">in</span> *.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="definition">inclA</span> <a class="idref" href="Vct.Valuation.html#eq"><span class="id" title="definition">Valuation.eq</span></a> <span class="id" title="var">s0'_sats</span> <span class="id" title="var">s0_sats</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">Hincl</span>. {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.CplSolver.html#refined_solver_sat_vals_subset"><span class="id" title="lemma">CplSolver.refined_solver_sat_vals_subset</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">clause</span> := <span class="id" title="abbreviation">List.map</span> <a class="idref" href="Vct.Lit.html#Neg"><span class="id" title="constructor">Lit.Neg</span></a> <span class="id" title="var">cs</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Solver.McnfExt.html#val_subset_no_new_atms"><span class="id" title="lemma">val_subset_no_new_atms</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">V</span> := <span class="id" title="var">V</span>)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Solver.McnfExt.html#cs_incl_V"><span class="id" title="lemma">cs_incl_V</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">s</span> := <span class="id" title="var">s0</span>) (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">subst</span> <span class="id" title="var">s0'</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="lemma">Nat.le_neq</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#NoDupA_incl_length"><span class="id" title="lemma">NoDupA_incl_length</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">eqA</span> := <a class="idref" href="Vct.Valuation.html#eq"><span class="id" title="definition">Valuation.eq</span></a>)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.CplSolver.html#every_sat_valuation_nodup"><span class="id" title="lemma">CplSolver.every_sat_valuation_nodup</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span> <span class="id" title="var">Hlen</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.CplSolver.html#refined_solver_diff_val"><span class="id" title="lemma">CplSolver.refined_solver_diff_val</span></a> <span class="id" title="keyword">with</span> <span class="id" title="var">A</span> <span class="id" title="var">V</span> <span class="id" title="var">cs</span> <span class="id" title="var">s0'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.Solver.McnfExt.html#cs_incl_V"><span class="id" title="lemma">cs_incl_V</span></a> <span class="id" title="keyword">with</span> <span class="id" title="var">s0</span> <span class="id" title="var">A</span>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">subst</span> <span class="id" title="var">cs</span>. <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">subst</span> <span class="id" title="var">s0'</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Vct.CplSolver.html#add_conflict_set"><span class="id" title="definition">CplSolver.add_conflict_set</span></a>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="Vct.CplSolver.html#add_clause_cons"><span class="id" title="axiom">CplSolver.add_clause_cons</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#PermutationA_inA"><span class="id" title="lemma">PermutationA_inA</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">l</span> := <span class="id" title="var">s0_sats</span>)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { <span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.CplSolver.html#valuation_in_every_sat_valuation"><span class="id" title="lemma">CplSolver.valuation_in_every_sat_valuation</span></a>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">subst</span> <span class="id" title="var">s0_sats</span> <span class="id" title="var">s0'_sats</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#NoDup_PermutationA_bis"><span class="id" title="lemma">NoDup_PermutationA_bis</span></a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Vct.ListExt.html#NoDupA_length_incl"><span class="id" title="lemma">NoDupA_length_incl</span></a>...<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+For proofs, we don't want to write <span class="inlinecode"><a class="idref" href="Vct.Solver.TailRec.html#tableau"><span class="id" title="definition">tableau</span></a></span> <span class="inlinecode"><span class="id" title="var">mc0</span></span> <span class="inlinecode">(<a class="idref" href="Vct.Solver.McnfExt.html#cplsolver_mcnf"><span class="id" title="definition">cplsolver_mcnf</span></a></span> <span class="inlinecode"><span class="id" title="var">mc0</span>)</span> every time.
+
+<div class="paragraph"> </div>
+
+    This notation can be seen as expanding <span class="inlinecode">$<span class="id" title="var">mc0</span></span> to <span class="inlinecode"><span class="id" title="var">mc0</span></span> <span class="inlinecode">(<a class="idref" href="Vct.Solver.McnfExt.html#cplsolver_mcnf"><span class="id" title="definition">cplsolver_mcnf</span></a></span> <span class="inlinecode"><span class="id" title="var">mc0</span>)</span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> <a id="8439fbb71a5e6e0f083ab4268be9e169" class="idref" href="#8439fbb71a5e6e0f083ab4268be9e169"><span class="id" title="notation">&quot;</span></a>fn $ var" := (<span class="id" title="var">fn</span> <span class="id" title="var">var</span> (<a class="idref" href="Vct.Solver.McnfExt.html#cplsolver_mcnf"><span class="id" title="definition">cplsolver_mcnf</span></a> <span class="id" title="var">var</span>)) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10, <span class="id" title="tactic">left</span> <span class="id" title="keyword">associativity</span>).<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a
+    href="https://github.com/coq-community/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

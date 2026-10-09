@@ -102,4 +102,5 @@ Qed.
         forall (s : CplSolver.t) (A core : Assumptions.t),
         CplSolution.Unsat core = CplSolver.solve_with_assumptions s A ->
         List.incl core A
-    ]] *)
+    ]]
+*)
